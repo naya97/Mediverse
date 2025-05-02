@@ -25,7 +25,7 @@ return new class extends Migration
                 ->cascadeOnUpdate();
             $table->date('reservation_date');
             $table->time('reservation_hour');
-            $table->enum('status',['visited','notVisited']);
+            $table->enum('status',['visited','canceled','pending'])->default('pending');
             $table->timestamps();
         });
     }

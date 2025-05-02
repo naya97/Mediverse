@@ -19,7 +19,6 @@ return new class extends Migration
             $table->foreignId('clinic_id')->constrained('clinics')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-            $table->integer('age');
             $table->string('photo')->nullable();
             $table->string('speciality');
             $table->string('professional_title');
