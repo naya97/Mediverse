@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->integer('numOfDoctors');
-            $table->string('description');
             $table->string('location');
             $table->timestamps();
         });
