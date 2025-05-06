@@ -30,7 +30,7 @@ class AuthController extends Controller
             ->first();
 
         if (!$user || !Hash::check($request->get('password'), $user->password)) {
-            return response()->json(['error' => 'Invalid User'], 401);
+            return response()->json(['error' => 'wrong password'], 401);
         }
 
         try {

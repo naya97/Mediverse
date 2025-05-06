@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('doctor_id')->constrained('doctors')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
+            $table->text('symptoms');
             $table->string('allergies');
             $table->string('chronic_conditions');
             $table->enum('marital_status',['single','married','divorced']);
