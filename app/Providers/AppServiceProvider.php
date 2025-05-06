@@ -26,5 +26,8 @@ class AppServiceProvider extends ServiceProvider
         Route::middleware('api')
             ->prefix('lab_pharmacy')
             ->group(base_path('routes/LabAndPharmacyAPI.php'));
+        Route::middleware('api')
+            ->prefix('Admin')
+            ->group(base_path('routes/Admin/lab_phar.php'));
     }
 }

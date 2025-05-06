@@ -5,52 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Lab_Pharmacy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
+
 
 class LabAndPharmacyController extends Controller
 {
-    public function add(Request $request)
-    {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['message' => 'you have to login/signup again']);
-        }
-        if ($user->role != 'admin') {
-            return response()->json('You do not have permission in this page', 400);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'is_lab' => 'boolean|required',
-            'name' => 'string|required',
-            'location' => 'string',
-            'start_time' => 'string',
-            'finish_time' => 'string',
-            'phone' => 'string',
-            'latitude' => 'nullable|numeric|between:-180,180',
-            'longitude' => 'nullable|numeric|between:-180,180',
-        ]);
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        $place = Lab_Pharmacy::create([
-            'is_lab' => $request->is_lab,
-            'name' => $request->name,
-            'location' => $request->location,
-            'start_time' => $request->start_time,
-            'finish_time' => $request->finish_time,
-            'phone' => $request->phone,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-        ]);
-        return response()->json($place, 201);
-    }
-    /////
     public function show(Request $request)
     {
         $user = Auth::user();
         if (!$user) {
-            return response()->json(['message' => 'you have to login/signup again']);
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
         }
 
         $places = Lab_Pharmacy::where('is_lab', $request->is_lab)->get()->all();
@@ -65,6 +30,37 @@ class LabAndPharmacyController extends Controller
                 'latitude' => $place->latitude,
                 'longitude' => $place->longitude,
                 'location' => $place->location,
+
+            ];
+        }
+        return response()->json($response, 200);
+    }
+    //////search by name or location
+    public function search(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
+
+        $results = Lab_Pharmacy::search(($request->name))->get();
+        if ($results->isEmpty()) {
+            return response()->json(['message' => 'Not Found']);
+        }
+        $results = $results->where('is_lab', $request->is_lab);
+        $response = [];
+        foreach ($results as $result) {
+            $response[] = [
+                'id' => $result->id,
+                'name' => $result->name,
+                'start_time' => $result->start_time,
+                'finish_time' => $result->finish_time,
+                'phone' => $result->phone,
+                'latitude' => $result->latitude,
+                'longitude' => $result->longitude,
+                'location' => $result->location,
 
             ];
         }
