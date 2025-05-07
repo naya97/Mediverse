@@ -115,6 +115,6 @@ class PatientController extends Controller
         return response()->json([
             'message' => 'profile has been updated',
             'data' => $response
-        ]);
+        ],200);
     }
 }

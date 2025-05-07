@@ -29,5 +29,8 @@ class AppServiceProvider extends ServiceProvider
         Route::middleware('api')
             ->prefix('Admin')
             ->group(base_path('routes/Admin/lab_phar.php'));
+        Route::middleware('api')
+            ->prefix('Admin')
+            ->group(base_path('routes/Admin/doctor.php'));
     }
 }

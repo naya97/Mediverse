@@ -18,7 +18,7 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->foreignId('doctor_id')->nullable()
-                ->constrained('patients')
+                ->constrained('doctors')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->foreignId('review_id')->nullable()

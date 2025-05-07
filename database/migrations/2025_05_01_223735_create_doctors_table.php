@@ -20,16 +20,16 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->string('photo')->nullable();
-            $table->string('speciality');
-            $table->string('professional_title');
-            $table->float('finalRate');
-            $table->time('average_visit_duration');
-            $table->time('checkup_duration');
-            $table->float('visit_fee');
-            $table->string('sign');
-            $table->integer('experience');
+            $table->string('speciality')->nullable();
+            $table->string('professional_title')->nullable();
+            $table->float('finalRate')->nullable();
+            $table->time('average_visit_duration')->nullable();
+            $table->time('checkup_duration')->nullable();
+            $table->float('visit_fee')->nullable();
+            $table->string('sign')->nullable();
+            $table->integer('experience')->nullable();
             $table->integer('treated')->default(0);
-            $table->enum('status',['available','notAvailabe']);
+            $table->enum('status', ['available', 'notAvailable'])->default('notAvailable');
             $table->timestamps();
         });
     }

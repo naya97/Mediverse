@@ -1,0 +1,68 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Clinic;
+use App\Models\Doctor;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+
+class DoctorController extends Controller
+{
+    public function addDoctor(Request $request)  {
+        $this->auth();
+
+        $validator = Validator::make($request->all(), [
+            'department' => 'required|string',
+            'first_name' => 'string|required',
+            'last_name' => 'string|required',
+            'email' => 'string|email|max:255|required|unique:users',
+            'phone' => 'phone:SY|unique:users',
+            'password' => ['required', 'string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/',],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 400);
+        }
+
+        $user = User::create([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => Hash::make($request->get('password')),
+            'role' => 'doctor',
+        ]);
+
+        $user->save();
+
+        $clinic = Clinic::where('name',$request->department)->first();
+
+        $doctor = Doctor::create([
+            'user_id' => $user->id,
+            'clinic_id' => $clinic->id,
+        ]);
+
+        return response()->json([
+            'message' => 'created',
+            'data' => $doctor,
+        ],201);
+
+    }
+
+    public function auth() {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
+        if ($user->role != 'admin') {
+            return response()->json('You do not have permission in this page', 400);
+        }
+    }
+}
