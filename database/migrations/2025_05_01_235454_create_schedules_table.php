@@ -13,12 +13,14 @@ return new class extends Migration
     {
         Schema::create('schedules', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('clinic_id')->constrained('clinics')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
             $table->foreignId('doctor_id')->constrained('doctors')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->string('day');
-            $table->time('start');
-            $table->time('finish');
+            $table->enum('Shift', ['morning shift:from 9 AM to 3 PM', 'evening shift:from 3 PM to 9 PM']);
             $table->timestamps();
         });
     }

@@ -31,31 +31,38 @@ class Doctor extends Model
         'experience',
     ];
 
-    public function user() : BelongsTo {
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function clinic() : BelongsTo {
+    public function clinic(): BelongsTo
+    {
         return $this->belongsTo(Clinic::class);
     }
 
-    public function schedule() : HasMany {
+    public function schedule(): HasMany
+    {
         return $this->hasMany(Schedule::class);
     }
 
-    public function doctorReviews() : HasMany {
+    public function doctorReviews(): HasMany
+    {
         return $this->hasMany(PatientReview::class);
     }
 
-    public function patientDetails() : HasMany {
+    public function patientDetails(): HasMany
+    {
         return $this->hasMany(PatientDetails::class);
     }
 
-    public function prescriptions() : HasMany {
+    public function prescriptions(): HasMany
+    {
         return $this->hasMany(Prescription::class);
     }
 
-    public function appointments() : HasMany {
+    public function appointments(): HasMany
+    {
         return $this->hasMany(Appointment::class);
     }
 }

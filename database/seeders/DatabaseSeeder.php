@@ -14,7 +14,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-
+        $this->call([
+            ClinicSeeder::class,
+        ]);
         User::factory()->create([
             'first_name' => 'Test User',
             'password' => Hash::make('Nour1234'),
