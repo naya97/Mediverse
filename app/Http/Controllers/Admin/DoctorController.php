@@ -15,7 +15,7 @@ class DoctorController extends Controller
 {
     public function addDoctor(Request $request)  {
         $this->auth();
-
+        
         $validator = Validator::make($request->all(), [
             'department' => 'required|string',
             'first_name' => 'string|required',
@@ -43,6 +43,8 @@ class DoctorController extends Controller
         $clinic = Clinic::where('name',$request->department)->first();
 
         $doctor = Doctor::create([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
             'user_id' => $user->id,
             'clinic_id' => $clinic->id,
         ]);

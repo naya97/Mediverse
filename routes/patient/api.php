@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware([JwtMiddleware::class])->group(function () {
     Route::controller(PatientController::class)->group(function () {
-        Route::post('/completeInfo', 'completePatientInfo');
-        Route::post('/editProfile', 'editProfile');
+        Route::post('/completeInfo','completePatientInfo');
+        Route::post('/editProfile','editProfile');
+        Route::get('/showProfile','showProfile');
     });
     Route::controller(RateController::class)->group(function () {
         Route::post('/rate', 'patientRate');

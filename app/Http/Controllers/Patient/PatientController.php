@@ -18,7 +18,7 @@ class PatientController extends Controller
         if(!$user) {
             return response()->json([
                 'message' => 'unauthorized'
-            ],401); //not sure about the num
+            ],401); 
         }
         if($user->role != 'patient') {
             return response()->json([
@@ -34,6 +34,8 @@ class PatientController extends Controller
         ]);
 
         $patient->update([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
             'age' => $request->age,
             'gender' => $request->gender,
             'blood_type' => $request->blood_type,
@@ -45,6 +47,41 @@ class PatientController extends Controller
             'data' => $patient
         ],200);
 
+    }
+
+    public function showProfile() {
+        $user = Auth::user();
+
+        //check the auth
+        if(!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ],401);
+        }
+
+        if(!$user->role == 'patient') {
+            return response()->json([
+                'message' => 'you dont have permission'
+            ],401);
+        }
+
+        $patient = Patient::where('user_id',$user->id)->first();
+
+        $response = [
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'age' => $patient->age,
+            'gender' => $patient->gender,
+            'blood_type' => $patient->blood_type,
+            'address' => $patient->address,
+        ];
+
+        return response()->json([
+            'message' => 'ok',
+            'data' => $response,
+        ],200);
     }
 
     public function editProfile(Request $request) {
