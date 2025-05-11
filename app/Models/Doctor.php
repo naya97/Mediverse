@@ -65,4 +65,14 @@ class Doctor extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    public function getPhotoUrlAttribute()
+    {
+        return $this->photo ? url($this->photo) : null;
+    }
+
+    public function getSignUrlAttribute()
+    {
+        return $this->sign ? url($this->sign) : null;
+    }
 }

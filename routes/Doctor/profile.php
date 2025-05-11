@@ -10,5 +10,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('profile', 'profile');
         Route::get('availableWorkDays', 'availableWorkDays');
         Route::post('schedule', 'schedule');
+        Route::post('editProfile', 'editProfile');
     });
 });
