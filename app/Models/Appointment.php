@@ -10,7 +10,8 @@ class Appointment extends Model
 {
     protected $fillable = [
         'patient_id',
-        'doctor_id',
+        'schedule_id',
+        'timeSelected',
         'parent_id',
         'reservation_date',
         'reservation_hour',
@@ -21,8 +22,8 @@ class Appointment extends Model
         return $this->belongsTo(Patient::class);
     }
 
-    public function doctor() : BelongsTo {
-        return $this->belongsTo(Doctor::class);
+    public function schedule() : BelongsTo {
+        return $this->belongsTo(Schedule::class);
     }
 
     public function MedicalInfo() : HasOne {

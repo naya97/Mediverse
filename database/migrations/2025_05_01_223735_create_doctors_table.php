@@ -24,9 +24,8 @@ return new class extends Migration
             $table->string('photo')->nullable();
             $table->string('speciality')->nullable();
             $table->string('professional_title')->nullable();
-            $table->float('finalRate')->nullable();
+            $table->float('finalRate')->nullable();  //10*6     4*6      3*6       2*6         1*6
             $table->enum('average_visit_duration', ['10 min', '15 min', '20 min', '30 min', '60 min'])->nullable();
-            $table->enum('checkup_duration', ['10 min', '15 min', '20 min', '30 min', '60 min'])->nullable();
             $table->float('visit_fee')->nullable();
             $table->string('sign')->nullable();
             $table->integer('experience')->nullable();

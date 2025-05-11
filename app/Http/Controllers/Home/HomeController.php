@@ -52,6 +52,7 @@ class HomeController extends Controller
 
         $doctors = $this->showAllDoctors();
 
+        $clinic_doctors = [];
         foreach($doctors as $doctor) { 
             if ($doctor->clinic_id == $request->clinic_id) {
                 $clinic_doctors[] = $doctor;
