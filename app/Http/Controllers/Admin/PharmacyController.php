@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Lab_Pharmacy;
+use App\Models\Pharmacy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
-class Lab_PharmacyController extends Controller
+class PharmacyController extends Controller
 {
     public function add(Request $request)
     {
@@ -16,8 +16,7 @@ class Lab_PharmacyController extends Controller
         if ($validation) return $validation;
         $auth = $this->auth();
         if ($auth) return $auth;
-        $place = Lab_Pharmacy::create([
-            'is_lab' => $request->is_lab,
+        $pharmacy = Pharmacy::create([
             'name' => $request->name,
             'location' => $request->location,
             'start_time' => $request->start_time,
@@ -26,7 +25,7 @@ class Lab_PharmacyController extends Controller
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
         ]);
-        return response()->json($place, 201);
+        return response()->json($pharmacy, 201);
     }
     ////
     public function update(Request $request)
@@ -35,15 +34,15 @@ class Lab_PharmacyController extends Controller
         if ($validation) return $validation;
         $auth = $this->auth();
         if ($auth) return $auth;
-        $place = Lab_Pharmacy::where('id', $request->id)->first();
-        if (!$place) {
-            return response()->json(['message' => 'place not found'], 404);
+        $pharmacy = Pharmacy::where('id', $request->id)->first();
+        if (!$pharmacy) {
+            return response()->json(['message' => 'pharmacy not found'], 404);
         }
-        $place->update($request->all());
-        $place = Lab_Pharmacy::find($request->id);
+        $pharmacy->update($request->all());
+        $pharmacy = Pharmacy::find($request->id);
         return response()->json(
             [
-                'data' => $place,
+                'data' => $pharmacy,
                 'message' => 'Updated successfully'
             ],
             200
@@ -54,11 +53,11 @@ class Lab_PharmacyController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
-        $place = Lab_Pharmacy::where('id', $request->id)->first();
-        if (!$place) {
-            return response()->json(['message' => 'This place is no longer exist!'], 404);
+        $pharmacy = Pharmacy::where('id', $request->id)->first();
+        if (!$pharmacy) {
+            return response()->json(['message' => 'This pharmacy is no longer exist!'], 404);
         }
-        $place->delete();
+        $pharmacy->delete();
         return response()->json(['message' => 'Deleted successfully'], 200);
     }
     /////
@@ -78,12 +77,11 @@ class Lab_PharmacyController extends Controller
     public function validation($request)
     {
         $validator = Validator::make($request->all(), [
-            'is_lab' => 'boolean|required',
             'name' => 'string|required',
             'location' => 'string',
             'start_time' => 'string',
             'finish_time' => 'string',
-            'phone' => 'string',
+            'phone' => 'phone:SY',
             'latitude' => 'nullable|numeric|between:-180,180',
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
