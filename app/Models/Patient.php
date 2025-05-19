@@ -18,24 +18,32 @@ class Patient extends Model
         'address',
     ];
 
-    public function user() : BelongsTo {
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function medicalInfos() : HasMany {
+    public function medicalInfos(): HasMany
+    {
         return $this->hasMany(MedicalInfo::class);
     }
 
-    public function appointments() : HasMany {
+    public function appointments(): HasMany
+    {
         return $this->hasMany(Appointment::class);
     }
 
-    public function patientDetails() : HasMany {
+    public function patientDetails(): HasMany
+    {
         return $this->hasMany(PatientDetails::class);
     }
 
-    public function patientReviews() : HasMany {
+    public function patientReviews(): HasMany
+    {
         return $this->hasMany(PatientReview::class);
     }
-    
+    public function analysis(): HasMany
+    {
+        return $this->hasMany(Analyse::class);
+    }
 }

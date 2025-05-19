@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
             ClinicSeeder::class,
             DoctorSeeder::class,
             //AppointmentSeeder::class,
-
+            LabTechSeeder::class,
         ]);
         User::factory()->create([
             'first_name' => 'Test User',
