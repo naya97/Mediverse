@@ -48,10 +48,7 @@ class ReservationController extends Controller
 
         $schedule [] = Schedule::where('doctor_id',$request->doctor_id)->get();
 
-        return response()->json([
-            'message' => 'available days',
-            'data' =>  $schedule,
-        ],200);
+        return response()->json($schedule,200);
 
     }
 
