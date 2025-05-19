@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('lab__pharmacies', function (Blueprint $table) {
+        Schema::create('pharmacies', function (Blueprint $table) {
             $table->id();
-            $table->boolean('is_lab')->default(true);
             $table->string('name');
             $table->string('location')->nullable();
             $table->string('start_time')->nullable();
@@ -30,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('lab__pharmacies');
+        Schema::dropIfExists('pharmacies');
     }
 };

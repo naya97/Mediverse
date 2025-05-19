@@ -18,7 +18,12 @@ class Clinic extends Model
         'location',
     ];
 
-    public function doctors() : HasMany {
+    public function doctors(): HasMany
+    {
         return $this->hasMany(Doctor::class);
+    }
+    public function analysis(): HasMany
+    {
+        return $this->hasMany(Analyse::class);
     }
 }

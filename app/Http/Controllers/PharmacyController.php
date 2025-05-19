@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Lab_Pharmacy;
+use App\Models\Pharmacy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-
-class LabAndPharmacyController extends Controller
+class PharmacyController extends Controller
 {
     public function show(Request $request)
     {
@@ -18,9 +17,9 @@ class LabAndPharmacyController extends Controller
             ], 401);
         }
 
-        $places = Lab_Pharmacy::where('is_lab', $request->is_lab)->get()->all();
+        $pharmacy = Pharmacy::get()->all();
         $response = [];
-        foreach ($places as $place) {
+        foreach ($pharmacy as $place) {
             $response[] = [
                 'id' => $place->id,
                 'name' => $place->name,
@@ -45,11 +44,10 @@ class LabAndPharmacyController extends Controller
             ], 401);
         }
 
-        $results = Lab_Pharmacy::search(($request->name))->get();
+        $results = Pharmacy::search(($request->name))->get();
         if ($results->isEmpty()) {
             return response()->json(['message' => 'Not Found']);
         }
-        $results = $results->where('is_lab', $request->is_lab);
         $response = [];
         foreach ($results as $result) {
             $response[] = [

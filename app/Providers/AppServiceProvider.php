@@ -24,11 +24,11 @@ class AppServiceProvider extends ServiceProvider
             ->prefix('patient')
             ->group(base_path('routes/patient/api.php'));
         Route::middleware('api')
-            ->prefix('lab_pharmacy')
-            ->group(base_path('routes/LabAndPharmacyAPI.php'));
+            ->prefix('pharmacy')
+            ->group(base_path('routes/pharmacies.php'));
         Route::middleware('api')
             ->prefix('Admin')
-            ->group(base_path('routes/Admin/lab_phar.php'));
+            ->group(base_path('routes/Admin/pharmacies.php'));
         Route::middleware('api')
             ->prefix('Admin')
             ->group(base_path('routes/Admin/doctor.php'));
@@ -44,5 +44,8 @@ class AppServiceProvider extends ServiceProvider
         Route::middleware('api')
             ->prefix('patient')
             ->group(base_path('routes/patient/reservation.php'));
+        Route::middleware('api')
+            ->prefix('labTech')
+            ->group(base_path('routes/LabTech/analysis.php'));
     }
 }

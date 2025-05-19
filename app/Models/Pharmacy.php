@@ -2,15 +2,14 @@
 
 namespace App\Models;
 
-use Laravel\Scout\Searchable;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Scout\Searchable;
 
-class Lab_Pharmacy extends Model
+class Pharmacy extends Model
 {
     use Searchable;
     protected $fillable = [
         'name',
-        'is_lab',
         'location',
         'start_time',
         'finish_time',
