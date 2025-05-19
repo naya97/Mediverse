@@ -13,8 +13,28 @@ use Illuminate\Support\Facades\Validator;
 
 class DoctorController extends Controller
 {
+    public function showDoctors() {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $doctors = Doctor::select(
+                'first_name',
+                'last_name',
+                'clinic_id',
+                'photo',
+                'speciality',
+                'finalRate',
+                'visit_fee',
+                'treated',
+                'status'
+                )
+            -> get();
+        return response()->json($doctors, 200);
+    }
+
     public function addDoctor(Request $request)  {
-        $this->auth();
+        $auth = $this->auth();
+        if($auth) return $auth;
         
         $validator = Validator::make($request->all(), [
             'department' => 'required|string',
@@ -49,11 +69,31 @@ class DoctorController extends Controller
             'clinic_id' => $clinic->id,
         ]);
 
+        $clinic->numOfDoctors += 1;
+        $clinic->save();
+
         return response()->json([
             'message' => 'created',
             'data' => $doctor,
         ],201);
 
+    }
+
+    public function removeDoctor(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $doctor = Doctor::where('id', $request->doctor_id)->first();
+        $clinic = Clinic::where('id', $doctor->clinic_id)->first();
+        $user = User::where('id',$doctor->user_id)->first();
+
+        $doctor->delete();
+        $user->delete();
+
+        $clinic->numOfDoctors -= 1;
+        $clinic->save();
+
+        return response()->json('deleted successfully', 200);
     }
 
     public function auth() {

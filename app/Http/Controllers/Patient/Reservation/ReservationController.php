@@ -203,4 +203,30 @@ class ReservationController extends Controller
         return response()->json($appointment,200);
 
     }
+
+    public function editReservation(Request $request) {
+        $user = Auth::user(); // 
+
+         //check the auth
+         if(!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ],401);
+        }
+
+        if(!$user->role == 'patient') {
+            return response()->json([
+                'message' => 'you dont have permission'
+            ],401);
+        }
+
+        $patient = Patient::where('user_id',$user->id)->first();
+
+        $validator = Validator::make($request->all(), [
+            'clinic_id' => 'required|exists:clinics,id',
+            'doctor_id' => 'required|exists:doctors,id',
+            'date' => 'required|date_format:d/m/y',
+            'time' => 'required|date_format:h:i A'
+        ]);
+    }
 }
