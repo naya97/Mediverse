@@ -29,7 +29,7 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->date('reservation_date')->nullable();
-            $table->time('reservation_hour')->nullable();
+            // $table->time('reservation_hour')->nullable();
             $table->enum('status',['visited','canceled','pending'])->default('pending');
             $table->timestamps();
         });

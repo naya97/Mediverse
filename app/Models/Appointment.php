@@ -14,7 +14,7 @@ class Appointment extends Model
         'timeSelected',
         'parent_id',
         'reservation_date',
-        'reservation_hour',
+        // 'reservation_hour',
         'status',
     ];
 

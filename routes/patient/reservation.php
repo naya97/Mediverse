@@ -11,5 +11,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('/showDoctorWorkDays','showDoctorWorkDays');
         Route::post('/showTimes','showTimes');
         Route::post('/addReservation','addReservation');
+        Route::post('/editReservation','editReservation');
+        Route::post('/cancelReservation','cancelReservation');
     });
 });

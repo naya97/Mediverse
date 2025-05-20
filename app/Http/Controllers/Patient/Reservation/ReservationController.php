@@ -147,12 +147,13 @@ class ReservationController extends Controller
             'time' => 'required|date_format:h:i A'
         ]);
 
-        $dateFormatted = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
-        $timeFormatted = Carbon::parse($request->time)->format('h:i:s'); 
-        
+
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 400);
         }
+
+        $dateFormatted = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
+        $timeFormatted = Carbon::parse($request->time)->format('h:i:s'); 
 
         $date = Carbon::createFromFormat('d/m/y', $request->date);
         $day = $date->format('l');
@@ -164,6 +165,7 @@ class ReservationController extends Controller
 
         $appointmentsNum = Appointment::where('schedule_id',$schedule->id)
             -> where('reservation_date',$dateFormatted)
+            ->where('status', 'pending')
             ->where('timeSelected',$timeFormatted)
             ->count();
 
@@ -172,35 +174,21 @@ class ReservationController extends Controller
         $numOfPeopleInHour = floor(60 / $visitTime); 
 
         $newTimeFormatted = Carbon::parse($request->time);
-        $startTime = Carbon::createFromFormat('H:i:s', $timeFormatted);
-        $totalMinutes = ($visitTime * $appointmentsNum);
-        //return $totalMinutes;
-        if($totalMinutes == 60) $timeSelected = $newTimeFormatted->addHours(1)->toTimeString();
+        if($appointmentsNum == $numOfPeopleInHour) $timeSelected = $newTimeFormatted->addHours(1)->toTimeString();
         else $timeSelected = $timeFormatted;
-        $reservationEndTime = $startTime->addMinutes($totalMinutes)->toTimeString();
 
-        //return $timeSelected;
-
-        if($totalMinutes == 0) $newNumOfPeople = 1;
-        else $newNumOfPeople = floor(60/$totalMinutes);
-
-        //return $totalMinutes;
-        //return $numOfPeopleInHour;
-        if($newNumOfPeople > $numOfPeopleInHour) {
-            return response()->json('you can not reservation this time',400);
-        }
-
-        $appointment = Appointment::create([
+        if($appointmentsNum < $numOfPeopleInHour) {
+            $appointment = Appointment::create([
             'patient_id' => $patient->id,
             'schedule_id' => $schedule->id,
             'timeSelected' => $timeSelected,
             'reservation_date' => $dateFormatted,
-            'reservation_hour' => $reservationEndTime,
-        ]);
-            
-        
+            ]);
 
-        return response()->json($appointment,200);
+            return response()->json($appointment,200);
+        }
+
+        return response()->json('this time is full', 400);
 
     }
 
@@ -222,11 +210,95 @@ class ReservationController extends Controller
 
         $patient = Patient::where('user_id',$user->id)->first();
 
+        // front should give me the old time and date
+
         $validator = Validator::make($request->all(), [
             'clinic_id' => 'required|exists:clinics,id',
             'doctor_id' => 'required|exists:doctors,id',
-            'date' => 'required|date_format:d/m/y',
-            'time' => 'required|date_format:h:i A'
+            'new_date' => 'required|date_format:d/m/y',
+            'new_time' => 'required|date_format:h:i A'
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 400);
+        }
+
+
+    $dateFormatted = Carbon::createFromFormat('d/m/y', $request->new_date)->format('Y-m-d');
+    $timeFormatted = Carbon::createFromFormat('h:i A', $request->new_time)->format('h:i:s'); 
+
+    $oldDateFormatted = Carbon::createFromFormat('d/m/y', $request->old_date)->format('Y-m-d');
+    $oldTimeFormatted = Carbon::createFromFormat('h:i A', $request->old_time)->format('h:i:s');
+
+        $new_date = Carbon::createFromFormat('d/m/y', $request->new_date);
+        $new_day = $new_date->format('l');
+
+        // delete old reservation 
+        $oldReservation = Appointment::where('reservation_date', $oldDateFormatted)
+            ->where('timeSelected', $oldTimeFormatted)
+            ->where('status', 'pending')
+            ->first();
+        // return $oldReservation;
+
+        $oldReservation->delete();
+
+        $schedule = Schedule::where('doctor_id',$request->doctor_id)
+            ->where('day',$new_day)
+            ->first();
+
+        $appointmentsNum = Appointment::where('schedule_id',$schedule->id)
+            -> where('reservation_date',$dateFormatted)
+            ->where('status', 'pending')
+            ->where('timeSelected',$timeFormatted)
+            ->count();
+
+        $visitTime = Doctor::where('id',$request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
+        $visitTime = (float) $visitTime; 
+        $numOfPeopleInHour = floor(60 / $visitTime); 
+
+        $newTimeFormatted = Carbon::parse($request->time);
+        if($appointmentsNum == $numOfPeopleInHour) $timeSelected = $newTimeFormatted->addHours(1)->toTimeString();
+        else $timeSelected = $timeFormatted;
+
+        if($appointmentsNum < $numOfPeopleInHour) {
+            $appointment = Appointment::create([
+            'patient_id' => $patient->id,
+            'schedule_id' => $schedule->id,
+            'timeSelected' => $timeSelected,
+            'reservation_date' => $dateFormatted,
+            ]);
+
+            return response()->json($appointment,200);
+        }
+
+        return response()->json('this time is full', 400);
+    }
+
+    public function cancelReservation(Request $request) {
+        $user = Auth::user(); // 
+
+         //check the auth
+         if(!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ],401);
+        }
+
+        if(!$user->role == 'patient') {
+            return response()->json([
+                'message' => 'you dont have permission'
+            ],401);
+        }
+
+        $patient = Patient::where('user_id',$user->id)->first();
+
+        $reservation = Appointment::where('id',$request->reservation_id)->first();
+
+        $reservation->update([
+            'status' => 'canceled',
+        ]);
+        $reservation->save();
+
+        return response()->json('reservation canceled successfully', 200);
     }
 }
