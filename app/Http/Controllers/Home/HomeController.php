@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Auth;
 class HomeController extends Controller
 {
     public function showDoctors() {
-         $this->auth();
+        $auth = $this->auth();
+        if($auth) return $auth;
 
         $doctors = $this->showAllDoctors();
 
@@ -20,9 +21,35 @@ class HomeController extends Controller
         return response()->json($doctors,200);
     }
 
-    public function showDoctorDetails(Request $request) {
-      $this->auth();
+    public function searchDoctor(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
 
+        $results = Doctor::search(($request->name))->get();
+
+        if ($results->isEmpty()) {
+            return response()->json(['message' => 'Not Found']);
+        }
+
+        $response = [];
+        foreach ($results as $result) {
+            $response[] = [
+                'first_name' => $result->first_name,
+                'last_name' => $result->last_name,
+                'photo' => $result->photo,
+                'clinic_id' => $result->clinic_id,
+                'speciality' => $result->speciality,
+                'finalRate' => $result->finalRate,
+            ];
+        }
+
+        return response()->json($response, 200);
+
+    }
+
+    public function showDoctorDetails(Request $request) {
+      $auth = $this->auth();
+        if($auth) return $auth;
         $doctor = Doctor::where('id',$request->doctor_id)->first();
 
         $department = Clinic::where('id',$doctor->clinic_id)->select('name')->first();
@@ -48,7 +75,8 @@ class HomeController extends Controller
     }
 
     public function showClinincDoctors(Request $request) {
-         $this->auth();
+        $auth = $this->auth();
+        if($auth) return $auth;
 
         $doctors = $this->showAllDoctors();
 

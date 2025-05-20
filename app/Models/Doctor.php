@@ -7,11 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Laravel\Scout\Searchable;
 
 class Doctor extends Model
 {
     /** @use HasFactory<\Database\Factories\DoctorFactory> */
     use HasFactory;
+    use Searchable;
 
     protected $fillable = [
         'first_name',
@@ -74,5 +76,13 @@ class Doctor extends Model
     public function getSignUrlAttribute()
     {
         return $this->sign ? url($this->sign) : null;
+    }
+
+    public function toSearchableArray(): array
+    {
+        return [
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+        ];
     }
 }
