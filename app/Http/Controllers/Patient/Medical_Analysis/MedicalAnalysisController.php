@@ -35,11 +35,44 @@ class MedicalAnalysisController extends Controller
                 'description',
                 'result_file',
                 'result_photo',
+                'status',
             )
         ->get();
 
         return response()->json($analysis , 200);
 
+    }
+
+    public function filteringAnalysis(Request $request) {
+        $user = Auth::user(); // 
+
+         //check the auth
+         if(!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ],401);
+        }
+
+        if(!$user->role == 'patient') {
+            return response()->json([
+                'message' => 'you dont have permission'
+            ],401);
+        }
+
+        $patient = Patient::where('user_id',$user->id)->first();
+
+        $analysis = Analyse::where('patient_id', $patient->id)
+            ->where('status', $request->status)
+            ->select(
+                'name',
+                'description',
+                'result_file',
+                'result_photo',
+                'status',
+            )
+        ->get();
+
+        return response()->json($analysis, 200);
     }
 
 

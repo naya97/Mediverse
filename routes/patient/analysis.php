@@ -9,5 +9,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('addAnalysis', 'addAnalysis');
         Route::post('deleteAnalysis', 'deleteAnalysis');
         Route::get('showAnalysis', 'showAnalysis');
+        Route::post('filteringAnalysis', 'filteringAnalysis');
     });
 });
