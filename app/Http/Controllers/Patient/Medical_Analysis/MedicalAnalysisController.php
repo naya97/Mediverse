@@ -7,6 +7,7 @@ use App\Models\Analyse;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 
 class MedicalAnalysisController extends Controller
@@ -152,6 +153,16 @@ class MedicalAnalysisController extends Controller
         }
 
         $analyse = Analyse::where('id', $request->analyse_id)->first();
+
+        if($analyse->result_photo) {
+            $image_path = public_path($analyse->result_photo);
+            if(File::exists($image_path)) File::delete($image_path);
+        }
+        if($analyse->result_file) {
+            $image_path = public_path($analyse->result_file);
+            if(File::exists($image_path)) File::delete($image_path);
+        }
+
         $analyse->delete();
 
         return response()->json('deleted successfully', 200);
