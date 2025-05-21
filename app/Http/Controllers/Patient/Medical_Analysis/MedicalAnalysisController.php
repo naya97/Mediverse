@@ -104,24 +104,32 @@ class MedicalAnalysisController extends Controller
 
         $patient = Patient::where('user_id',$user->id)->first();
 
-        if($request->hasFile('result_file')){
-            $file_path = $request->result_file->store('files/patients/analysis', 'public');
-            $result_file = '/storage/' . $file_path;
-        }
-
-         if($request->hasFile('result_photo')){
-            $photo_path = $request->result_photo->store('files/patients/analysis', 'public');
-            $result_photo = '/storage/' . $photo_path;
-        }
-
         $analyse = Analyse::create([
             'patient_id' => $patient->id,
             'name' => $request->name,
             'description' => $request->description,
-            'result_file' => $result_file,
-            'result_photo' => $result_photo,
             'status' => 'finished',
         ]);
+
+        if($request->hasFile('result_file')){
+            $file_path = $request->result_file->store('files/patients/analysis', 'public');
+            $result_file = '/storage/' . $file_path;
+
+            $analyse->update([
+                'result_file' => $result_file
+            ]);
+            $analyse->save();
+        }
+
+        if($request->hasFile('result_photo')){
+            $photo_path = $request->result_photo->store('files/patients/analysis', 'public');
+            $result_photo = '/storage/' . $photo_path;
+
+            $analyse->update([
+                'result_photo' => $result_photo
+            ]);
+            $analyse->save();
+        }
 
         return response()->json($analyse, 201);
 
