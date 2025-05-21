@@ -161,7 +161,7 @@ class ReservationController extends Controller
         $schedule = Schedule::where('doctor_id',$request->doctor_id)
             ->where('day',$day)
             ->first();
-        //$mysqlDate = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
+        $doctor = Doctor::where('id',$request->doctor_id)->first();
 
         $appointmentsNum = Appointment::where('schedule_id',$schedule->id)
             -> where('reservation_date',$dateFormatted)
@@ -171,6 +171,11 @@ class ReservationController extends Controller
 
         $visitTime = Doctor::where('id',$request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
         $visitTime = (float) $visitTime; 
+
+        if($visitTime == 0 || $doctor->status == 'notAvailable') {
+            return response()->json('this doctor not available', 503);
+        }
+
         $numOfPeopleInHour = floor(60 / $visitTime); 
 
         $newTimeFormatted = Carbon::parse($request->time);

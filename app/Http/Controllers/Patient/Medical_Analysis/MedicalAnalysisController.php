@@ -159,8 +159,8 @@ class MedicalAnalysisController extends Controller
             if(File::exists($image_path)) File::delete($image_path);
         }
         if($analyse->result_file) {
-            $image_path = public_path($analyse->result_file);
-            if(File::exists($image_path)) File::delete($image_path);
+            $file_path = public_path($analyse->result_file);
+            if(File::exists($file_path)) File::delete($file_path);
         }
 
         $analyse->delete();
