@@ -21,9 +21,10 @@ return new class extends Migration
                 ->constrained('appointments')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-            $table->string('diagnosis')->default('null');
-            $table->string('doctorNote')->default('null');
-            $table->string('patientNote')->default('null');
+            $table->string('symptoms')->nullable();
+            $table->string('diagnosis')->default('null')->nullable();
+            $table->string('doctorNote')->default('null')->nullable();
+            $table->string('patientNote')->default('null')->nullable();
             $table->timestamps();
         });
     }

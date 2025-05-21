@@ -24,10 +24,10 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-               'message' =>  $validator->errors()->all()
+                'message' =>  $validator->errors()->all()
             ], 400);
         }
-        
+
         $user = User::where('email', $request->get('email'))
             ->orWhere('phone', $request->get('phone'))
             ->first();
@@ -39,7 +39,7 @@ class AuthController extends Controller
         try {
             $token = JWTAuth::claims(['role' => $user->role])->fromUser($user);
 
-            return response()->json(['message' => 'User successfully loggedin', 'token' => $token], 200);
+            return response()->json(['message' => 'User successfully loggedin', 'user' => $user, 'token' => $token], 200);
         } catch (JWTException $e) {
             return response()->json(['error' => 'Could not create token'], 500);
         }
@@ -56,7 +56,7 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-               'message' =>  $validator->errors()->all()
+                'message' =>  $validator->errors()->all()
             ], 400);
         }
 

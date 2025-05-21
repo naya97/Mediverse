@@ -45,6 +45,12 @@ class AppServiceProvider extends ServiceProvider
             ->prefix('Doctor')
             ->group(base_path('routes/Doctor/profile.php'));
         Route::middleware('api')
+            ->prefix('Doctor/patientInfo')
+            ->group(base_path('routes/Doctor/patientInfo.php'));
+        Route::middleware('api')
+            ->prefix('Doctor/appointments')
+            ->group(base_path('routes/Doctor/appointments.php'));
+        Route::middleware('api')
             ->prefix('patient')
             ->group(base_path('routes/patient/reservation.php'));
         Route::middleware('api')

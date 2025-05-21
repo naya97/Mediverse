@@ -12,19 +12,23 @@ class MedicalInfo extends Model
         'prescription_id',
         'appointment_id',
         'diagnosis',
+        'symptoms',
         'doctorNote',
         'patientNote',
     ];
 
-    public function patient() : BelongsTo {
+    public function patient(): BelongsTo
+    {
         return $this->belongsTo(Patient::class);
     }
 
-    public function appointment() : BelongsTo {
+    public function appointment(): BelongsTo
+    {
         return $this->belongsTo(Appointment::class);
     }
 
-    public function prescription() : HasOne {
+    public function prescription(): HasOne
+    {
         return $this->hasOne(Prescription::class);
     }
 }
