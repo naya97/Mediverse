@@ -24,8 +24,10 @@ class AnalysisController extends Controller
             'patientLastName' => 'string|required',
             'clinic_id' => 'required',
         ]);
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+       if ($validator->fails()) {
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 422);
         }
         $patient = Patient::where('first_name', $request->patientFirstName)->where('last_name', $request->patientLastName)->first();
         if (!$patient) {
@@ -95,8 +97,10 @@ class AnalysisController extends Controller
             'result_photo' => 'image|required_without:result_file',
             'result_file' => 'file|required_without:result_photo',
         ]);
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+       if ($validator->fails()) {
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 422);
         }
         $analyse = Analyse::find($request->id);
         if ($request->hasFile('result_photo')) {

@@ -54,7 +54,9 @@ class ClinicController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 400);
         }
 
         $clinic = Clinic::create([
@@ -75,7 +77,9 @@ class ClinicController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 400);
         }
 
         $clinic = Clinic::where('id', $request->clinic_id)->first();

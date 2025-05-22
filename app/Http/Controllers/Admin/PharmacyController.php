@@ -86,7 +86,9 @@ class PharmacyController extends Controller
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 422);
         }
     }
 }

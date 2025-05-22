@@ -89,8 +89,11 @@ class DoctorProfileController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 400);
         }
+        
         $doctor = Doctor::where('user_id', $user->id)->first();
         if ($request->hasFile('photo')) {
             if ($doctor->photo) {

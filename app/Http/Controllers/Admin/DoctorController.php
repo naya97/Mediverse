@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Clinic;
 use App\Models\Doctor;
+use App\Models\PatientReview;
+use App\Models\Review;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -46,7 +48,9 @@ class DoctorController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 400);
         }
 
         $user = User::create([
@@ -94,6 +98,10 @@ class DoctorController extends Controller
         $clinic->save();
 
         return response()->json('deleted successfully', 200);
+    }
+
+    public function showDoctorReviews(Request $request) {
+        
     }
 
     public function auth() {

@@ -100,7 +100,9 @@ class MedicalAnalysisController extends Controller
             'result_photo' => 'image|required_without:result_file',
         ]);
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 422);
         }
 
         $patient = Patient::where('user_id',$user->id)->first();

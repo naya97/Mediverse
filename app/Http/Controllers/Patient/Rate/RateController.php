@@ -35,8 +35,10 @@ class RateController extends Controller
             'comment' => 'required|string|max:255',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
+       if ($validator->fails()) {
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 400);
         }
 
         // create new rate 

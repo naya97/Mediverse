@@ -43,7 +43,9 @@ class ReservationController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 400);
         }
 
         $schedule [] = Schedule::where('doctor_id',$request->doctor_id)->get();
@@ -76,7 +78,9 @@ class ReservationController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 400);
         }
 
         $date = Carbon::createFromFormat('d/m/y', $request->date);
@@ -149,7 +153,9 @@ class ReservationController extends Controller
 
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 400);
         }
 
         $dateFormatted = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
@@ -225,7 +231,9 @@ class ReservationController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 400);
         }
 
 

@@ -23,8 +23,11 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 400);
         }
+        
         $user = User::where('email', $request->get('email'))
             ->orWhere('phone', $request->get('phone'))
             ->first();
@@ -52,7 +55,9 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 400);
         }
 
         $user = User::create([
