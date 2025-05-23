@@ -101,7 +101,17 @@ class DoctorController extends Controller
     }
 
     public function showDoctorReviews(Request $request) {
-        
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $reviews = PatientReview::where('doctor_id', $request->doctor_id)->get();
+        $review_ids = $reviews->pluck('review_id')->all();
+
+        foreach($review_ids as $review_id) {
+            $response [] = Review::where('id', $review_id)->first();
+        }
+
+        return response()->json($response, 200);
     }
 
     public function auth() {

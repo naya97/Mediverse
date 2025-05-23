@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Doctor;
 use App\Http\Controllers\Controller;
 use App\Models\Clinic;
 use App\Models\Doctor;
+use App\Models\PatientReview;
+use App\Models\Review;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -208,5 +210,39 @@ class DoctorProfileController extends Controller
         }
 
         return response()->json($schedule, 200);
+    }
+
+    public function showDoctorReviews() {
+
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
+        if ($user->role != 'doctor') {
+            return response()->json([
+                'message' => 'you dont have permission'
+            ], 401);
+        }
+
+        $doctor = Doctor::where('user_id', $user->id)->first();
+        
+        $reviews = PatientReview::with('review')->where('doctor_id', $doctor->id)->get();
+
+        $response = [];
+
+        foreach ($reviews as $patientReview) {
+            if ($patientReview->review) {
+                $response[] = [
+                    'patient_id' => $patientReview->patient_id,
+                    'rate' => $patientReview->review->rate,
+                    'comment' => $patientReview->review->comment,
+                ];
+            }
+        }
+
+
+        return response()->json($response, 200);
     }
 }

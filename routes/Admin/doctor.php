@@ -9,5 +9,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('/showDoctors','showDoctors');
         Route::post('/addDoctor','addDoctor');
         Route::post('/removeDoctor','removeDoctor');
+        Route::post('/showDoctorReviews','showDoctorReviews');
     });
 });
