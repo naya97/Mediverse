@@ -39,7 +39,7 @@ class AuthController extends Controller
         try {
             $token = JWTAuth::claims(['role' => $user->role])->fromUser($user);
 
-            return response()->json(['message' => 'User successfully loggedin', 'user' => $user, 'token' => $token], 200);
+            return response()->json(['message' => 'User successfully logged in', 'user' => $user, 'token' => $token], 200);
         } catch (JWTException $e) {
             return response()->json(['error' => 'Could not create token'], 500);
         }
@@ -72,7 +72,9 @@ class AuthController extends Controller
 
         $token = JWTAuth::fromUser($user);
 
-        return response()->json(compact('user', 'token'), 201);
+        return response()->json([
+            'message' => 'user successfully registered'
+        ], 201);
     }
     //
     public function logout()

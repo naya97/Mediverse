@@ -4,13 +4,17 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Analyse;
+use App\Models\Appointment;
 use App\Models\Clinic;
 use App\Models\Doctor;
+use App\Models\MedicalInfo;
 use App\Models\Medicine;
+use App\Models\Patient;
 use App\Models\Prescription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+
 
 class PatientInfoController extends Controller
 {
@@ -22,9 +26,10 @@ class PatientInfoController extends Controller
             'patient_id' => 'required',
         ]);
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
         }
-
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
         $prescription = Prescription::create([
@@ -57,7 +62,9 @@ class PatientInfoController extends Controller
             'note' => 'string'
         ]);
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
         }
         $medicine = Medicine::create([
             'name' => $request->name,
@@ -105,7 +112,9 @@ class PatientInfoController extends Controller
             'patient_id' => 'required',
         ]);
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
         }
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
@@ -119,6 +128,70 @@ class PatientInfoController extends Controller
         return response()->json([
             'message' => 'analyse created successfully',
             'data' => $analyse,
+        ], 201);
+    }
+    /////
+    public function showPatientAnalysis(Request $request) //by status
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $analysis = Analyse::where('patient_id', $request->patient_id)
+            ->where('status', $request->status)
+            ->select(
+                'name',
+                'description',
+                'result_file',
+                'result_photo',
+                'status',
+            )
+            ->get();
+
+        return response()->json($analysis, 200);
+    }
+    /////
+    public function showPatientAnalysisByClinic(Request $request) //by status and clinic
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $analysis = Analyse::where('patient_id', $request->patient_id)
+            ->where('status', $request->status)
+            ->where('clinic_id', $request->clinic_id)
+            ->select(
+                'name',
+                'description',
+                'result_file',
+                'result_photo',
+                'status',
+            )
+            ->get();
+
+        return response()->json($analysis, 200);
+    }
+    /////
+    public function addMedicalInfo(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $madicalTnfo = MedicalInfo::create([
+            'prescription_id' => $request->prescription_id,
+            'appointment_id' => $request->appointment_id,
+            'symptoms' => $request->symptoms,
+            'diagnosis' => $request->diagnosis,
+            'doctorNote' => $request->doctorNote,
+            'patientNote' => $request->patientNote,
+        ]);
+        $appointment = Appointment::find($request->appointment_id);
+        if ($appointment->parent_id == null) {
+            $user = Auth::user();
+            $doctor = Doctor::where('user_id', $user->id)->first();
+            $doctor->treated = $doctor->treated + 1;
+            $doctor->save();
+        }
+        $appointment->status = 'visited';
+        $appointment->save();
+        return response()->json([
+            'message' => 'Medical information added successfully',
+            'data' => $madicalTnfo,
         ], 201);
     }
     /////

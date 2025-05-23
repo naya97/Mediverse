@@ -9,20 +9,23 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Prescription extends Model
 {
     protected $fillable = [
-        'patien_id',
+        'patient_id',
         'doctor_id',
         'note',
     ];
 
-    public function doctor() : BelongsTo {
+    public function doctor(): BelongsTo
+    {
         return $this->belongsTo(Doctor::class);
     }
 
-    public function medicalInfo() : BelongsTo {
+    public function medicalInfo(): BelongsTo
+    {
         return $this->belongsTo(MedicalInfo::class);
     }
 
-    public function medicines() : HasMany {
+    public function medicines(): HasMany
+    {
         return $this->hasMany(Medicine::class);
     }
 }
