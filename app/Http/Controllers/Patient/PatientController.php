@@ -27,6 +27,22 @@ class PatientController extends Controller
         }
         $patient = Patient::where('user_id',$user->id)->first();
 
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'string|required',
+            'last_name' => 'string|required',
+            'age' => 'integer|required',
+            'gender' => 'in:male,female|required',
+            'blood_type' => 'string|nullable',
+            'address' => 'string|nullable',
+
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+               'message' =>  $validator->errors()->all()
+            ], 400);
+        }
+
         $current_user = User::where('id',$user->id)->first();
         $current_user->update([
             'first_name'=>$request->first_name,
