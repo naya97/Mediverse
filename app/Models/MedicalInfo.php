@@ -27,8 +27,8 @@ class MedicalInfo extends Model
         return $this->belongsTo(Appointment::class);
     }
 
-    public function prescription(): HasOne
+    public function prescription(): BelongsTo
     {
-        return $this->hasOne(Prescription::class);
+        return $this->belongsTo(Prescription::class);
     }
 }
