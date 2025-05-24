@@ -41,15 +41,14 @@ class AppointmentController extends Controller
                     'doctor_speciality' => $doctor->speciality,
                     'reservation_date' => $appointment->reservation_date,
                     'reservation_hour' => $appointment->timeSelected,
-                    'status' => $appointment->status,
                 ];
             }   
         }
         return response()->json($response, 200);
     }
-    /////
-    public function auth()
-    {
+
+    public function showAppointmentDetails(Request $request) {
+       // don't forget the appointment details will be different if the patient has checkout or not
         $user = Auth::user();
         if (!$user) {
             return response()->json([
@@ -61,6 +60,27 @@ class AppointmentController extends Controller
                 'message' => 'you dont have permission'
             ], 401);
         }
-        return $user;
+        $patient = Patient::where('user_id', $user->id)->first();
+
+        $appointment = Appointment::with('schedule.doctor')
+            ->where('id', $request->appointment_id)
+            ->where('patient_id', $patient->id)
+            ->first();
+        $doctor = $appointment->schedule->doctor;
+
+        $response = [
+            'doctor_photo' => $doctor->photo,
+            'doctor_name' => $doctor->first_name . ' ' . $doctor->last_name,
+            'doctor_speciality' => $doctor->speciality,
+            'visit_fee' => $doctor->visit_fee,
+            'finalRate' => $doctor->finalRate,
+            'status' => $appointment->status,
+            'reservation_date' => $appointment->timeSelected,
+            'reservation_hour' => $appointment->reservation_date,
+        ];
+
+        return response()->json($response, 200);
+
     }
+
 }

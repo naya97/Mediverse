@@ -19,5 +19,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     });
     Route::controller(AppointmentController::class)->group(function () {
         Route::post('showAppointment', 'showAppointment');
+        Route::post('showAppointmentDetails', 'showAppointmentDetails');
     });
 });
