@@ -36,6 +36,7 @@ class AppointmentController extends Controller
 
             if ($doctor) {
                 $response[] = [
+                    'id' => $appointment->id,
                     'doctor_photo' => $doctor->photo,
                     'doctor_name' => $doctor->first_name . ' ' . $doctor->last_name,
                     'doctor_speciality' => $doctor->speciality,
@@ -49,6 +50,7 @@ class AppointmentController extends Controller
 
     public function showAppointmentDetails(Request $request) {
        // don't forget the appointment details will be different if the patient has checkout or not
+       // don't forget show the parent_id (first_time_visit, checout_visit)
         $user = Auth::user();
         if (!$user) {
             return response()->json([
@@ -69,6 +71,7 @@ class AppointmentController extends Controller
         $doctor = $appointment->schedule->doctor;
 
         $response = [
+            'id' => $doctor->id,
             'doctor_photo' => $doctor->photo,
             'doctor_name' => $doctor->first_name . ' ' . $doctor->last_name,
             'doctor_speciality' => $doctor->speciality,

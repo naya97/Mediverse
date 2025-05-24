@@ -84,6 +84,7 @@ class PatientController extends Controller
         $patient = Patient::where('user_id',$user->id)->first();
 
         $response = [
+            'id' => $patient->id,
             'first_name' => $user->first_name,
             'last_name' => $user->last_name,
             'email' => $user->email,
@@ -157,6 +158,7 @@ class PatientController extends Controller
         $patient->update($request->all());
 
         $response = [
+            'id' => $patient->id,
             'first_name' => $user->first_name,
             'last_name' => $user->last_name,
             'email' => $user->email,

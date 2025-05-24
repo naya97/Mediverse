@@ -32,6 +32,7 @@ class MedicalAnalysisController extends Controller
 
         $analysis = Analyse::where('patient_id', $patient->id)
             ->select(
+                'id',
                 'name',
                 'description',
                 'result_file',
@@ -65,6 +66,7 @@ class MedicalAnalysisController extends Controller
         $analysis = Analyse::where('patient_id', $patient->id)
             ->where('status', $request->status)
             ->select(
+                'id',
                 'name',
                 'description',
                 'result_file',

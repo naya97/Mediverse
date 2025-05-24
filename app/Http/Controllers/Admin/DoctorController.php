@@ -20,6 +20,7 @@ class DoctorController extends Controller
         if($auth) return $auth;
 
         $doctors = Doctor::select(
+                'id',
                 'first_name',
                 'last_name',
                 'clinic_id',

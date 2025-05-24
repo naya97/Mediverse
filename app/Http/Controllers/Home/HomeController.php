@@ -34,6 +34,7 @@ class HomeController extends Controller
         $response = [];
         foreach ($results as $result) {
             $response[] = [
+                'id', $result->id,
                 'first_name' => $result->first_name,
                 'last_name' => $result->last_name,
                 'photo' => $result->photo,
@@ -56,6 +57,7 @@ class HomeController extends Controller
         $doctor_details = User::where('id',$doctor->user_id)->select('first_name','last_name','phone')->first();
 
         $response = [
+            'id' => $doctor_details->id,
             'first_name' => $doctor_details->first_name,
             'last_name' => $doctor_details->last_name,
             'phone' => $doctor_details->phone,
@@ -103,7 +105,7 @@ class HomeController extends Controller
     }
 
     public function showAllDoctors() {
-        $doctors = Doctor::select('photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id')
+        $doctors = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id')
         ->get();
 
         return $doctors;
