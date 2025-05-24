@@ -156,7 +156,7 @@ class AppointmentController extends Controller
             $type = 'check up';
         }
         $response = [
-            'patient id ' => $patient->id, //it is for showing patient analysis and appointments
+            'patient id ' => $patient->id, //it is for showing patient analysis and appointments and add checkup
             'patient first name' => $patient->first_name,
             'patient last name' => $patient->last_name,
             'reservation date' => $appointment->reservation_date,
@@ -268,7 +268,8 @@ class AppointmentController extends Controller
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
             'date' => 'required|date_format:d/m/y',
-            'time' => 'required|date_format:h:i A'
+            'time' => 'required|date_format:h:i A',
+            'this_appointment_id' => 'required|exists:appointments,id',
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -312,6 +313,7 @@ class AppointmentController extends Controller
                 'schedule_id' => $schedule->id,
                 'timeSelected' => $timeSelected,
                 'reservation_date' => $dateFormatted,
+                'parent_id' => $request->this_appointment_id,
             ]);
 
             return response()->json($appointment, 200);
