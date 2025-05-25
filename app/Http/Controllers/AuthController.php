@@ -10,6 +10,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use GuzzleHttp\Client;
 
 class AuthController extends Controller
 {
@@ -92,7 +93,9 @@ class AuthController extends Controller
         $token = JWTAuth::fromUser($user);
 
         return response()->json([
-            'message' => 'user successfully registered'
+            'message' => 'user successfully registered',
+            'user' => $user,
+            'token' => $token,
         ], 201);
     }
     //
@@ -101,5 +104,47 @@ class AuthController extends Controller
         JWTAuth::invalidate(JWTAuth::getToken());
 
         return response()->json(['message' => 'Successfully logged out']);
+    }
+
+    /////
+    public function handleGoogleLogin(Request $request)
+    {
+        $request->validate([
+            'id_token' => 'required|string',
+        ]);
+
+        $client = new Client();
+
+        try {
+            $response = $client->get('https://oauth2.googleapis.com/tokeninfo', [
+                'query' => ['id_token' => $request->id_token]
+            ]);
+
+            $googleUser = json_decode($response->getBody());
+
+            if (!$googleUser->email_verified) {
+                return response()->json(['error' => 'Email not verified'], 403);
+            }
+
+            // أنشئ أو جلب المستخدم
+            $user = User::updateOrCreate(
+                ['email' => $googleUser->email],
+                [
+                    'name' => $googleUser->name ?? 'Google User',
+                    'avatar' => $googleUser->picture ?? null,
+                    'password' => Hash::make(uniqid()) // كلمة مرور وهمية
+                ]
+            );
+
+            $token = JWTAuth::fromUser($user);
+
+            return response()->json([
+                'message' => 'Logged in with Google successfully',
+                'token' => $token,
+                'user' => $user,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid Google token'], 401);
+        }
     }
 }
