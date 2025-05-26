@@ -16,3 +16,6 @@ Route::post('login', [AuthController::class, 'login']);
 Route::middleware([JwtMiddleware::class])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
 });
+
+// routes/api.php
+Route::post('/auth/google/callback', [AuthController::class, 'handleGoogleLogin']);

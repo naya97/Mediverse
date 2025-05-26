@@ -11,30 +11,33 @@ use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
-    public function showDoctors() {
+    public function showDoctors()
+    {
         $auth = $this->auth();
-        if($auth) return $auth;
+        if ($auth) return $auth;
 
         $doctors = $this->showAllDoctors();
 
         // don't show the clinic id (tell the front)
-        return response()->json($doctors,200);
+        return response()->json($doctors, 200);
     }
 
-    public function searchDoctor(Request $request) {
+    public function searchDoctor(Request $request)
+    {
         $auth = $this->auth();
-        if($auth) return $auth;
+        if ($auth) return $auth;
 
         $results = Doctor::search(($request->name))->get();
 
-        if ($results->isEmpty()) {
-            return response()->json(['message' => 'Not Found']);
-        }
+        // if ($results->isEmpty()) {
+        //     return response()->json(['message' => 'Not Found']);
+        // }
 
         $response = [];
         foreach ($results as $result) {
             $response[] = [
-                'id', $result->id,
+                'id',
+                $result->id,
                 'first_name' => $result->first_name,
                 'last_name' => $result->last_name,
                 'photo' => $result->photo,
@@ -45,16 +48,16 @@ class HomeController extends Controller
         }
 
         return response()->json($response, 200);
-
     }
 
-    public function showDoctorDetails(Request $request) {
-      $auth = $this->auth();
-        if($auth) return $auth;
-        $doctor = Doctor::where('id',$request->doctor_id)->first();
+    public function showDoctorDetails(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $doctor = Doctor::where('id', $request->doctor_id)->first();
 
-        $department = Clinic::where('id',$doctor->clinic_id)->select('name')->first();
-        $doctor_details = User::where('id',$doctor->user_id)->select('first_name','last_name','phone')->first();
+        $department = Clinic::where('id', $doctor->clinic_id)->select('name')->first();
+        $doctor_details = User::where('id', $doctor->user_id)->select('first_name', 'last_name', 'phone')->first();
 
         $response = [
             'id' => $doctor_details->id,
@@ -72,41 +75,51 @@ class HomeController extends Controller
             'status' => $doctor->status,
         ];
 
-        return response()->json($response,200);
-
+        return response()->json($response, 200);
     }
 
-    public function showClinincDoctors(Request $request) {
+    public function showClinincDoctors(Request $request)
+    {
         $auth = $this->auth();
-        if($auth) return $auth;
+        if ($auth) return $auth;
 
         $doctors = $this->showAllDoctors();
 
         $clinic_doctors = [];
-        foreach($doctors as $doctor) { 
+        foreach ($doctors as $doctor) {
             if ($doctor->clinic_id == $request->clinic_id) {
                 $clinic_doctors[] = $doctor;
             }
         }
 
-        return response()->json($clinic_doctors,200);
+        return response()->json($clinic_doctors, 200);
+    }
+
+    public function showClinics()
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $clinics = Clinic::select('id', 'name', 'numOfDoctors', 'location')->get();
+        return response()->json($clinics, 200);
     }
 
     //-------------------------------------------------------------------
 
-    public function auth() {
+    public function auth()
+    {
         $user = Auth::user();
-        
-        if(!$user) {
+
+        if (!$user) {
             return response()->json([
                 'message' => 'unauthorized'
-            ],401);
+            ], 401);
         }
     }
 
-    public function showAllDoctors() {
+    public function showAllDoctors()
+    {
         $doctors = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id')
-        ->get();
+            ->get();
 
         return $doctors;
     }
