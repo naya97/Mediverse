@@ -3,17 +3,115 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class DashBoardController extends Controller
 {
-    public function showAllAppointment(Request $request) {
+    public function showAllAppointments() {
         
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $all_appointments = Appointment::all()->count();
+
+        $appointments = Appointment::with('patient','schedule')->get();
+
+        foreach($appointments as $appointment) {
+            $response [] = [
+                'id' => $appointment->id,
+                'patient' => $appointment->patient->first_name. ' '. $appointment->patient->last_name,
+                'doctor' => $appointment->schedule->doctor->first_name. ' '.$appointment->schedule->doctor->last_name,
+                'doctor_photo' => $appointment->schedule->doctor->photo ,
+                'visit_fee' => $appointment->schedule->doctor->visit_fee ,
+                'reservation_date' => $appointment->reservation_date,
+                'timeSelected' => $appointment->timeSelected,
+                'status' => $appointment->status,
+            ];
+        };
+
+        return response()->json([
+            'appointments' => $response,
+            'numOfAppointments' => $all_appointments
+        ],200);
     }
 
-    public function filteringAppointment(Request $request) {
-        
+    public function filteringAppointmentByDoctor(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $all_appointments = Appointment::whereHas('schedule', function($query) use ($request) {
+            $query->where('doctor_id', $request->doctor_id);
+        })->count();
+
+        $appointments = Appointment::with('patient', 'schedule.doctor')
+        ->whereHas('schedule', function($query) use ($request) {
+            $query->where('doctor_id', $request->doctor_id);
+        })->get();
+
+        foreach($appointments as $appointment) {
+            $response [] = [
+                'id' => $appointment->id,
+                'patient' => $appointment->patient->first_name. ' '. $appointment->patient->last_name,
+                'doctor' => $appointment->schedule->doctor->first_name. ' '.$appointment->schedule->doctor->last_name,
+                'doctor_photo' => $appointment->schedule->doctor->photo ,
+                'visit_fee' => $appointment->schedule->doctor->visit_fee ,
+                'reservation_date' => $appointment->reservation_date,
+                'timeSelected' => $appointment->timeSelected,
+                'status' => $appointment->status,
+            ];
+        };
+
+        return response()->json([
+            'appointments' => $response,
+            'numOfAppointments' => $all_appointments
+        ],200);
     }
 
-    // public function showPaymentDetails()
+    public function filteringAppointmentByStatus(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $all_appointments = Appointment::whereHas('schedule', function($query) use ($request) {
+            $query->where('status', $request->status);
+        })->count();
+
+        $appointments = Appointment::with('patient', 'schedule.doctor')
+        ->whereHas('schedule', function($query) use ($request) {
+            $query->where('status', $request->status);
+        })->get();
+
+        foreach($appointments as $appointment) {
+            $response [] = [
+                'id' => $appointment->id,
+                'patient' => $appointment->patient->first_name. ' '. $appointment->patient->last_name,
+                'doctor' => $appointment->schedule->doctor->first_name. ' '.$appointment->schedule->doctor->last_name,
+                'doctor_photo' => $appointment->schedule->doctor->photo ,
+                'visit_fee' => $appointment->schedule->doctor->visit_fee ,
+                'reservation_date' => $appointment->reservation_date,
+                'timeSelected' => $appointment->timeSelected,
+                'status' => $appointment->status,
+            ];
+        };
+
+        return response()->json([
+            'appointments' => $response,
+            'numOfAppointments' => $all_appointments
+        ],200);
+    }
+
+    // public function showPaymentDetails() {}
+
+    public function auth() {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
+        if ($user->role != 'admin') {
+            return response()->json('You do not have permission in this page', 400);
+        }
+    }
 }

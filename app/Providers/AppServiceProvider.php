@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
         Route::middleware('api')
             ->prefix('pharmacy')
             ->group(base_path('routes/pharmacies.php'));
+        //Admin
         Route::middleware('api')
             ->prefix('Admin')
             ->group(base_path('routes/Admin/pharmacies.php'));
@@ -39,8 +40,13 @@ class AppServiceProvider extends ServiceProvider
             ->prefix('Admin')
             ->group(base_path('routes/Admin/employee.php'));
         Route::middleware('api')
+            ->prefix('Admin')
+            ->group(base_path('routes/Admin/dashboard.php'));
+        //Home
+        Route::middleware('api')
             ->prefix('Home')
             ->group(base_path('routes/Home/home.php'));
+        //Doctor
         Route::middleware('api')
             ->prefix('Doctor')
             ->group(base_path('routes/Doctor/profile.php'));
@@ -50,12 +56,14 @@ class AppServiceProvider extends ServiceProvider
         Route::middleware('api')
             ->prefix('Doctor/appointments')
             ->group(base_path('routes/Doctor/appointments.php'));
+        //Patient
         Route::middleware('api')
             ->prefix('patient')
             ->group(base_path('routes/patient/reservation.php'));
         Route::middleware('api')
             ->prefix('patient')
             ->group(base_path('routes/patient/analysis.php'));
+        //LabTech
         Route::middleware('api')
             ->prefix('labTech')
             ->group(base_path('routes/LabTech/analysis.php'));
