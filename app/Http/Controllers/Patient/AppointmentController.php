@@ -9,8 +9,11 @@ use App\Models\Doctor;
 use App\Models\MedicalInfo;
 use App\Models\Patient;
 use App\Models\Prescription;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 
 class AppointmentController extends Controller
 {
@@ -145,5 +148,62 @@ class AppointmentController extends Controller
         return response()->json($formattedMedicalInfo, 200);
     }
 
+    public function downloadPrescription(Request $request) {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
+        if ($user->role != 'patient') {
+            return response()->json([
+                'message' => 'you dont have permission'
+            ], 401);
+        }
+        $patient = Patient::where('user_id', $user->id)->first();
+
+        $prescription = Prescription::with('medicines')->where('id', $request->prescription_id)->first();
+
+        $medicines = $prescription->medicines;
+
+        $doctor = Doctor::with('clinic')->where('id', $prescription->doctor_id)->first();
+
+        if (!$prescription || !$patient || !$doctor) {
+        return response()->json(['message' => 'data not found'], 404);
+        }
+
+        $pdf = App::make('dompdf.wrapper');
+
+    
+        // $signatureFile = $doctor->sign ?? null;
+        // $signatureRelativePath = public_path($signatureFile);
+        // $signatureExists =  File::exists($signatureRelativePath);
+
+        $html = view('prescription', [
+            'prescription' => $prescription,
+            'patient' => $patient,
+            'doctor' => $doctor,
+            'medicines' => $prescription->medicines,
+            // 'signatureRelativePath' => $signatureRelativePath,
+            // 'signatureExists' => $signatureExists, 
+        ])->render();
+
+        $pdf = Pdf::loadView('prescription', compact(
+            'doctor',
+            'patient',
+            'prescription',
+            'medicines',
+            // 'signatureRelativePath',
+            // 'signatureExists'
+        ));
+
+        $pdfContent = $pdf->output();
+        $base64 = base64_encode($pdfContent);
+
+        return response()->json([
+            'filename' => 'prescription_' . $prescription->id . '.pdf',
+            'pdf_base64' => $base64
+        ]);
+    }
 
 }

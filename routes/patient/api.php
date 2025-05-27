@@ -21,5 +21,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('showAppointment', 'showAppointment');
         Route::post('showAppointmentInfo', 'showAppointmentInfo');
         Route::post('showAppointmentResults', 'showAppointmentResults');
+        Route::post('downloadPrescription', 'downloadPrescription');
     });
 });
