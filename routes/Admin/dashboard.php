@@ -9,5 +9,8 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('/showAllAppointments','showAllAppointments');
         Route::post('/filteringAppointmentByDoctor','filteringAppointmentByDoctor');
         Route::post('/filteringAppointmentByStatus','filteringAppointmentByStatus');
+        Route::get('/showPaymentDetails','showPaymentDetails');
+        Route::post('/showPaymentDetailsByDoctor','showPaymentDetailsByDoctor');
+        Route::post('/showPaymentDetailsByDate','showPaymentDetailsByDate');
     });
 });

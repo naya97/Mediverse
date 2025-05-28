@@ -16,9 +16,6 @@ return new class extends Migration
             $table->foreignId('patient_id')->constrained('patients')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-            // $table->foreignId('doctor_id')->constrained('doctors')
-            //     ->cascadeOnDelete()
-            //     ->cascadeOnUpdate();
             $table->foreignId('schedule_id')->nullable()
                 ->constrained('schedules')
                 ->cascadeOnDelete()
@@ -31,6 +28,7 @@ return new class extends Migration
             $table->date('reservation_date')->nullable();
             // $table->time('reservation_hour')->nullable();
             $table->enum('status',['visited','canceled','pending'])->default('pending');
+            $table->float('price')->default(0);
             $table->timestamps();
         });
     }
