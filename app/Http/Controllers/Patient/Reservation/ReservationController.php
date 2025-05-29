@@ -73,7 +73,6 @@ class ReservationController extends Controller
                 $startLeaveTime =  $schedule->start_leave_time;
                 $endLeaveTime =  $schedule->end_leave_time;
 
-
                 if($date >= $startLeaveDate && $date <= $endLeaveDate) {
                     if($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
                         $start = Carbon::createFromTime(9,0,0)->format('H:i:s');
@@ -82,6 +81,10 @@ class ReservationController extends Controller
                        $start = Carbon::createFromTime(15,0,0)->format('H:i:s');
                         $end = Carbon::createFromTime(21,0,0)->format('H:i:s');
 
+                    }
+                    if($startLeaveTime == null && $endLeaveTime == null) {
+                        $availableDates->forget($key);
+                        continue;
                     }
                     if($startLeaveTime == $start && $endLeaveTime == $end) {
                         $availableDates->forget($key);
