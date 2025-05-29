@@ -5,45 +5,33 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Tymon\JWTAuth\Facades\JWTAuth;
-use Google\Client;
+use Google_Client;
 
 class GoogleAuthController extends Controller
 {
-    public function loginWithGoogle(Request $request)
+    public function googleLogin(Request $request)
     {
-        $request->validate([
-            'id_token' => 'required|string',
-        ]);
+        $idToken = $request->input('id_token');
 
-        $client = new Client(['client_id' => env('GOOGLE_CLIENT_ID')]); // from Google Console
-
-        $payload = $client->verifyIdToken($request->id_token);
+        $client = new Google_Client(['client_id' => env('GOOGLE_CLIENT_ID')]);
+        $payload = $client->verifyIdToken($idToken);
 
         if (!$payload) {
-            return response()->json(['error' => 'Invalid Google Token'], 401);
+            return response()->json(['error' => 'Invalid ID Token'], 401);
         }
 
-        $googleId = $payload['sub'];
         $email = $payload['email'];
-        $name = $payload['name'];
 
-        $user = User::where('google_id', $googleId)->orWhere('email', $email)->first();
-
-        if (!$user) {
-            $user = User::create([
-                'name' => $name,
-                'email' => $email,
-                'google_id' => $googleId,
-                'password' => bcrypt('dummy123') // won't be used
-            ]);
-        }
+        $user = User::firstOrCreate(
+            ['email' => $email],
+            ['name' => $payload['name'], 'password' => bcrypt(uniqid())]
+        );
 
         $token = JWTAuth::fromUser($user);
 
         return response()->json([
-            'message' => 'user successuffly loged in',
             'token' => $token,
-            'user' => $user
+            'user' => $user,
         ]);
     }
 }
