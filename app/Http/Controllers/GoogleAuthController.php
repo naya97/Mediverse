@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Google_Client;
+use App\Models\Patient;
 
 class GoogleAuthController extends Controller
 {
@@ -27,9 +28,17 @@ class GoogleAuthController extends Controller
             ['name' => $payload['name'], 'password' => bcrypt(uniqid())]
         );
 
+        if ($user->wasRecentlyCreated) {
+            $patient = Patient::create([
+                'user_id' => $user->id,
+            ]);
+        }
+
+
         $token = JWTAuth::fromUser($user);
 
         return response()->json([
+            'message' => 'patient successfully loged in',
             'token' => $token,
             'user' => $user,
         ]);
