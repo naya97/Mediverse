@@ -8,6 +8,7 @@ use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\Schedule;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use DateInterval;
 use DatePeriod;
 use DateTime;
@@ -49,11 +50,49 @@ class ReservationController extends Controller
             ], 400);
         }
 
-        // I should show dates not just the day
+        $schedules = Schedule::where('doctor_id',$request->doctor_id)->get();
+        $workingDays = $schedules->pluck('day');
 
-        // $schedules = Schedule::where('doctor_id',$request->doctor_id)->get();
+        $startDate = Carbon::today();
+        $endDate = Carbon::today()->addMonth();
+        $period = CarbonPeriod::create($startDate, $endDate);
+        
+        $availableDates = collect();
 
-        // return response()->json($schedules,200);
+        foreach($period as $date) {
+            if ($workingDays->contains($date->format('l'))) {
+                $availableDates->push($date->toDateString());
+            }
+        }
+
+        foreach($availableDates as $key => $availableDate) {
+            foreach($schedules as $schedule) {
+                $date = $availableDate;
+                $startLeaveDate = $schedule->start_leave_date;
+                $endLeaveDate = $schedule->end_leave_date;
+                $startLeaveTime =  $schedule->start_leave_time;
+                $endLeaveTime =  $schedule->end_leave_time;
+
+
+                if($date >= $startLeaveDate && $date <= $endLeaveDate) {
+                    if($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
+                        $start = Carbon::createFromTime(9,0,0)->format('H:i:s');
+                        $end = Carbon::createFromTime(15,0,0)->format('H:i:s');
+                    }else {
+                       $start = Carbon::createFromTime(15,0,0)->format('H:i:s');
+                        $end = Carbon::createFromTime(21,0,0)->format('H:i:s');
+
+                    }
+                    if($startLeaveTime == $start && $endLeaveTime == $end) {
+                        $availableDates->forget($key);
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'available_dates' => $availableDates->values()
+        ], 200);
 
     }
 
