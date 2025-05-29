@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use League\CommonMark\Parser\Block\BlockContinueParserInterface;
 
+use function PHPUnit\Framework\isEmpty;
 use function PHPUnit\Framework\isNull;
 
 class ReservationController extends Controller
@@ -48,9 +49,11 @@ class ReservationController extends Controller
             ], 400);
         }
 
-        $schedule [] = Schedule::where('doctor_id',$request->doctor_id)->get();
+        // I should show dates not just the day
 
-        return response()->json($schedule,200);
+        // $schedules = Schedule::where('doctor_id',$request->doctor_id)->get();
+
+        // return response()->json($schedules,200);
 
     }
 
@@ -102,12 +105,12 @@ class ReservationController extends Controller
         $available_times = [];
 
         if($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
-            $start = new DateTime('09:00 AM');
-            $end = new DateTime('03:00 PM');
+            $start = new DateTime('09:00');
+            $end = new DateTime('15:00');
         }
         else {
-            $start = new DateTime('03:00 PM');
-            $end = new DateTime('09:00 PM');
+            $start = new DateTime('15:00');
+            $end = new DateTime('21:00');
         }
         
         $interval = new DateInterval('PT1H');
@@ -115,11 +118,22 @@ class ReservationController extends Controller
 
         foreach($period as $time) {
         
-            $timeFormatted = $time->format('h:i:s');
+            $timeFormatted = $time->format('H:i:s');
             $count = $appointments->where('timeSelected', $timeFormatted)->count();
-            if ($count < $numOfPeopleInHour) {
-                $available_times[] = $time->format('h:i A');
+            if($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
+                if($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time){
+                    continue;
+                }
             }
+            if ($count < $numOfPeopleInHour) {
+                $available_times[] = $time->format('H:i');
+            }
+        }
+
+        if($available_times == []) {
+            return response()->json([
+                'message' => 'this doctor is not available in this date'
+            ], 400);
         }
 
         return response()->json($available_times,200);
@@ -148,7 +162,7 @@ class ReservationController extends Controller
             'clinic_id' => 'required|exists:clinics,id',
             'doctor_id' => 'required|exists:doctors,id',
             'date' => 'required|date_format:d/m/y',
-            'time' => 'required|date_format:h:i A'
+            'time' => 'required|date_format:H:i'
         ]);
 
 
@@ -159,9 +173,10 @@ class ReservationController extends Controller
         }
 
         $dateFormatted = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
-        $timeFormatted = Carbon::parse($request->time)->format('h:i:s'); 
+        $timeFormatted = Carbon::parse($request->time)->format('H:i:s'); 
 
         $date = Carbon::createFromFormat('d/m/y', $request->date);
+        $time = Carbon::createFromFormat('H:i', $request->time);
         $day = $date->format('l');
         
         $schedule = Schedule::where('doctor_id',$request->doctor_id)
@@ -173,7 +188,7 @@ class ReservationController extends Controller
             -> where('reservation_date',$dateFormatted)
             ->where('status', 'pending')
             ->where('timeSelected',$timeFormatted)
-            ->count();
+        ->count();
 
         $visitTime = Doctor::where('id',$request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
         $visitTime = (float) $visitTime; 
@@ -183,6 +198,30 @@ class ReservationController extends Controller
         }
 
         $numOfPeopleInHour = floor(60 / $visitTime); 
+
+        $userTime = new DateTime($request->input('time'));
+        if($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
+            $start = new DateTime('09:00');
+            $end = new DateTime('15:00');
+        }
+        else {
+            $start = new DateTime('15:00');
+            $end = new DateTime('21:00');
+        }
+
+        if ($userTime < $start || $userTime >= $end) {
+            return response()->json([
+                'message' => 'this time not available in this schedule',
+            ],400);
+        }
+
+        if($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
+            if($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time){
+                return response()->json([
+                'message' => 'this doctor is not available in this date '
+                ], 400);
+            }
+        }
 
         $newTimeFormatted = Carbon::parse($request->time);
         if($appointmentsNum == $numOfPeopleInHour) $timeSelected = $newTimeFormatted->addHours(1)->toTimeString();
@@ -227,7 +266,7 @@ class ReservationController extends Controller
             'clinic_id' => 'required|exists:clinics,id',
             'doctor_id' => 'required|exists:doctors,id',
             'new_date' => 'required|date_format:d/m/y',
-            'new_time' => 'required|date_format:h:i A'
+            'new_time' => 'required|date_format:H:i'
         ]);
 
         if ($validator->fails()) {
@@ -238,13 +277,43 @@ class ReservationController extends Controller
 
 
     $dateFormatted = Carbon::createFromFormat('d/m/y', $request->new_date)->format('Y-m-d');
-    $timeFormatted = Carbon::createFromFormat('h:i A', $request->new_time)->format('h:i:s'); 
+    $timeFormatted = Carbon::createFromFormat('H:i', $request->new_time)->format('H:i:s'); 
 
     $oldDateFormatted = Carbon::createFromFormat('d/m/y', $request->old_date)->format('Y-m-d');
-    $oldTimeFormatted = Carbon::createFromFormat('h:i A', $request->old_time)->format('h:i:s');
+    $oldTimeFormatted = Carbon::createFromFormat('H:i', $request->old_time)->format('H:i:s');
 
         $new_date = Carbon::createFromFormat('d/m/y', $request->new_date);
+        $new_time = Carbon::createFromFormat('H:i', $request->new_time);
         $new_day = $new_date->format('l');
+
+        $schedule = Schedule::where('doctor_id',$request->doctor_id)
+            ->where('day',$new_day)
+        ->first();
+
+
+        $userTime = new DateTime($request->input('new_time'));
+        if($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
+            $start = new DateTime('09:00');
+            $end = new DateTime('15:00');
+        }
+        else {
+            $start = new DateTime('15:00');
+            $end = new DateTime('21:00');
+        }
+
+        if ($userTime < $start || $userTime >= $end) {
+            return response()->json([
+                'message' => 'this time not available in this schedule',
+            ],400);
+        }
+
+        if($new_date->toDateString() >= $schedule->start_leave_date && $new_date->toDateString() <= $schedule->end_leave_date) {
+            if($new_time->format('H:i') >= $schedule->start_leave_time && $new_time->format('H:i') <= $schedule->end_leave_time){
+                return response()->json([
+                'message' => 'this doctor is not available in this date '
+                ], 400);
+            }
+        }
 
         // delete old reservation 
         $oldReservation = Appointment::where('reservation_date', $oldDateFormatted)
@@ -255,15 +324,11 @@ class ReservationController extends Controller
 
         $oldReservation->delete();
 
-        $schedule = Schedule::where('doctor_id',$request->doctor_id)
-            ->where('day',$new_day)
-            ->first();
-
         $appointmentsNum = Appointment::where('schedule_id',$schedule->id)
             -> where('reservation_date',$dateFormatted)
             ->where('status', 'pending')
             ->where('timeSelected',$timeFormatted)
-            ->count();
+        ->count();
 
         $visitTime = Doctor::where('id',$request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
         $visitTime = (float) $visitTime; 

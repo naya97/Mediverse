@@ -21,6 +21,10 @@ return new class extends Migration
                 ->cascadeOnUpdate();
             $table->string('day');
             $table->enum('Shift', ['morning shift:from 9 AM to 3 PM', 'evening shift:from 3 PM to 9 PM']);
+            $table->date('start_leave_date')->nullable();
+            $table->date('end_leave_date')->nullable();
+            $table->time('start_leave_time')->nullable();
+            $table->time('end_leave_time')->nullable();
             $table->timestamps();
         });
     }

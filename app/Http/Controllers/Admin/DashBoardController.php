@@ -19,6 +19,7 @@ class DashBoardController extends Controller
 
         $appointments = Appointment::with('patient','schedule')->get();
 
+        $response = [];
         foreach($appointments as $appointment) {
             $response [] = [
                 'id' => $appointment->id,
@@ -52,6 +53,7 @@ class DashBoardController extends Controller
             $query->where('doctor_id', $request->doctor_id);
         })->get();
 
+        $response = [];
         foreach($appointments as $appointment) {
             $response [] = [
                 'id' => $appointment->id,
@@ -85,6 +87,7 @@ class DashBoardController extends Controller
             $query->where('status', $request->status);
         })->get();
 
+        $response = [];
         foreach($appointments as $appointment) {
             $response [] = [
                 'id' => $appointment->id,

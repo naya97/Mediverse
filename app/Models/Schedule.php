@@ -13,6 +13,10 @@ class Schedule extends Model
         'doctor_id',
         'day',
         'Shift',
+        'start_leave_date',
+        'end_leave_date',
+        'start_leave_time',
+        'end_leave_time',
     ];
 
     public function doctor(): BelongsTo

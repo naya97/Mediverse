@@ -78,7 +78,7 @@ class HomeController extends Controller
         return response()->json($response, 200);
     }
 
-    public function showClinincDoctors(Request $request)
+    public function showClinicDoctors(Request $request)
     {
         $auth = $this->auth();
         if ($auth) return $auth;
