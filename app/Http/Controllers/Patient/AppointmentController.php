@@ -37,6 +37,7 @@ class AppointmentController extends Controller
             ->where('status', $request->status)
             ->get();
     
+        $response = [];
         foreach ($appointments as $appointment) {
             $doctor = $appointment->schedule->doctor ?? null;
 
