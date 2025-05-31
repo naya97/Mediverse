@@ -43,9 +43,10 @@ class AppointmentController extends Controller
 
             if ($doctor) {
                 $response[] = [
-                    'id' => $appointment->id,
+                    'appointment_id' => $appointment->id,
                     'doctor_photo' => $doctor->photo,
                     'doctor_name' => $doctor->first_name . ' ' . $doctor->last_name,
+                    'doctor_id' => $doctor->id,
                     'doctor_speciality' => $doctor->speciality,
                     'reservation_date' => $appointment->reservation_date,
                     'reservation_hour' => $appointment->timeSelected,
@@ -81,12 +82,13 @@ class AppointmentController extends Controller
         else $type = 'check up';
 
         $information = [
-            'id' => $doctor->id,
+            'appointment_id' => $appointment->id,
             'clinic_id' => $doctor->clinic_id ,
             'clinic_name'=> $clinic->name ,
             'type' => $type,
             'doctor_photo' => $doctor->photo,
             'doctor_name' => $doctor->first_name . ' ' . $doctor->last_name,
+            'doctor_id' => $doctor->id,
             'doctor_speciality' => $doctor->speciality,
             'visit_fee' => $doctor->visit_fee,
             'finalRate' => $doctor->finalRate,

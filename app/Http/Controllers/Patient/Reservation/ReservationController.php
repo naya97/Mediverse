@@ -305,8 +305,6 @@ class ReservationController extends Controller
         // front should give me the old time and date
 
         $validator = Validator::make($request->all(), [
-            'clinic_id' => 'required|exists:clinics,id',
-            'doctor_id' => 'required|exists:doctors,id',
             'new_date' => 'required|date_format:d/m/y',
             'new_time' => 'required|date_format:H:i'
         ]);
@@ -321,8 +319,8 @@ class ReservationController extends Controller
     $dateFormatted = Carbon::createFromFormat('d/m/y', $request->new_date)->format('Y-m-d');
     $timeFormatted = Carbon::createFromFormat('H:i', $request->new_time)->format('H:i:s'); 
 
-    $oldDateFormatted = Carbon::createFromFormat('d/m/y', $request->old_date)->format('Y-m-d');
-    $oldTimeFormatted = Carbon::createFromFormat('H:i', $request->old_time)->format('H:i:s');
+    // $oldDateFormatted = Carbon::createFromFormat('d/m/y', $request->old_date)->format('Y-m-d');
+    // $oldTimeFormatted = Carbon::createFromFormat('H:i', $request->old_time)->format('H:i:s');
 
         $new_date = Carbon::createFromFormat('d/m/y', $request->new_date);
         $new_time = Carbon::createFromFormat('H:i', $request->new_time);
@@ -358,8 +356,7 @@ class ReservationController extends Controller
         }
 
         // delete old reservation 
-        $oldReservation = Appointment::where('reservation_date', $oldDateFormatted)
-            ->where('timeSelected', $oldTimeFormatted)
+        $oldReservation = Appointment::where('id', $request->appiontment_id)
             ->where('status', 'pending')
             ->first();
         // return $oldReservation;
