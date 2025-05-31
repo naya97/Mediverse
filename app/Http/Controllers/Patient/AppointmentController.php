@@ -93,8 +93,8 @@ class AppointmentController extends Controller
             'visit_fee' => $doctor->visit_fee,
             'finalRate' => $doctor->finalRate,
             'status' => $appointment->status,
-            'reservation_date' => $appointment->timeSelected,
-            'reservation_hour' => $appointment->reservation_date,
+            'reservation_date' => $appointment->reservation_date,
+            'reservation_hour' => $appointment->timeSelected,
         ];
 
         return response()->json($information, 200);

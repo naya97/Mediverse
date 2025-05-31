@@ -356,7 +356,7 @@ class ReservationController extends Controller
         }
 
         // delete old reservation 
-        $oldReservation = Appointment::where('id', $request->appiontment_id)
+        $oldReservation = Appointment::where('id', $request->appointment_id)
             ->where('status', 'pending')
             ->first();
         // return $oldReservation;

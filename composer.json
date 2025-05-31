@@ -16,6 +16,7 @@
         "laravel/tinker": "^2.10.1",
         "overtrue/socialite": "*",
         "propaganistas/laravel-phone": "^6.0",
+        "still-code/ar-php-laravel": "^2.0",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {
