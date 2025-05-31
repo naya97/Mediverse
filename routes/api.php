@@ -17,10 +17,6 @@ Route::post('login', [AuthController::class, 'login']);
 
 Route::middleware([JwtMiddleware::class])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
-    Route::post('/logout/google', function () {
-        Auth::logout();
-        return response()->json(['message' => 'Logged out']);
-    });
 });
 
-Route::post('/auth/google', [GoogleAuthController::class, 'loginWithGoogle']);
+Route::post('/auth/google', [GoogleAuthController::class, 'googleLogin']);
