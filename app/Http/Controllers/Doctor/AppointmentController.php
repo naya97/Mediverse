@@ -175,11 +175,15 @@ class AppointmentController extends Controller
         $appointment = Appointment::find($request->appointment_id);
         $medicalInfo = MedicalInfo::where('appointment_id', $appointment->id)->first();
         $prescription = Prescription::find($medicalInfo->prescription_id);
-        $medicines = Medicine::where('prescription_id', $prescription->id)->get()->all();
-        $prescription = [
-            'medicines' => $medicines,
-            'note' => $prescription->note,
-        ];
+        if ($prescription) {
+            $medicines = Medicine::where('prescription_id', $prescription->id)->get()->all();
+            $prescription = [
+                'medicines' => $medicines,
+                'note' => $prescription->note,
+            ];
+        } else {
+            $prescription = null;
+        }
         $medicalInfo = [
             'symptoms' => $medicalInfo->symptoms,
             'diagnosis' => $medicalInfo->diagnosis,
