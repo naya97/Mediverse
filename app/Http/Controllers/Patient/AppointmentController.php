@@ -121,31 +121,39 @@ class AppointmentController extends Controller
         ->first();
 
         $medicalInfo = MedicalInfo::with('prescription.medicines')->where('appointment_id', $appointment->id)->first();
-        $prescription = $medicalInfo->prescription;
-        
-        $medicines = $prescription->medicines->map(function ($medicine) {
-            return [
-                'id' => $medicine->id,
-                'name' => $medicine->name,
-                'dose' => $medicine->dose,
-                'frequency' => $medicine->frequency,
-                'strength' => $medicine->strength,
-                'until' => $medicine->until,
-                'whenToTake' => $medicine->whenToTake,
-                'note' => $medicine->note,
-            ];
-        });
+        if (!$medicalInfo) {
+            return response()->json([
+                'message' => 'medical info not found'
+            ], 404);
+        }
 
+        $prescription = $medicalInfo->prescription;
+        $medicines = [];
+        if ($prescription && $prescription->medicines) {
+            $medicines = $prescription->medicines->map(function ($medicine) {
+                return [
+                    'id' => $medicine->id,
+                    'name' => $medicine->name,
+                    'dose' => $medicine->dose,
+                    'frequency' => $medicine->frequency,
+                    'strength' => $medicine->strength,
+                    'until' => $medicine->until,
+                    'whenToTake' => $medicine->whenToTake,
+                    'note' => $medicine->note,
+                ];
+            });
+        }
+    
         $formattedMedicalInfo = [
             'id' => $medicalInfo->id,
             'diagnosis' => $medicalInfo->diagnosis,
             'doctorNote' => $medicalInfo->doctorNote,
             'patientNote' => $medicalInfo->patientNote,
-            'prescription' => [
+            'prescription' => $prescription ? [
                 'id' => $prescription->id,
                 'note' => $prescription->note,
                 'medicines' => $medicines,
-            ],
+            ] : null,
         ];
 
         return response()->json($formattedMedicalInfo, 200);
