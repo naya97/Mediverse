@@ -6,9 +6,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware([JwtMiddleware::class])->group(function () {
     Route::controller(LabtechSecretaryController::class)->group(function () {
-        Route::post('/showEmployee','showEmployee');
+        Route::get('/showEmployee','showEmployee');
         Route::post('/addEmployee','addEmployee');
         Route::post('/editEmployee','editEmployee');
-        Route::post('/removeEmployee','removeEmployee');
+        Route::delete('/removeEmployee','removeEmployee');
     });
 });

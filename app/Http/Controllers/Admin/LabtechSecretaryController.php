@@ -90,6 +90,8 @@ class LabtechSecretaryController extends Controller
 
         $user = User::where('id',$request->user_id)->first();
 
+        if(!$user) return response(['message'=>'user not found'],404);
+
         if($request->is_secretary == 1) {
             $user->update([
             'first_name' => $request->first_name,
@@ -123,6 +125,8 @@ class LabtechSecretaryController extends Controller
         if($auth) return $auth;
 
         $user = User::where('id',$request->user_id)->first();
+        if(!$user) return response(['message'=>'user not found'],404);
+
         $user->delete();
 
         return response()->json('deleted successfully', 200);

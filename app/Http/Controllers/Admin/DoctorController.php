@@ -89,6 +89,7 @@ class DoctorController extends Controller
         if($auth) return $auth;
 
         $doctor = Doctor::where('id', $request->doctor_id)->first();
+        if(!$doctor) return response()->json(['message'=> 'doctor not found'], 404);
         $clinic = Clinic::where('id', $doctor->clinic_id)->first();
         $user = User::where('id',$doctor->user_id)->first();
 
@@ -105,9 +106,14 @@ class DoctorController extends Controller
         $auth = $this->auth();
         if($auth) return $auth;
 
+        $doctor = Doctor::where('id', $request->doctor_id)->first();
+
+        if(!$doctor) return response()->json(['message'=> 'doctor not found'], 404);
+
         $reviews = PatientReview::where('doctor_id', $request->doctor_id)->get();
         $review_ids = $reviews->pluck('review_id')->all();
 
+        $response = [] ;
         foreach($review_ids as $review_id) {
             $response [] = Review::where('id', $review_id)->first();
         }

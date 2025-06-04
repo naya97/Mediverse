@@ -27,6 +27,8 @@ class ClinicController extends Controller
 
         $clinic = Clinic::where('id', $request->clinic_id)->first();
 
+        if(!$clinic) return response()->json(['message' => 'clinic not found'], 404);
+
         $doctors_clinic = Doctor::where('clinic_id', $clinic->id)
             ->select(
                 'first_name',
@@ -64,7 +66,7 @@ class ClinicController extends Controller
             'location' => $request->location,
         ]);
 
-        return response()->json('created successfully', 201);
+        return response()->json(['message' =>'created successfully'], 201);
     }
 
     public function editClinic(Request $request) {
@@ -84,13 +86,15 @@ class ClinicController extends Controller
 
         $clinic = Clinic::where('id', $request->clinic_id)->first();
 
+        if(!$clinic) return response()->json(['message' => 'clinic not found'], 404);
+
         $clinic->update([
             'name' => $request->name,
             'location' => $request->location,
         ]);
         $clinic->save();
 
-        return response()->json('clinic updated successfully', 200);
+        return response()->json(['message' =>'clinic updated successfully'], 200);
 
     }
 
@@ -99,9 +103,10 @@ class ClinicController extends Controller
         if($auth) return $auth;
 
         $clinic = Clinic::where('id',$request->clinic_id)->first();
+        if(!$clinic) return response()->json(['message' => 'clinic not found'], 404);
         $clinic->delete();
 
-        return response()->json('deleted successfully', 200);
+        return response()->json(['message' =>'deleted successfully'], 200);
 
     }
 
