@@ -13,6 +13,7 @@ use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use DateInterval;
 use DatePeriod;
 use DateTime;
@@ -26,12 +27,11 @@ class AppointmentController extends Controller
         if ($auth) return $auth;
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
-        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
-        $appointments = Appointment::whereIn('schedule_id', $scheduleIds)->get();
+        $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->get();
         $response = [];
         foreach ($appointments as $appointment) {
-            $patient = Patient::find($appointment->patient_id);
             if ($appointment->parent_id == null) {
                 $type = 'first time';
             } else {
@@ -39,8 +39,8 @@ class AppointmentController extends Controller
             }
             $response[] = [
                 'id' => $appointment->id,
-                'patient first name' => $patient->first_name,
-                'patient last name' => $patient->last_name,
+                'patient first name' => $appointment->patient->first_name,
+                'patient last name' => $appointment->patient->last_name,
                 'reservation date' => $appointment->reservation_date,
                 'reservation hour' => $appointment->timeSelected,
                 'status' => $appointment->status,
@@ -54,19 +54,26 @@ class AppointmentController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
+        $validator = Validator::make($request->all(), [
+            'status' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
-        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
         if ($request->status != 'today') {
-            $appointments = Appointment::whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->get();
+            $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->get();
         } else {
             $today = now()->format('Y-m-d');
-            $appointments = Appointment::whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->get();
+            $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->get();
         }
         $response = [];
         foreach ($appointments as $appointment) {
-            $patient = Patient::find($appointment->patient_id);
             if ($appointment->parent_id == null) {
                 $type = 'first time';
             } else {
@@ -74,8 +81,8 @@ class AppointmentController extends Controller
             }
             $response[] = [
                 'id' => $appointment->id,
-                'patient first name' => $patient->first_name,
-                'patient last name' => $patient->last_name,
+                'patient first name' => $appointment->patient->first_name,
+                'patient last name' => $appointment->patient->last_name,
                 'reservation date' => $appointment->reservation_date,
                 'reservation hour' => $appointment->timeSelected,
                 'status' => $appointment->status,
@@ -89,36 +96,47 @@ class AppointmentController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
+        $validator = Validator::make($request->all(), [
+            'status' => 'required',
+            'type' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
-        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
 
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
         if ($request->type == 'first time') {
             if ($request->status != 'today') {
-                $appointments = Appointment::whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->where('parent_id', null)->get();
+                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->where('parent_id', null)->get();
             } else {
                 $today = now()->format('Y-m-d');
-                $appointments = Appointment::whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->where('parent_id', null)->get();
+                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->where('parent_id', null)->get();
             }
+            $type = 'first time';
         } else {
             if ($request->status != 'today') {
-                $appointments = Appointment::whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->whereNotNull('parent_id')->get();
+                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->whereNotNull('parent_id')->get();
             } else {
                 $today = now()->format('Y-m-d');
-                $appointments = Appointment::whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->whereNotNull('parent_id')->get();
+                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->whereNotNull('parent_id')->get();
             }
+            $type = 'check up';
         }
         $response = [];
         foreach ($appointments as $appointment) {
-            $patient = Patient::find($appointment->patient_id);
             $response[] = [
                 'id' => $appointment->id,
-                'patient first name' => $patient->first_name,
-                'patient last name' => $patient->last_name,
+                'patient first name' => $appointment->patient->first_name,
+                'patient last name' => $appointment->patient->last_name,
                 'reservation date' => $appointment->reservation_date,
                 'reservation hour' => $appointment->timeSelected,
                 'status' => $appointment->status,
+                'type' => $type,
             ];
         }
         return response()->json($response, 200);
@@ -128,10 +146,23 @@ class AppointmentController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
-        $appointments = Appointment::where('patient_id', $request->patient_id)->get()->all();
+        $validator = Validator::make($request->all(), [
+            'patient_id' => 'required|exists:patients,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->all()
+            ], 400);
+        }
+
+        $user = Auth::user();
+        $doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+        $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
+        $appointments = Appointment::where('patient_id', $request->patient_id)->whereIn('schedule_id', $scheduleIds)->get()->all();
         $response = [];
         foreach ($appointments as $appointment) {
-            $appointment = Appointment::find($appointment->id);
             if ($appointment->parent_id == null) {
                 $type = 'first time';
             } else {
@@ -152,19 +183,26 @@ class AppointmentController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
-        $appointment = Appointment::find($request->id);
-        if(!$appointment) return response()->json(['message'=> 'Appointment Not Found'], 404);
+        $validator = Validator::make($request->all(), [
+            'appointment_id' => 'required|exists:appointments,id',
+        ]);
 
-        $patient = Patient::find($appointment->patient_id);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->all()
+            ], 400);
+        }
+
+        $appointment = Appointment::with('patient')->find($request->appointment_id);
         if ($appointment->parent_id == null) {
             $type = 'first time';
         } else {
             $type = 'check up';
         }
         $response = [
-            'patient id ' => $patient->id, //it is for showing patient analysis and appointments and add checkup
-            'patient first name' => $patient->first_name,
-            'patient last name' => $patient->last_name,
+            'patient id ' => $appointment->patient->id, //it is for showing patient analysis and appointments and add checkup
+            'patient first name' => $appointment->patient->first_name,
+            'patient last name' => $appointment->patient->last_name,
             'reservation date' => $appointment->reservation_date,
             'reservation hour' => $appointment->timeSelected,
             'status' => $appointment->status,
@@ -178,11 +216,18 @@ class AppointmentController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
-        $appointment = Appointment::find($request->appointment_id);
-        if(!$appointment) return response()->json(['message'=> 'Appointment Not Found'], 404);
+        $validator = Validator::make($request->all(), [
+            'appointment_id' => 'required|exists:appointments,id',
+        ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->all()
+            ], 400);
+        }
+        $appointment = Appointment::find($request->appointment_id);
         $medicalInfo = MedicalInfo::where('appointment_id', $appointment->id)->first();
-        if(!$medicalInfo) return response()->json(['message'=> 'MedicalInfo Not Found'], 404);
+        if (!$medicalInfo) return response()->json(['message' => 'MedicalInfo Not Found'], 404);
 
         $prescription = Prescription::find($medicalInfo->prescription_id);
         if ($prescription) {
@@ -212,16 +257,63 @@ class AppointmentController extends Controller
         if ($auth) return $auth;
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
-        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
 
-        $schedule[] = Schedule::where('doctor_id', $doctor->id)->get();
-        return response()->json($schedule, 200);
+        $schedules = Schedule::where('doctor_id', $doctor->id)->get();
+        $workingDays = $schedules->pluck('day');
+
+        $startDate = Carbon::today();
+        $endDate = Carbon::today()->addMonth();
+        $period = CarbonPeriod::create($startDate, $endDate);
+
+        $availableDates = collect();
+
+        foreach ($period as $date) {
+            if ($workingDays->contains($date->format('l'))) {
+                $availableDates->push($date->toDateString());
+            }
+        }
+
+        foreach ($availableDates as $key => $availableDate) {
+            foreach ($schedules as $schedule) {
+                $date = $availableDate;
+                $startLeaveDate = $schedule->start_leave_date;
+                $endLeaveDate = $schedule->end_leave_date;
+                $startLeaveTime =  $schedule->start_leave_time;
+                $endLeaveTime =  $schedule->end_leave_time;
+
+                if ($date >= $startLeaveDate && $date <= $endLeaveDate) {
+                    if ($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
+                        $start = Carbon::createFromTime(9, 0, 0)->format('H:i:s');
+                        $end = Carbon::createFromTime(15, 0, 0)->format('H:i:s');
+                    } else {
+                        $start = Carbon::createFromTime(15, 0, 0)->format('H:i:s');
+                        $end = Carbon::createFromTime(21, 0, 0)->format('H:i:s');
+                    }
+                    if ($startLeaveTime == null && $endLeaveTime == null) {
+                        $availableDates->forget($key);
+                        continue;
+                    }
+                    if ($startLeaveTime == $start && $endLeaveTime == $end) {
+                        $availableDates->forget($key);
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'available_dates' => $availableDates->values()
+        ], 200);
     }
     /////
     public function showTimes(Request $request)
     {
         $auth = $this->auth();
         if ($auth) return $auth;
+        $user = Auth::user();
+        $doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
         $validator = Validator::make($request->all(), [
             'date' => 'required|date_format:d/m/y',
         ]);
@@ -235,11 +327,7 @@ class AppointmentController extends Controller
         $date = Carbon::createFromFormat('d/m/y', $request->date);
         $day = $date->format('l');
 
-        $user = Auth::user();
-        $doctor = Doctor::where('user_id', $user->id)->first();
-
         $schedule = Schedule::where('doctor_id', $doctor->id)->where('day', $day)->first();
-        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
 
         $mysqlDate = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
 
@@ -255,11 +343,11 @@ class AppointmentController extends Controller
         $available_times = [];
 
         if ($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
-            $start = new DateTime('09:00 AM');
-            $end = new DateTime('03:00 PM');
+            $start = new DateTime('09:00');
+            $end = new DateTime('15:00');
         } else {
-            $start = new DateTime('03:00 PM');
-            $end = new DateTime('09:00 PM');
+            $start = new DateTime('15:00');
+            $end = new DateTime('21:00');
         }
 
         $interval = new DateInterval('PT1H');
@@ -267,11 +355,22 @@ class AppointmentController extends Controller
 
         foreach ($period as $time) {
 
-            $timeFormatted = $time->format('h:i:s');
+            $timeFormatted = $time->format('H:i:s');
             $count = $appointments->where('timeSelected', $timeFormatted)->count();
-            if ($count < $numOfPeopleInHour) {
-                $available_times[] = $time->format('h:i A');
+            if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
+                if ($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time) {
+                    continue;
+                }
             }
+            if ($count < $numOfPeopleInHour) {
+                $available_times[] = $time->format('H:i');
+            }
+        }
+
+        if ($available_times == []) {
+            return response()->json([
+                'message' => 'you are not available in this date'
+            ], 400);
         }
 
         return response()->json($available_times, 200);
@@ -283,12 +382,12 @@ class AppointmentController extends Controller
         if ($auth) return $auth;
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
-        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
 
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
             'date' => 'required|date_format:d/m/y',
-            'time' => 'required|date_format:h:i A',
+            'time' => 'required|date_format:H:i',
             'this_appointment_id' => 'required|exists:appointments,id',
         ]);
         if ($validator->fails()) {
@@ -296,12 +395,16 @@ class AppointmentController extends Controller
                 'message' =>  $validator->errors()->all()
             ], 400);
         }
-        $patient = Patient::find($request->patient_id);
+        $patient = Patient::where('id', $request->patient_id)->first();
+        if (!$patient) {
+            return response()->json(['message' => 'Patient not found.'], 404);
+        }
 
         $dateFormatted = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
-        $timeFormatted = Carbon::parse($request->time)->format('h:i:s');
+        $timeFormatted = Carbon::parse($request->time)->format('H:i:s');
 
         $date = Carbon::createFromFormat('d/m/y', $request->date);
+        $time = Carbon::createFromFormat('H:i', $request->time);
         $day = $date->format('l');
 
         $schedule = Schedule::where('doctor_id', $doctor->id)
@@ -322,6 +425,29 @@ class AppointmentController extends Controller
         }
 
         $numOfPeopleInHour = floor(60 / $visitTime);
+
+        $userTime = new DateTime($request->input('time'));
+        if ($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
+            $start = new DateTime('09:00');
+            $end = new DateTime('15:00');
+        } else {
+            $start = new DateTime('15:00');
+            $end = new DateTime('21:00');
+        }
+
+        if ($userTime < $start || $userTime >= $end) {
+            return response()->json([
+                'message' => 'this time not available in this schedule',
+            ], 400);
+        }
+
+        if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
+            if ($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time) {
+                return response()->json([
+                    'message' => 'this doctor is not available in this date '
+                ], 400);
+            }
+        }
 
         $newTimeFormatted = Carbon::parse($request->time);
         if ($appointmentsNum == $numOfPeopleInHour) $timeSelected = $newTimeFormatted->addHours(1)->toTimeString();

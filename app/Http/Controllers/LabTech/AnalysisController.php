@@ -24,14 +24,14 @@ class AnalysisController extends Controller
             'patientLastName' => 'string|required',
             'clinic_id' => 'required',
         ]);
-       if ($validator->fails()) {
+        if ($validator->fails()) {
             return response()->json([
-               'message' =>  $validator->errors()->all()
+                'message' =>  $validator->errors()->all()
             ], 422);
         }
         $patient = Patient::where('first_name', $request->patientFirstName)->where('last_name', $request->patientLastName)->first();
         if (!$patient) {
-            return response()->json(['message' => 'You are not registered in the application'], 404);
+            return response()->json(['message' => 'patient is not registered in the application'], 404);
         }
         $analyse = Analyse::create([
             'name' => $request->name,
@@ -49,60 +49,84 @@ class AnalysisController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
-        $analysis = Analyse::where('status', $request->status)->get()->all();
-        $response = [];
-        foreach ($analysis as $analyse) {
-            $clinic = Clinic::find($analyse->clinic_id);
-            $patient = Patient::find($analyse->patient_id);
-            $response[] = [
+
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|string|in:pending,finished'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->all()
+            ], 422);
+        }
+
+        $analysis = Analyse::with(['clinic', 'patient'])
+            ->where('status', $request->status)
+            ->get();
+
+        $response = $analysis->map(function ($analyse) {
+            return [
                 'id' => $analyse->id,
                 'name' => $analyse->name,
                 'description' => $analyse->description,
                 'result_file' => $analyse->result_file,
                 'result_photo' => $analyse->result_photo,
-                'clinic' => $clinic->name,
-                'patient firt name' => $patient->first_name,
-                'patient last name' => $patient->last_name,
+                'clinic' => $analyse->clinic->name ?? null,
+                'patient_first_name' => $analyse->patient->first_name ?? null,
+                'patient_last_name' => $analyse->patient->last_name ?? null,
             ];
-        }
+        });
+
         return response()->json($response, 200);
     }
+
 
     /////
     public function showAnalyse(Request $request)
     {
-        $auth = $this->auth();
-        if ($auth) return $auth;
-        $analyse = Analyse::find($request->id);
-        $clinic = Clinic::find($analyse->clinic_id);
-        $patient = Patient::find($analyse->patient_id);
+        if ($auth = $this->auth()) {
+            return $auth;
+        }
+
+        $analyse = Analyse::with(['clinic', 'patient'])->find($request->id);
+
+        if (!$analyse) {
+            return response()->json(['error' => 'Analyse not found'], 404);
+        }
         $response = [
             'id' => $analyse->id,
             'name' => $analyse->name,
             'description' => $analyse->description,
             'result_file' => $analyse->result_file,
             'result_photo' => $analyse->result_photo,
-            'clinic' => $clinic->name,
-            'patient firt name' => $patient->first_name,
-            'patient last name' => $patient->last_name,
+            'clinic' => $analyse->clinic->name ?? null,
+            'patient_first_name' => $analyse->patient->first_name ?? null,
+            'patient_last_name' => $analyse->patient->last_name ?? null,
         ];
-        return response()->json($response, 200);
+
+        return response()->json($response);
     }
+
     /////
     public function addAnalyseResult(Request $request)
     {
         $auth = $this->auth();
         if ($auth) return $auth;
         $validator = Validator::make($request->all(), [
-            'result_photo' => 'image|required_without:result_file',
-            'result_file' => 'file|required_without:result_photo',
+            'id' => 'required|exists:analyses,id',
+            'result_photo' => 'nullable|image|required_without:result_file',
+            'result_file' => 'nullable|file|required_without:result_photo',
         ]);
-       if ($validator->fails()) {
+
+        if ($validator->fails()) {
             return response()->json([
-               'message' =>  $validator->errors()->all()
+                'message' =>  $validator->errors()->all()
             ], 422);
         }
         $analyse = Analyse::find($request->id);
+        if (!$analyse) {
+            return response()->json(['error' => 'Analyse not found'], 404);
+        }
         if ($request->hasFile('result_photo')) {
             $path1 = $request->result_photo->store('images/patients/analysis', 'public');
             $analyse->result_photo = '/storage/' . $path1;
@@ -115,6 +139,7 @@ class AnalysisController extends Controller
         $analyse->save();
         return response()->json(['message' => 'added successfully'], 200);
     }
+
     /////
     public function auth()
     {

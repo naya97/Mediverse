@@ -32,6 +32,9 @@ class PatientInfoController extends Controller
         }
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$doctor) {
+            return response()->json(['message' => 'Doctor not found'], 404);
+        }
         $prescription = Prescription::create([
             'patient_id' => $request->patient_id,
             'doctor_id' => $doctor->id,
@@ -88,7 +91,13 @@ class PatientInfoController extends Controller
         if ($auth) return $auth;
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$doctor) {
+            return response()->json(['message' => 'Doctor not found'], 404);
+        }
         $prescription = Prescription::find($request->id);
+        if (!$prescription) {
+            return response()->json(['message' => 'prescription not found'], 404);
+        }
         $prescription->note = $request->note;
         $prescription->save();
         return response()->json([
@@ -118,7 +127,13 @@ class PatientInfoController extends Controller
         }
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$doctor) {
+            return response()->json(['message' => 'Doctor not found'], 404);
+        }
         $clinic = Clinic::find($doctor->clinic_id);
+        if (!$clinic) {
+            return response()->json(['message' => 'Clinic not found'], 404);
+        }
         $analyse = Analyse::create([
             'name' => $request->name,
             'description' => $request->description,
@@ -135,6 +150,15 @@ class PatientInfoController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
+        $validator = Validator::make($request->all(), [
+            'status' => 'string|required',
+            'patient_id' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
         $analysis = Analyse::where('patient_id', $request->patient_id)
             ->where('status', $request->status)
             ->select(
@@ -153,6 +177,16 @@ class PatientInfoController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
+        $validator = Validator::make($request->all(), [
+            'status' => 'string|required',
+            'patient_id' => 'required',
+            'clinic_id' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
         $analysis = Analyse::where('patient_id', $request->patient_id)
             ->where('status', $request->status)
             ->where('clinic_id', $request->clinic_id)
@@ -172,6 +206,20 @@ class PatientInfoController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
+        $validator = Validator::make($request->all(), [
+            'prescription_id' => 'required|exists:prescriptions,id',
+            'appointment_id' => 'required|exists:appointments,id',
+            'symptoms' => 'nullable|string',
+            'diagnosis' => 'nullable|string',
+            'doctorNote' => 'nullable|string',
+            'patientNote' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->all()
+            ], 422);
+        }
         $madicalTnfo = MedicalInfo::create([
             'prescription_id' => $request->prescription_id,
             'appointment_id' => $request->appointment_id,
@@ -181,9 +229,15 @@ class PatientInfoController extends Controller
             'patientNote' => $request->patientNote,
         ]);
         $appointment = Appointment::find($request->appointment_id);
+        if (!$appointment) {
+            return response()->json(['message' => 'Appointment not found'], 404);
+        }
         if ($appointment->parent_id == null) {
             $user = Auth::user();
             $doctor = Doctor::where('user_id', $user->id)->first();
+            if (!$doctor) {
+                return response()->json(['message' => 'Doctor not found'], 404);
+            }
             $doctor->treated = $doctor->treated + 1;
             $doctor->save();
         }
@@ -193,6 +247,29 @@ class PatientInfoController extends Controller
             'message' => 'Medical information added successfully',
             'data' => $madicalTnfo,
         ], 201);
+    }
+    /////
+    public function showPatientProfile(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $validator = Validator::make($request->all(), [
+            'patient_id' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
+        $patient = Patient::select('id', 'first_name', 'last_name', 'age', 'gender', 'blood_type', 'address')
+            ->where('id', $request->patient_id)
+            ->first();
+
+        if (!$patient) {
+            return response()->json(['message' => 'patient not found'], 404);
+        }
+
+        return response()->json($patient, 200);
     }
     /////
     public function auth()

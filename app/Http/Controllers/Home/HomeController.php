@@ -8,9 +8,13 @@ use App\Models\Doctor;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\PharmacyTrait;
+
 
 class HomeController extends Controller
 {
+    use PharmacyTrait;
+
     public function showDoctors()
     {
         $auth = $this->auth();
@@ -102,6 +106,27 @@ class HomeController extends Controller
         $clinics = Clinic::select('id', 'name', 'numOfDoctors', 'location')->get();
         return response()->json($clinics, 200);
     }
+    /////
+    public function showAllPharmacies(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        return $this->getAllPharmacies($request);
+    }
+    /////
+    public function searchPharmacy(Request $request) //by name
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        return $this->searchPharmacyByName($request);
+    }
+    /////
+    public function getPharmacyById(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        return $this->getPharmacy($request);
+    }
 
     //-------------------------------------------------------------------
 
@@ -113,6 +138,9 @@ class HomeController extends Controller
             return response()->json([
                 'message' => 'unauthorized'
             ], 401);
+        }
+        if ($user->role != 'patient') {
+            return response()->json('You do not have permission in this page', 400);
         }
     }
 

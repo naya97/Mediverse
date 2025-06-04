@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Doctor;
 use App\Http\Controllers\Controller;
 use App\Models\Clinic;
 use App\Models\Doctor;
+use App\Models\Patient;
 use App\Models\PatientReview;
 use App\Models\Review;
 use App\Models\Schedule;
@@ -18,21 +19,17 @@ class DoctorProfileController extends Controller
 {
     public function profile()
     {
+        $auth = $this->auth();
+        if ($auth) return $auth;
         $user = Auth::user();
-        if (!$user) {
-            return response()->json([
-                'message' => 'unauthorized'
-            ], 401);
-        }
-        if ($user->role != 'doctor') {
-            return response()->json([
-                'message' => 'you dont have permission'
-            ], 401);
-        }
         $doctor = Doctor::where('user_id', $user->id)->first();
-        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
         $clinic = Clinic::where('id', $doctor->clinic_id)->first();
-        $workDays = Schedule::where('doctor_id', $doctor->id)->where('clinic_id', $clinic->id)->get()->all();
+        if (!$clinic) return response()->json(['message' => 'Clinic Not Found'], 404);
+        $workDays = Schedule::where('doctor_id', $doctor->id)->where('clinic_id', $clinic->id)->get();
+        if ($workDays->isEmpty()) {
+            return response()->json(['message' => 'No schedule available yet'], 404);
+        }
         $schedule = [];
         foreach ($workDays as $workDay) {
             $schedule[] = [
@@ -61,19 +58,9 @@ class DoctorProfileController extends Controller
     /////
     public function editProfile(Request $request)
     {
+        $auth = $this->auth();
+        if ($auth) return $auth;
         $user = Auth::user();
-        if (!$user) {
-            return response()->json([
-                'message' => 'unauthorized'
-            ], 401);
-        }
-
-        if ($user->role !== 'doctor') {
-            return response()->json([
-                'message' => 'you dont have permission'
-            ], 401);
-        }
-
         $validator = Validator::make($request->all(), [
             'first_name' => 'string|nullable',
             'last_name' => 'string|nullable',
@@ -93,12 +80,12 @@ class DoctorProfileController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-               'message' =>  $validator->errors()->all()
+                'message' =>  $validator->errors()->all()
             ], 400);
         }
-        
+
         $doctor = Doctor::where('user_id', $user->id)->first();
-        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
         if ($request->hasFile('photo')) {
             if ($doctor->photo) {
                 $previousImagePath = public_path($doctor->photo);
@@ -140,19 +127,20 @@ class DoctorProfileController extends Controller
     /////
     public function schedule(Request $request)
     {
+        $auth = $this->auth();
+        if ($auth) return $auth;
         $user = Auth::user();
-        if (!$user) {
-            return response()->json([
-                'message' => 'unauthorized'
-            ], 401);
-        }
-        if ($user->role != 'doctor') {
-            return response()->json([
-                'message' => 'you dont have permission'
-            ], 401);
+        $validator = Validator::make($request->all(), [
+            'RosterDays' => 'required|array|min:1',
+            'RosterDays.*.day' => 'required|string',
+            'RosterDays.*.Shift' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()->all()], 422);
         }
         $doctor = Doctor::where('user_id', $user->id)->first();
-        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
         Schedule::where('doctor_id', $doctor->id)->delete();
         foreach ($request->RosterDays as $RosterDay) {
             $day = $RosterDay['day'];
@@ -171,76 +159,71 @@ class DoctorProfileController extends Controller
     /////
     public function availableWorkDays()
     {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json([
-                'message' => 'unauthorized'
-            ], 401);
-        }
-        if ($user->role != 'doctor') {
-            return response()->json([
-                'message' => 'you dont have permission'
-            ], 401);
+        if ($auth = $this->auth()) {
+            return $auth;
         }
 
+        $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
-        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
+
+        if (!$doctor) {
+            return response()->json(['message' => 'Doctor not found.'], 404);
+        }
+
         $days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'];
-        $schedule = [];
+        $shifts = [
+            'morning shift:from 9 AM to 3 PM',
+            'evening shift:from 3 PM to 9 PM',
+        ];
+
+        $availableSchedule = [];
+
         foreach ($days as $day) {
             $availableShifts = [];
-            $morningTakenByOther = Schedule::where('clinic_id', $doctor->clinic_id)
-                ->where('day', $day)
-                ->where('Shift', 'morning shift:from 9 AM to 3 PM')
-                ->where('doctor_id', '!=', $doctor->id)
-                ->exists();
 
-            if (!$morningTakenByOther) {
-                $availableShifts[] = 'morning shift:from 9 AM to 3 PM';
-            }
-            $eveningTakenByOther = Schedule::where('clinic_id', $doctor->clinic_id)
-                ->where('day', $day)
-                ->where('Shift', 'evening shift:from 3 PM to 9 PM')
-                ->where('doctor_id', '!=', $doctor->id)
-                ->exists();
+            foreach ($shifts as $shift) {
+                $isTaken = Schedule::where('clinic_id', $doctor->clinic_id)
+                    ->where('day', $day)
+                    ->where('Shift', $shift)
+                    ->where('doctor_id', '!=', $doctor->id)
+                    ->exists();
 
-            if (!$eveningTakenByOther) {
-                $availableShifts[] = 'evening shift:from 3 PM to 9 PM';
+                if (!$isTaken) {
+                    $availableShifts[] = $shift;
+                }
             }
 
             if (!empty($availableShifts)) {
-                $schedule[$day] = $availableShifts;
+                $availableSchedule[] = [
+                    'day' => $day,
+                    'available_shifts' => $availableShifts
+                ];
             }
         }
 
-        return response()->json($schedule, 200);
+        return response()->json($availableSchedule, 200);
     }
 
-    public function showDoctorReviews() {
+    public function showDoctorReviews()
+    {
 
+        if ($auth = $this->auth()) {
+            return $auth;
+        }
         $user = Auth::user();
-        if (!$user) {
-            return response()->json([
-                'message' => 'unauthorized'
-            ], 401);
-        }
-        if ($user->role != 'doctor') {
-            return response()->json([
-                'message' => 'you dont have permission'
-            ], 401);
-        }
-
         $doctor = Doctor::where('user_id', $user->id)->first();
-        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
-        
-        $reviews = PatientReview::with('review')->where('doctor_id', $doctor->id)->get();
 
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
+        $reviews = PatientReview::with(['review', 'patient'])->where('doctor_id', $doctor->id)->get();
         $response = [];
 
         foreach ($reviews as $patientReview) {
             if ($patientReview->review) {
                 $response[] = [
                     'patient_id' => $patientReview->patient_id,
+                    'patient first name' => $patientReview->patient->first_name,
+                    'patient last name' => $patientReview->patient->last_name,
                     'rate' => $patientReview->review->rate,
                     'comment' => $patientReview->review->comment,
                 ];
@@ -249,5 +232,20 @@ class DoctorProfileController extends Controller
 
 
         return response()->json($response, 200);
+    }
+    /////
+    public function auth()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
+        if ($user->role != 'doctor') {
+            return response()->json([
+                'message' => 'you dont have permission'
+            ], 401);
+        }
     }
 }

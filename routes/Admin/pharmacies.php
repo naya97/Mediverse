@@ -10,5 +10,8 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('add_Pharmacy', 'add');
         Route::post('update_Pharmacy', 'update');
         Route::post('delete_Pharmacy', 'delete');
+        Route::get('showAllPharmacies', 'showAllPharmacies');
+        Route::post('searchPharmacy', 'searchPharmacy');
+        Route::get('getPharmacyById', 'getPharmacyById');
     });
 });

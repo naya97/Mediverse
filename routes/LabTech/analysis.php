@@ -8,7 +8,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::controller(AnalysisController::class)->group(function () {
         Route::post('addAnalyse', 'addAnalyse');
         Route::post('showAllAnalysis', 'showAllAnalysis');
-        Route::post('showAnalyse', 'showAnalyse');
+        Route::get('showAnalyse', 'showAnalyse');
         Route::post('addAnalyseResult', 'addAnalyseResult');
     });
 });

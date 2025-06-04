@@ -7,9 +7,11 @@ use App\Models\Pharmacy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\PharmacyTrait;
 
 class PharmacyController extends Controller
 {
+    use PharmacyTrait;
     public function add(Request $request)
     {
         $validation = $this->validation($request);
@@ -61,6 +63,27 @@ class PharmacyController extends Controller
         return response()->json(['message' => 'Deleted successfully'], 200);
     }
     /////
+    public function showAllPharmacies(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        return $this->getAllPharmacies($request);
+    }
+    /////
+    public function searchPharmacy(Request $request) //by name
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        return $this->searchPharmacyByName($request);
+    }
+    /////
+    public function getPharmacyById(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        return $this->getPharmacy($request);
+    }
+    /////
     public function auth()
     {
         $user = Auth::user();
@@ -87,7 +110,7 @@ class PharmacyController extends Controller
         ]);
         if ($validator->fails()) {
             return response()->json([
-               'message' =>  $validator->errors()->all()
+                'message' =>  $validator->errors()->all()
             ], 422);
         }
     }
