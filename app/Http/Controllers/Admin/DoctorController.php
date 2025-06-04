@@ -35,6 +35,16 @@ class DoctorController extends Controller
         return response()->json($doctors, 200);
     }
 
+    public function showDoctorDetails(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $doctor = Doctor::where('id', $request->doctor_id)->first();
+        if(!$doctor) return response()->json(['message'=> 'Not Found'], 404);
+
+        return response()->json($doctor, 200);
+    }
+
     public function addDoctor(Request $request)  {
         $auth = $this->auth();
         if($auth) return $auth;
