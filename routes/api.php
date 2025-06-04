@@ -20,3 +20,17 @@ Route::middleware([JwtMiddleware::class])->group(function () {
 });
 
 Route::post('/auth/google', [GoogleAuthController::class, 'googleLogin']);
+
+
+Route::prefix('admin')->middleware(JwtMiddleware::class)->group(function () {
+    require __DIR__.'/Admin/clinic.php';
+    require __DIR__.'/Admin/dashboard.php';
+    require __DIR__.'/Admin/doctor.php';
+    require __DIR__.'/Admin/employee.php';
+    require __DIR__.'/Admin/pharmacies.php';
+});
+
+Route::prefix('secretary')->middleware(JwtMiddleware::class)->group(function () {
+    require __DIR__.'/Secretary/appointment.php';
+    require __DIR__.'/Secretary/payment.php';
+});
