@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
+use Illuminate\Validation\Rule;
 
 class DoctorProfileController extends Controller
 {
@@ -71,8 +72,8 @@ class DoctorProfileController extends Controller
             'photo' => 'image',
             'speciality' => 'string|nullable',
             'professional_title' => 'string|nullable',
-            'average_visit_duration' => 'required|string|nullable',
-            'visit_fee' => 'required|nullable',
+            'average_visit_duration' =>  ['nullable', Rule::in(['10 min', '15 min', '20 min', '30 min', '60 min'])],
+            'visit_fee' => 'numeric|nullable',
             'experience' => 'integer|nullable',
             'sign' => 'image',
             'status' => 'string|nullable'

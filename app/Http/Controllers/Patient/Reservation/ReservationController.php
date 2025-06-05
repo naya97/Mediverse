@@ -109,7 +109,7 @@ class ReservationController extends Controller
            ],401);
        }
 
-       if(!$user->role == 'patient') {
+       if($user->role != 'patient') {
            return response()->json([
                'message' => 'you dont have permission'
            ],401);
@@ -140,6 +140,7 @@ class ReservationController extends Controller
             ->get();
         
         $visitTime = Doctor::where('id',$request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
+        if(!$visitTime) return response()->json(['message' => 'Visit Time Not Availabe'], 404);
         $visitTime = (float) $visitTime; 
         $numOfPeopleInHour = floor(60 / $visitTime); 
         
@@ -224,7 +225,10 @@ class ReservationController extends Controller
         $schedule = Schedule::where('doctor_id',$request->doctor_id)
             ->where('day',$day)
             ->first();
+        if(!$schedule) return response()->json(['message' => 'Schedule Not Found'], 404);
         $doctor = Doctor::where('id',$request->doctor_id)->first();
+        if(!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
 
         $appointmentsNum = Appointment::where('schedule_id',$schedule->id)
             -> where('reservation_date',$dateFormatted)
@@ -233,10 +237,11 @@ class ReservationController extends Controller
         ->count();
 
         $visitTime = Doctor::where('id',$request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
+        if(!$visitTime) return response()->json(['message' => 'Visit Time Not Availabe'], 404);
         $visitTime = (float) $visitTime; 
 
         if($visitTime == 0 || $doctor->status == 'notAvailable') {
-            return response()->json('this doctor not available', 503);
+            return response()->json(['message' =>'this doctor not available'], 503);
         }
 
         $numOfPeopleInHour = floor(60 / $visitTime); 
@@ -280,7 +285,7 @@ class ReservationController extends Controller
             return response()->json($appointment,200);
         }
 
-        return response()->json('this time is full', 400);
+        return response()->json(['message' => 'this time is full'], 400);
 
     }
 
@@ -330,6 +335,7 @@ class ReservationController extends Controller
             ->where('day',$new_day)
         ->first();
 
+        if(!$schedule) return response()->json(['message' => 'schedule not found'], 404);
 
         $userTime = new DateTime($request->input('new_time'));
         if($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
@@ -360,6 +366,7 @@ class ReservationController extends Controller
             ->where('status', 'pending')
             ->first();
         // return $oldReservation;
+        if(!$oldReservation) return response()->json(['message' => 'reservation not found'], 404);
 
         $oldReservation->delete();
 
@@ -370,6 +377,8 @@ class ReservationController extends Controller
         ->count();
 
         $visitTime = Doctor::where('id',$request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
+        if(!$visitTime) return response()->json(['message' => 'Visit Time Not Availabe'], 404);
+
         $visitTime = (float) $visitTime; 
         $numOfPeopleInHour = floor(60 / $visitTime); 
 
@@ -388,7 +397,7 @@ class ReservationController extends Controller
             return response()->json($appointment,200);
         }
 
-        return response()->json('this time is full', 400);
+        return response()->json(['message' => 'this time is full'], 400);
     }
 
     public function cancelReservation(Request $request) {
@@ -407,15 +416,17 @@ class ReservationController extends Controller
             ],401);
         }
 
-        $patient = Patient::where('user_id',$user->id)->first();
+        // $patient = Patient::where('user_id',$user->id)->first();
 
         $reservation = Appointment::where('id',$request->reservation_id)->first();
+        if(!$reservation) return response()->json(['message' => 'Reservaion Not Found'], 404);
+
 
         $reservation->update([
             'status' => 'canceled',
         ]);
         $reservation->save();
 
-        return response()->json('reservation canceled successfully', 200);
+        return response()->json(['message' => 'reservation canceled successfully'], 200);
     }
 }

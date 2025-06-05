@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class DoctorController extends Controller
 {
@@ -56,6 +57,8 @@ class DoctorController extends Controller
             'email' => 'string|email|max:255|required|unique:users',
             'phone' => 'phone:SY|unique:users',
             'password' => ['required', 'string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/',],
+            'average_visit_duration' =>  ['required', Rule::in(['10 min', '15 min', '20 min', '30 min', '60 min'])],
+            'visit_fee' => 'required|numeric',
         ]);
 
         if ($validator->fails()) {
@@ -76,12 +79,15 @@ class DoctorController extends Controller
         $user->save();
 
         $clinic = Clinic::where('name',$request->department)->first();
+        if(!$clinic) return response()->json(['message' => 'clinic not found'], 404);
 
         $doctor = Doctor::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'user_id' => $user->id,
             'clinic_id' => $clinic->id,
+            'average_visit_duration' => $request->average_visit_duration,
+            'visit_fee' => $request->visit_fee,
         ]);
 
         $clinic->numOfDoctors += 1;
@@ -109,7 +115,7 @@ class DoctorController extends Controller
         $clinic->numOfDoctors -= 1;
         $clinic->save();
 
-        return response()->json('deleted successfully', 200);
+        return response()->json(['message' => 'deleted successfully'], 200);
     }
 
     public function showDoctorReviews(Request $request) {
