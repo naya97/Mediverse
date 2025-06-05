@@ -149,10 +149,10 @@ class PatientController extends Controller
         // if the user descide to change the pass
         if($request->filled('password')){
             if(! $request->filled('old_password')){
-                return response()->json(['message'=>'you have to enter old_password to change password']);
+                return response()->json(['message'=>'you have to enter old_password to change password'], 422);
             }
             if(! Hash::check($request->old_password,$user->password)){
-                return response()->json(['message'=>'old password is wrong']);
+                return response()->json(['message'=>'old password is wrong'], 422);
             }
         }
 

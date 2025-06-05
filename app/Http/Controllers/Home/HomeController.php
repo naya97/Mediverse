@@ -59,6 +59,7 @@ class HomeController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
         $doctor = Doctor::where('id', $request->doctor_id)->first();
+        if(!$doctor) return response()->json(['message' => 'doctor not found'], 404);
 
         $department = Clinic::where('id', $doctor->clinic_id)->select('name')->first();
         $doctor_details = User::where('id', $doctor->user_id)->select('first_name', 'last_name', 'phone')->first();
@@ -140,7 +141,7 @@ class HomeController extends Controller
             ], 401);
         }
         if ($user->role != 'patient') {
-            return response()->json('You do not have permission in this page', 400);
+            return response()->json(['message' => 'You do not have permission in this page'], 400);
         }
     }
 

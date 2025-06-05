@@ -177,6 +177,6 @@ class MedicalAnalysisController extends Controller
 
         $analyse->delete();
 
-        return response()->json('deleted successfully', 200);
+        return response()->json(['message' => 'deleted successfully'], 200);
     }
 }
