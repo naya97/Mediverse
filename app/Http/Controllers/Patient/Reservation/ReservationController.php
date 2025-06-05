@@ -33,14 +33,14 @@ class ReservationController extends Controller
             ],401);
         }
 
-        if(!$user->role == 'patient') {
+        if($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
             ],401);
         }
 
         $validator = Validator::make($request->all(), [
-            'clinic_id' => 'required|exists:clinics,id',
+            // 'clinic_id' => 'required|exists:clinics,id',
             'doctor_id' => 'required|exists:doctors,id',
         ]);
 
@@ -117,7 +117,7 @@ class ReservationController extends Controller
 
        $validator = Validator::make($request->all(), [
         
-        'clinic_id' => 'required|exists:clinics,id',
+        // 'clinic_id' => 'required|exists:clinics,id',
         'doctor_id' => 'required|exists:doctors,id',
         'date' => 'required|date_format:d/m/y',
         ]);
@@ -192,7 +192,7 @@ class ReservationController extends Controller
             ],401);
         }
 
-        if(!$user->role == 'patient') {
+        if($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
             ],401);
@@ -201,7 +201,7 @@ class ReservationController extends Controller
         $patient = Patient::where('user_id',$user->id)->first();
 
         $validator = Validator::make($request->all(), [
-            'clinic_id' => 'required|exists:clinics,id',
+            // 'clinic_id' => 'required|exists:clinics,id',
             'doctor_id' => 'required|exists:doctors,id',
             'date' => 'required|date_format:d/m/y',
             'time' => 'required|date_format:H:i'
@@ -294,7 +294,7 @@ class ReservationController extends Controller
             ],401);
         }
 
-        if(!$user->role == 'patient') {
+        if($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
             ],401);
@@ -401,7 +401,7 @@ class ReservationController extends Controller
             ],401);
         }
 
-        if(!$user->role == 'patient') {
+        if($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
             ],401);

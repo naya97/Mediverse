@@ -22,7 +22,7 @@ class MedicalAnalysisController extends Controller
             ],401);
         }
 
-        if(!$user->role == 'patient') {
+        if($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
             ],401);
@@ -55,7 +55,7 @@ class MedicalAnalysisController extends Controller
             ],401);
         }
 
-        if(!$user->role == 'patient') {
+        if($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
             ],401);
@@ -75,6 +75,8 @@ class MedicalAnalysisController extends Controller
             )
         ->get();
 
+        if(! $analysis) return response()->json(['message' => 'Not Found'], 404);
+
         return response()->json($analysis, 200);
     }
 
@@ -89,7 +91,7 @@ class MedicalAnalysisController extends Controller
             ],401);
         }
 
-        if(!$user->role == 'patient') {
+        if($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
             ],401);
@@ -150,13 +152,19 @@ class MedicalAnalysisController extends Controller
             ],401);
         }
 
-        if(!$user->role == 'patient') {
+        if($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
             ],401);
         }
 
         $analyse = Analyse::where('id', $request->analyse_id)->first();
+
+        if(!$analyse) {
+            return response()->json([
+                'message' => 'Not Found'
+            ], 404);
+        }
 
         if($analyse->result_photo) {
             $image_path = public_path($analyse->result_photo);

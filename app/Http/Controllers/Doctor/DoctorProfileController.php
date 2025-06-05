@@ -30,6 +30,7 @@ class DoctorProfileController extends Controller
             ], 401);
         }
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
         $clinic = Clinic::where('id', $doctor->clinic_id)->first();
         $workDays = Schedule::where('doctor_id', $doctor->id)->where('clinic_id', $clinic->id)->get()->all();
         $schedule = [];
@@ -97,6 +98,7 @@ class DoctorProfileController extends Controller
         }
         
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
         if ($request->hasFile('photo')) {
             if ($doctor->photo) {
                 $previousImagePath = public_path($doctor->photo);
@@ -150,6 +152,7 @@ class DoctorProfileController extends Controller
             ], 401);
         }
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
         Schedule::where('doctor_id', $doctor->id)->delete();
         foreach ($request->RosterDays as $RosterDay) {
             $day = $RosterDay['day'];
@@ -181,6 +184,7 @@ class DoctorProfileController extends Controller
         }
 
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
         $days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'];
         $schedule = [];
         foreach ($days as $day) {
@@ -227,6 +231,7 @@ class DoctorProfileController extends Controller
         }
 
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
         
         $reviews = PatientReview::with('review')->where('doctor_id', $doctor->id)->get();
 

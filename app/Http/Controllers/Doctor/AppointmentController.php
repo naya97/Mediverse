@@ -26,6 +26,7 @@ class AppointmentController extends Controller
         if ($auth) return $auth;
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
         $appointments = Appointment::whereIn('schedule_id', $scheduleIds)->get();
         $response = [];
@@ -55,6 +56,7 @@ class AppointmentController extends Controller
         if ($auth) return $auth;
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
         if ($request->status != 'today') {
             $appointments = Appointment::whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->get();
@@ -89,6 +91,8 @@ class AppointmentController extends Controller
         if ($auth) return $auth;
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
+
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
         if ($request->type == 'first time') {
             if ($request->status != 'today') {
@@ -149,6 +153,8 @@ class AppointmentController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
         $appointment = Appointment::find($request->id);
+        if(!$appointment) return response()->json(['message'=> 'Appointment Not Found'], 404);
+
         $patient = Patient::find($appointment->patient_id);
         if ($appointment->parent_id == null) {
             $type = 'first time';
@@ -173,7 +179,11 @@ class AppointmentController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
         $appointment = Appointment::find($request->appointment_id);
+        if(!$appointment) return response()->json(['message'=> 'Appointment Not Found'], 404);
+
         $medicalInfo = MedicalInfo::where('appointment_id', $appointment->id)->first();
+        if(!$medicalInfo) return response()->json(['message'=> 'MedicalInfo Not Found'], 404);
+
         $prescription = Prescription::find($medicalInfo->prescription_id);
         if ($prescription) {
             $medicines = Medicine::where('prescription_id', $prescription->id)->get()->all();
@@ -202,6 +212,8 @@ class AppointmentController extends Controller
         if ($auth) return $auth;
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
+
         $schedule[] = Schedule::where('doctor_id', $doctor->id)->get();
         return response()->json($schedule, 200);
     }
@@ -225,7 +237,9 @@ class AppointmentController extends Controller
 
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
+
         $schedule = Schedule::where('doctor_id', $doctor->id)->where('day', $day)->first();
+        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
 
         $mysqlDate = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
 
@@ -269,6 +283,8 @@ class AppointmentController extends Controller
         if ($auth) return $auth;
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->first();
+        if(!$doctor) return response()->json(['message'=> 'Doctor Not Found'], 404);
+
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
             'date' => 'required|date_format:d/m/y',

@@ -75,13 +75,15 @@ class PatientController extends Controller
             ],401);
         }
 
-        if(!$user->role == 'patient') {
+        if($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
             ],401);
         }
 
         $patient = Patient::where('user_id',$user->id)->first();
+        if(!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+
 
         $response = [
             'id' => $patient->id,
@@ -110,7 +112,7 @@ class PatientController extends Controller
             ],401);
         }
 
-        if(!$user->role == 'patient') {
+        if($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
             ],401);

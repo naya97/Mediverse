@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware([JwtMiddleware::class])->group(function () {
     Route::controller(ReservationController::class)->group(function () {
-        Route::post('/showDoctorWorkDays','showDoctorWorkDays');
+        Route::get('/showDoctorWorkDays','showDoctorWorkDays');
         Route::post('/showTimes','showTimes');
         Route::post('/addReservation','addReservation');
         Route::post('/editReservation','editReservation');

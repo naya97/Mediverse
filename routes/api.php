@@ -34,3 +34,23 @@ Route::prefix('secretary')->middleware(JwtMiddleware::class)->group(function () 
     require __DIR__.'/Secretary/appointment.php';
     require __DIR__.'/Secretary/payment.php';
 });
+
+Route::prefix('doctor')->middleware(JwtMiddleware::class)->group(function () {
+    require __DIR__.'/Doctor/appointments.php';
+    require __DIR__.'/Doctor/patientInfo.php';
+    require __DIR__.'/Doctor/profile.php';
+});
+
+Route::prefix('home')->middleware(JwtMiddleware::class)->group(function () {
+    require __DIR__.'/Home/home.php';
+});
+
+Route::prefix('labtech')->middleware(JwtMiddleware::class)->group(function () {
+    require __DIR__.'/LabTech/analysis.php';
+});
+
+Route::prefix('patient')->middleware(JwtMiddleware::class)->group(function () {
+    require __DIR__.'/patient/analysis.php';
+    require __DIR__.'/patient/reservation.php';
+    require __DIR__.'/patient/api.php';
+});

@@ -35,8 +35,10 @@ class AppointmentController extends Controller
         $appointments = Appointment::with('schedule.doctor')
             ->where('patient_id', $patient->id)
             ->where('status', $request->status)
-            ->get();
-    
+        ->get();
+
+        if(!$appointments) return response()->json(['message' => 'No Appointments yet'], 404);
+
         $response = [];
         foreach ($appointments as $appointment) {
             $doctor = $appointment->schedule->doctor ?? null;
@@ -75,7 +77,12 @@ class AppointmentController extends Controller
             ->where('patient_id', $patient->id)
         ->first();
 
+        if(!$appointment) return response()->json(['message' => 'Appointment Not Found'], 404);
+
         $doctor = $appointment->schedule->doctor;
+        if(!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
+
         $clinic = $doctor->clinic;
 
         if ($appointment->parent_id == null) $type = 'first time';
@@ -119,6 +126,9 @@ class AppointmentController extends Controller
             ->where('id', $request->appointment_id)
             ->where('patient_id', $patient->id)
         ->first();
+
+        if(!$appointment) return response()->json(['message' => 'Appointment Not Found'], 404);
+
 
         $medicalInfo = MedicalInfo::with('prescription.medicines')->where('appointment_id', $appointment->id)->first();
         if (!$medicalInfo) {
@@ -174,6 +184,8 @@ class AppointmentController extends Controller
         $patient = Patient::where('user_id', $user->id)->first();
 
         $prescription = Prescription::with('medicines')->where('id', $request->prescription_id)->first();
+        if(!$prescription) return response()->json(['message' => 'Pres$prescription Not Found'], 404);
+
 
         $medicines = $prescription->medicines;
 

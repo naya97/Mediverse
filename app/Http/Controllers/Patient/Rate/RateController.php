@@ -24,7 +24,7 @@ class RateController extends Controller
             ],401);
         }
 
-        if(!$user->role == 'patient') {
+        if($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
             ],401);
@@ -57,6 +57,7 @@ class RateController extends Controller
 
         // update final doctor rate 
         $doctor = Doctor::where('id',$request->doctor_id)->first();
+        if(!$doctor) return response()->json(['message' => 'Not Found', 404]);
         $lastRate = $doctor->finalRate;
         $newRate = $request->rate;
         $finalRate = ($lastRate + $newRate) / 2;
@@ -68,7 +69,7 @@ class RateController extends Controller
         return response()->json([
             'message' => 'ok',
             'data' => $review,
-        ]);
+        ], 200);
 
     }
 }
