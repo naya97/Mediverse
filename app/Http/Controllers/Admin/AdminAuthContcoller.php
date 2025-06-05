@@ -26,7 +26,6 @@ class AdminAuthContcoller extends Controller
                 'regex:/[A-Z]/',
             ],
         ]);
-
         if ($validator->fails()) {
             return response()->json([
                 'message' => $validator->errors()->all()

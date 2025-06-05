@@ -105,7 +105,20 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Successfully logged out']);
     }
-
+    /////
+    public function getUser()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
+        $user = User::select('id', 'first_name', 'last_name', 'email', 'phone', 'role')
+            ->where('id', $user->id)
+            ->first();
+        return response()->json($user, 200);
+    }
     /////
     public function handleGoogleLogin(Request $request)
     {
