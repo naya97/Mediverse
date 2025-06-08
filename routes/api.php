@@ -12,7 +12,6 @@ Route::get('/user', [AuthController::class, 'getUser']);
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
-Route::post('adminLogin', [AdminAuthContcoller::class, 'login']);
 
 Route::middleware([JwtMiddleware::class])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
@@ -27,6 +26,10 @@ Route::prefix('admin')->middleware(JwtMiddleware::class)->group(function () {
     require __DIR__ . '/Admin/doctor.php';
     require __DIR__ . '/Admin/employee.php';
     require __DIR__ . '/Admin/pharmacies.php';
+});
+
+Route::prefix('admin')->group(function() {
+    require __DIR__ . '/Admin/auth.php';
 });
 
 Route::prefix('secretary')->middleware(JwtMiddleware::class)->group(function () {
