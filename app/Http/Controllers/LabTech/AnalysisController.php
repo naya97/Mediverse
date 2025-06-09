@@ -20,23 +20,22 @@ class AnalysisController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'string|required',
             'description' => 'string',
-            'patientFirstName' => 'string|required',
-            'patientLastName' => 'string|required',
             'clinic_id' => 'required',
+            'patient_number' => 'required',
         ]);
         if ($validator->fails()) {
             return response()->json([
                 'message' =>  $validator->errors()->all()
             ], 422);
         }
-        $patient = Patient::where('first_name', $request->patientFirstName)->where('last_name', $request->patientLastName)->first();
+        $patient = Patient::find($request->patient_number);
         if (!$patient) {
             return response()->json(['message' => 'patient is not registered in the application'], 404);
         }
         $analyse = Analyse::create([
             'name' => $request->name,
             'description' => $request->description,
-            'patient_id' => $patient->id,
+            'patient_id' => $request->patient_number,
             'clinic_id' => $request->clinic_id,
         ]);
         return response()->json([
@@ -74,6 +73,7 @@ class AnalysisController extends Controller
                 'clinic' => $analyse->clinic->name ?? null,
                 'patient_first_name' => $analyse->patient->first_name ?? null,
                 'patient_last_name' => $analyse->patient->last_name ?? null,
+                'patient_number' => $analyse->patient_id,
             ];
         });
 
@@ -102,6 +102,7 @@ class AnalysisController extends Controller
             'clinic' => $analyse->clinic->name ?? null,
             'patient_first_name' => $analyse->patient->first_name ?? null,
             'patient_last_name' => $analyse->patient->last_name ?? null,
+            'patient_number' => $analyse->patient_id,
         ];
 
         return response()->json($response);
@@ -138,6 +139,48 @@ class AnalysisController extends Controller
         $analyse->status = 'finished';
         $analyse->save();
         return response()->json(['message' => 'added successfully'], 200);
+    }
+    /////
+
+    public function searchAnalyse(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'status' => 'required|string|in:pending,finished'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 422);
+        }
+        $results = Analyse::search($request->name)
+            ->where('status', $request->status)
+            ->get();
+        $results->load(['clinic', 'patient']);
+
+        if ($results->isEmpty()) {
+            return response()->json(['message' => 'Not Found'], 404);
+        }
+
+        $response = $results->map(function ($analyse) {
+            return [
+                'id' => $analyse->id,
+                'name' => $analyse->name,
+                'description' => $analyse->description,
+                'result_file' => $analyse->result_file,
+                'result_photo' => $analyse->result_photo,
+                'clinic' => $analyse->clinic->name ?? null,
+                'patient_first_name' => $analyse->patient->first_name ?? null,
+                'patient_last_name' => $analyse->patient->last_name ?? null,
+                'patient_number' => $analyse->patient_id,
+            ];
+        });
+
+        return response()->json($response, 200);
     }
 
     /////
