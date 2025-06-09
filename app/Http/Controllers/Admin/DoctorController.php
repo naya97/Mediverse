@@ -20,30 +20,60 @@ class DoctorController extends Controller
         $auth = $this->auth();
         if($auth) return $auth;
 
-        $doctors = Doctor::select(
-                'id',
-                'first_name',
-                'last_name',
-                'clinic_id',
-                'photo',
-                'speciality',
-                'finalRate',
-                'visit_fee',
-                'treated',
-                'status'
-                )
-            -> get();
-        return response()->json($doctors, 200);
+        $doctors = Doctor::with('user')->get();
+
+        $response = [];
+        foreach($doctors as $doctor){
+            $response [] = [
+                'id' => $doctor->id,
+                'first_name' => $doctor->first_name,
+                'last_name' => $doctor->last_name,
+                'clinic_id' => $doctor->clinic_id,
+                'photo' => $doctor->photo,
+                'speciality' => $doctor->speciality,
+                'finalRate' => $doctor->finalRate,
+                'visit_fee' => $doctor->visit_fee,
+                'treated' => $doctor->treated,
+                'professional_title' => $doctor->professional_title,
+                'average_visit_duration' => $doctor->average_visit_duration,
+                'experience' => $doctor->experience,
+                'treated' => $doctor->treated,
+                'status' => $doctor->status,
+                'phone' => optional($doctor->user)->phone,
+                'email' => optional($doctor->user)->email,
+            ];
+        }
+        
+        return response()->json($response, 200);
     }
 
     public function showDoctorDetails(Request $request) {
         $auth = $this->auth();
         if($auth) return $auth;
 
-        $doctor = Doctor::where('id', $request->doctor_id)->first();
+        $doctor = Doctor::with('user')->where('id', $request->doctor_id)->first();
         if(!$doctor) return response()->json(['message'=> 'Not Found'], 404);
 
-        return response()->json($doctor, 200);
+        $response = [
+                'id' => $doctor->id,
+                'first_name' => $doctor->first_name,
+                'last_name' => $doctor->last_name,
+                'clinic_id' => $doctor->clinic_id,
+                'photo' => $doctor->photo,
+                'speciality' => $doctor->speciality,
+                'finalRate' => $doctor->finalRate,
+                'visit_fee' => $doctor->visit_fee,
+                'treated' => $doctor->treated,
+                'professional_title' => $doctor->professional_title,
+                'average_visit_duration' => $doctor->average_visit_duration,
+                'experience' => $doctor->experience,
+                'treated' => $doctor->treated,
+                'status' => $doctor->status,
+                'phone' =>  optional($doctor->user)->phone,
+                'email' => optional($doctor->user)->email,
+            ];
+
+        return response()->json($response, 200);
     }
 
     public function addDoctor(Request $request)  {
@@ -51,7 +81,7 @@ class DoctorController extends Controller
         if($auth) return $auth;
         
         $validator = Validator::make($request->all(), [
-            'department' => 'required|string',
+            'clinic_id' => 'required|string',
             'first_name' => 'string|required',
             'last_name' => 'string|required',
             'email' => 'string|email|max:255|required|unique:users',
@@ -67,6 +97,9 @@ class DoctorController extends Controller
             ], 400);
         }
 
+        $clinic = Clinic::where('id',$request->clinic_id)->first();
+        if(!$clinic) return response()->json(['message' => 'clinic not found'], 404);
+
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
@@ -77,9 +110,6 @@ class DoctorController extends Controller
         ]);
 
         $user->save();
-
-        $clinic = Clinic::where('name',$request->department)->first();
-        if(!$clinic) return response()->json(['message' => 'clinic not found'], 404);
 
         $doctor = Doctor::create([
             'first_name' => $request->first_name,
@@ -145,7 +175,7 @@ class DoctorController extends Controller
             ], 401);
         }
         if ($user->role != 'admin') {
-            return response()->json('You do not have permission in this page', 400);
+            return response()->json(['message' => 'You do not have permission in this page'], 400);
         }
     }
 }
