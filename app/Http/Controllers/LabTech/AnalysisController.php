@@ -13,6 +13,14 @@ use Illuminate\Support\Facades\Validator;
 
 class AnalysisController extends Controller
 {
+    public function showClinics()
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $clinics = Clinic::select('id', 'name', 'numOfDoctors', 'location')->get();
+        return response()->json($clinics, 200);
+    }
+    
     public function addAnalyse(Request $request)
     {
         $auth = $this->auth();

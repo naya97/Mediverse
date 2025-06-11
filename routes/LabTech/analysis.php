@@ -9,6 +9,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('addAnalyse', 'addAnalyse');
         Route::post('showAllAnalysis', 'showAllAnalysis');
         Route::get('showAnalyse', 'showAnalyse');
+        Route::get('showClinics', 'showClinics');
         Route::post('addAnalyseResult', 'addAnalyseResult');
         Route::post('searchAnalyse', 'searchAnalyse');
     });
