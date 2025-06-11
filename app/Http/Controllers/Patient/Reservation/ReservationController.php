@@ -162,7 +162,7 @@ class ReservationController extends Controller
         foreach($period as $time) {
         
             $timeFormatted = $time->format('H:i:s');
-            $count = $appointments->where('timeSelected', $timeFormatted)->count();
+            $count = $appointments->where('timeSelected', $timeFormatted)->where('status', 'pending')->count();
             if($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
                 if($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time){
                     continue;
@@ -273,6 +273,18 @@ class ReservationController extends Controller
         $newTimeFormatted = Carbon::parse($request->time);
         if($appointmentsNum == $numOfPeopleInHour) $timeSelected = $newTimeFormatted->addHours(1)->toTimeString();
         else $timeSelected = $timeFormatted;
+
+        $numOfPatientReservation = Appointment::where('patient_id', $patient->id)
+            ->where('schedule_id',$schedule->id)
+            ->where('reservation_date',$dateFormatted)
+            ->where('status', 'pending')
+        ->count();
+
+        if($numOfPatientReservation > 0 ) {
+            return response()->json([
+                'message' => 'You already appointment at this time'
+            ], 400);
+        }
 
         if($appointmentsNum < $numOfPeopleInHour) {
             $appointment = Appointment::create([
