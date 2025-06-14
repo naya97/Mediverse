@@ -11,7 +11,8 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('showAnalyse', 'showAnalyse');
         Route::get('showClinics', 'showClinics');
         Route::post('addAnalyseResult', 'addAnalyseResult');
-        Route::post('searchAnalyse', 'searchAnalyse');
+        Route::post('searchAnalyseByName', 'searchAnalyseByName');
+        Route::post('searchAnalyseByPatientNum', 'searchAnalyseByPatientNum');
         Route::post('addBill', 'addBill');
     });
 });

@@ -36,6 +36,7 @@ class Analyse extends Model
     {
         return [
             'name' => $this->name,
+            'patient_id' => $this->patient_id,
         ];
     }
 }

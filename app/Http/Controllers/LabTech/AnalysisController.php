@@ -144,7 +144,7 @@ class AnalysisController extends Controller
             return response()->json(['error' => 'Analyse not found'], 404);
         }
         if ($analyse->payment_status == 'pending') {
-            return response()->json('this patient did not pay for this analyse yet', 402);
+            return response()->json(['message' => 'this patient did not pay for this analyse yet'], 402);
         }
         if ($request->hasFile('result_photo')) {
             $path1 = $request->result_photo->store('images/patients/analysis', 'public');
@@ -160,7 +160,7 @@ class AnalysisController extends Controller
     }
     /////
 
-    public function searchAnalyse(Request $request)
+    public function searchAnalyseByName(Request $request)
     {
         $auth = $this->auth();
         if ($auth) return $auth;
@@ -175,8 +175,37 @@ class AnalysisController extends Controller
                 'message' =>  $validator->errors()->all()
             ], 422);
         }
-        $results = Analyse::search($request->name)
-            ->where('status', $request->status)
+        $search = $this->searchAnalyse($request->name, $request->status);
+        if ($search) return $search;
+    }
+    /////
+    public function searchAnalyseByPatientNum(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $validator = Validator::make($request->all(), [
+            'patient_id' => 'required|numeric',
+            'status' => 'required|string|in:pending,finished'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 422);
+        }
+        $patient = Patient::find($request->patient_id);
+        if (!$patient) {
+            return response()->json(['message' => 'patient not found'], 404);
+        }
+        $search = $this->searchAnalyse($request->patient_id, $request->status);
+        if ($search) return $search;
+    }
+    /////
+    public function searchAnalyse($type, $status)
+    {
+        $results = Analyse::search($type)
+            ->where('status', $status)
             ->get();
         $results->load(['clinic', 'patient']);
 
