@@ -21,11 +21,17 @@ return new class extends Migration
                 ->constrained('clinics')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
+            $table->foreignId('doctor_id')->nullable()
+                ->constrained('doctors')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
             $table->string('name');
             $table->string('description')->nullable();
             $table->string('result_file')->nullable();
             $table->string('result_photo')->nullable();
             $table->enum('status', ['pending', 'finished'])->default('pending');
+            $table->float('price')->default(0);
+            $table->enum('payment_status', ['pending', 'paid'])->default('pending');
             $table->timestamps();
         });
     }

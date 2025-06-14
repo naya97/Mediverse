@@ -336,6 +336,7 @@ class AppointmentController extends Controller
             ->get();
 
         $visitTime = Doctor::where('id', $doctor->id)->select('average_visit_duration')->first()->average_visit_duration;
+        if (!$visitTime) return response()->json(['message' => 'Visit Time Not Availabe'], 404);
         $visitTime = (float) $visitTime;
         $numOfPeopleInHour = floor(60 / $visitTime);
 
@@ -356,7 +357,7 @@ class AppointmentController extends Controller
         foreach ($period as $time) {
 
             $timeFormatted = $time->format('H:i:s');
-            $count = $appointments->where('timeSelected', $timeFormatted)->count();
+            $count = $appointments->where('timeSelected', $timeFormatted)->where('status', 'pending')->count();
             if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
                 if ($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time) {
                     continue;
@@ -369,7 +370,7 @@ class AppointmentController extends Controller
 
         if ($available_times == []) {
             return response()->json([
-                'message' => 'you are not available in this date'
+                'message' => 'this doctor is not available in this date'
             ], 400);
         }
 

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->integer('numOfDoctors')->default(0);
-            $table->string('location');
+            $table->string('photo')->nullable();
             $table->timestamps();
         });
     }

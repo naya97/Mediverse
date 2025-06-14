@@ -20,7 +20,7 @@ class AnalysisController extends Controller
         $clinics = Clinic::select('id', 'name', 'numOfDoctors', 'location')->get();
         return response()->json($clinics, 200);
     }
-    
+
     public function addAnalyse(Request $request)
     {
         $auth = $this->auth();
@@ -30,6 +30,7 @@ class AnalysisController extends Controller
             'description' => 'string',
             'clinic_id' => 'required',
             'patient_number' => 'required',
+            'price' => 'required'
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -45,6 +46,8 @@ class AnalysisController extends Controller
             'description' => $request->description,
             'patient_id' => $request->patient_number,
             'clinic_id' => $request->clinic_id,
+            'price' => $request->price,
+            'payment_status' => 'paid',
         ]);
         return response()->json([
             'message' => 'analyse created successfully',
@@ -82,6 +85,8 @@ class AnalysisController extends Controller
                 'patient_first_name' => $analyse->patient->first_name ?? null,
                 'patient_last_name' => $analyse->patient->last_name ?? null,
                 'patient_number' => $analyse->patient_id,
+                'payment status' => $analyse->payment_status,
+                'price' => $analyse->price,
             ];
         });
 
@@ -111,6 +116,8 @@ class AnalysisController extends Controller
             'patient_first_name' => $analyse->patient->first_name ?? null,
             'patient_last_name' => $analyse->patient->last_name ?? null,
             'patient_number' => $analyse->patient_id,
+            'payment status' => $analyse->payment_status,
+            'price' => $analyse->price,
         ];
 
         return response()->json($response);
@@ -135,6 +142,9 @@ class AnalysisController extends Controller
         $analyse = Analyse::find($request->id);
         if (!$analyse) {
             return response()->json(['error' => 'Analyse not found'], 404);
+        }
+        if ($analyse->payment_status == 'pending') {
+            return response()->json('this patient did not pay for this analyse yet', 402);
         }
         if ($request->hasFile('result_photo')) {
             $path1 = $request->result_photo->store('images/patients/analysis', 'public');
@@ -185,10 +195,39 @@ class AnalysisController extends Controller
                 'patient_first_name' => $analyse->patient->first_name ?? null,
                 'patient_last_name' => $analyse->patient->last_name ?? null,
                 'patient_number' => $analyse->patient_id,
+                'payment status' => $analyse->payment_status,
+                'price' => $analyse->price,
             ];
         });
 
         return response()->json($response, 200);
+    }
+    /////
+    public function addBill(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $validator = Validator::make($request->all(), [
+            'analyse_id' => 'required|exists:analyses,id',
+            'price' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 422);
+        }
+        $analyse = Analyse::where('status', 'pending')
+            ->where('payment_status', 'pending')
+            ->where('id', $request->analyse_id)
+            ->first();
+
+        if (!$analyse) return response()->json(['message' => 'analyse not found'], 404);
+
+        $analyse->price = $request->price;
+        $analyse->payment_status = 'paid';
+        $analyse->save();
+
+        return response()->json('successfully payed', 200);
     }
 
     /////

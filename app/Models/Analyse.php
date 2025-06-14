@@ -17,6 +17,9 @@ class Analyse extends Model
         'status',
         'patient_id',
         'clinic_id',
+        'payment_status',
+        'price',
+        'doctor_id'
     ];
 
     public function patient(): BelongsTo

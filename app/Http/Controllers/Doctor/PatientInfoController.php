@@ -139,10 +139,11 @@ class PatientInfoController extends Controller
             'description' => $request->description,
             'patient_id' => $request->patient_id,
             'clinic_id' => $clinic->id,
+            'doctor_id' => $doctor->id
         ]);
         return response()->json([
             'message' => 'analyse created successfully',
-            'data' => $analyse,
+            'data' => $analyse
         ], 201);
     }
     /////
