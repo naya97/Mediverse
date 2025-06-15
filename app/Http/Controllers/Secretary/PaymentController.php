@@ -9,24 +9,27 @@ use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {
-    public function addBill(Request $request) {
+    public function addBill(Request $request)
+    {
         $auth = $this->auth();
-        if($auth) return $auth;
+        if ($auth) return $auth;
 
         $appointment = Appointment::where('status', 'pending')
             ->where('payment_status', 'pending')
             ->where('id', $request->appointment_id)
-        ->first();
+            ->first();
 
-        if(!$appointment) return response()->json(['message' => 'appointment not found'], 404);
+        if (!$appointment) return response()->json(['message' => 'appointment not found'], 404);
 
         $appointment->price = $request->price;
+        $appointment->payment_status = 'paid';
         $appointment->save();
 
-        return response()->json('successfully payed');
+        return response()->json(['message' => 'successfully payed'], 200);
     }
 
-    public function auth() {
+    public function auth()
+    {
         $user = Auth::user();
         if (!$user) {
             return response()->json([

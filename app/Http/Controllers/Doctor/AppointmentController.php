@@ -17,10 +17,14 @@ use Carbon\CarbonPeriod;
 use DateInterval;
 use DatePeriod;
 use DateTime;
+use App\CancelAppointmentsTrait;
+
 use Illuminate\Support\Facades\Validator;
 
 class AppointmentController extends Controller
 {
+    use CancelAppointmentsTrait;
+
     public function showAllAppointments()
     {
         $auth = $this->auth();
@@ -44,7 +48,8 @@ class AppointmentController extends Controller
                 'reservation date' => $appointment->reservation_date,
                 'reservation hour' => $appointment->timeSelected,
                 'status' => $appointment->status,
-                'appointment type' => $type
+                'appointment type' => $type,
+                'payment_status' => $appointment->payment_status,
             ];
         }
         return response()->json($response, 200);
@@ -86,7 +91,8 @@ class AppointmentController extends Controller
                 'reservation date' => $appointment->reservation_date,
                 'reservation hour' => $appointment->timeSelected,
                 'status' => $appointment->status,
-                'appointment type' => $type
+                'appointment type' => $type,
+                'payment_status' => $appointment->payment_status,
             ];
         }
         return response()->json($response, 200);
@@ -137,6 +143,7 @@ class AppointmentController extends Controller
                 'reservation hour' => $appointment->timeSelected,
                 'status' => $appointment->status,
                 'type' => $type,
+                'payment_status' => $appointment->payment_status,
             ];
         }
         return response()->json($response, 200);
@@ -173,7 +180,8 @@ class AppointmentController extends Controller
                 'reservation date' => $appointment->reservation_date,
                 'reservation hour' => $appointment->timeSelected,
                 'status' => $appointment->status,
-                'appointment type' => $type
+                'appointment type' => $type,
+                'payment_status' => $appointment->payment_status,
             ];
         }
         return response()->json($response, 200);
@@ -206,7 +214,8 @@ class AppointmentController extends Controller
             'reservation date' => $appointment->reservation_date,
             'reservation hour' => $appointment->timeSelected,
             'status' => $appointment->status,
-            'appointment type' => $type
+            'appointment type' => $type,
+            'payment_status' => $appointment->payment_status,
         ];
 
         return response()->json($response, 200);
@@ -469,6 +478,22 @@ class AppointmentController extends Controller
         return response()->json('this time is full', 400);
     }
     /////
+    public function editSchedule(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $user = Auth::user();
+        $doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+        return $this->editDoctorSchedule($request, $doctor->id);
+    }
+    /////  
+    public function cancelAppointment(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        return $this->cancelAnAppointment($request);
+    }
 
     public function auth()
     {

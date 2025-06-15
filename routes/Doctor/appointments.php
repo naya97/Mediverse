@@ -17,5 +17,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
                 Route::get('showDoctorWorkDays', 'showDoctorWorkDays');
                 Route::post('showTimes', 'showTimes');
                 Route::post('addCheckup', 'addCheckup');
+                Route::post('editSchedule', 'editSchedule');
+                Route::get('cancelAppointment', 'cancelAppointment');
         });
 });
