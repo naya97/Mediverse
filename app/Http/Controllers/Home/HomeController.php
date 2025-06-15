@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\PharmacyTrait;
-
+use Symfony\Component\VarDumper\Caster\DoctrineCaster;
 
 class HomeController extends Controller
 {
@@ -127,6 +127,17 @@ class HomeController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
         return $this->getPharmacy($request);
+    }
+
+    public function topRatedDoctors() {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $doctors = Doctor::orderBy('finalRate', 'desc')->take(5)->get();
+
+        return response()->json([
+            'top rated doctors' => $doctors,
+        ], 200);
     }
 
     //-------------------------------------------------------------------

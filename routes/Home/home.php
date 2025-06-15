@@ -16,5 +16,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('showAllPharmacies', 'showAllPharmacies');
         Route::post('searchPharmacy', 'searchPharmacy');
         Route::get('getPharmacyById', 'getPharmacyById');
+        Route::get('topRatedDoctors', 'topRatedDoctors');
     });
 });
