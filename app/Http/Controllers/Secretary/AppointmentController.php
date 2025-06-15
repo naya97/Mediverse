@@ -8,6 +8,9 @@ use App\Models\Schedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Stripe\Refund;
+use Stripe\Stripe;
 
 class AppointmentController extends Controller
 {
@@ -232,14 +235,28 @@ class AppointmentController extends Controller
             ->whereIn('timeSelected', [$start_leave_time, $end_leave_time])
         ->get();
 
-        foreach($appointments as $appointment) {
-            $appointment->status = 'canceled';
-            $appointment->save();
+        Stripe::setApiKey(env('STRIPE_SECRET'));
+
+        foreach ($appointments as $appointment) {
+
+        if ($appointment->payment_status == 'paid' && $appointment->payment_intent_id) {
+            try {
+                Refund::create([
+                    'payment_intent' => $appointment->payment_intent_id,
+                ]);
+            } catch (\Exception $e) {
+                Log::error("Stripe refund failed for appointment ID {$appointment->id}: " . $e->getMessage());
+            }
         }
+
+        $appointment->status = 'canceled';
+        $appointment->save();
+    }
+
 
 
         return response()->json([
-            'message' => 'canceled successfully',
+            'message' => 'Appointments canceled and refunds processed (if applicable).'
         ],200);
     }
 
