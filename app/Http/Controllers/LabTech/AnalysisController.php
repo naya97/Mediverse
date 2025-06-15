@@ -17,7 +17,7 @@ class AnalysisController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
-        $clinics = Clinic::select('id', 'name', 'numOfDoctors', 'location')->get();
+        $clinics = Clinic::select('id', 'name', 'numOfDoctors' )->get();
         return response()->json($clinics, 200);
     }
 

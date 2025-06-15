@@ -184,7 +184,7 @@ class PaymentController extends Controller
             return response()->json(['message' => $validator->errors()->all()], 400);
         }
 
-        $reservation = Appointment::find($request->reservation_id);
+        $reservation = Appointment::with('schedule.doctor')->find($request->reservation_id);
 
         if ($reservation->patient_id !== $patient->id) {
             return response()->json(['message' => 'You do not have permission to confirm this reservation'], 403);
@@ -197,6 +197,7 @@ class PaymentController extends Controller
 
             if ($intent->status === 'succeeded' && $reservation->payment_intent_id === $request->payment_intent_id) {
                 $reservation->payment_status = 'paid';
+                $reservation->price = $reservation->schedule->doctor->visit_fee;
                 $reservation->save();
 
                 return response()->json([
@@ -237,6 +238,7 @@ class PaymentController extends Controller
 
         if ($reservation->payment_status != 'paid') {
             $reservation->status = 'cancelled';
+            $reservation->price = 0;
             $reservation->save();
 
             return response()->json(['message' => 'Reservation cancelled (not paid).'], 200);
@@ -264,6 +266,25 @@ class PaymentController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    public function showWalletRange() {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
+        if ($user->role != 'patient') {
+            return response()->json('You do not have permission in this page', 400);
+        }
+
+        $patient = Patient::where('user_id', $user->id)->first();
+        if(!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+
+        return response()->json([
+            'wallet' => $patient->wallet,
+        ], 200);
     }
 
     public function auth() {

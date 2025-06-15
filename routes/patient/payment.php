@@ -13,5 +13,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('/createReservationPaymentIntent','createReservationPaymentIntent');
         Route::post('/confirmReservationPayment','confirmReservationPayment');
         Route::post('/cancelReservationAndRefund','cancelReservationAndRefund');
+        Route::get('/showWalletRange','showWalletRange');
     });
 });
