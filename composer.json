@@ -17,6 +17,7 @@
         "overtrue/socialite": "*",
         "propaganistas/laravel-phone": "^6.0",
         "still-code/ar-php-laravel": "^2.0",
+        "stripe/stripe-php": "^17.3",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {

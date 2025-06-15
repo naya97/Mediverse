@@ -22,6 +22,7 @@ return new class extends Migration
             $table->enum('gender', ['male', 'female'])->nullable();
             $table->enum('blood_type', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])->nullable();
             $table->string('address')->nullable();
+            $table->decimal('wallet', 10, 2)->default(0);
             $table->timestamps();
         });
     }

@@ -14,8 +14,11 @@ class PaymentController extends Controller
         if($auth) return $auth;
 
         $appointment = Appointment::where('status', 'pending')
+            ->where('payment_status', 'pending')
             ->where('id', $request->appointment_id)
         ->first();
+
+        if(!$appointment) return response()->json(['message' => 'appointment not found'], 404);
 
         $appointment->price = $request->price;
         $appointment->save();

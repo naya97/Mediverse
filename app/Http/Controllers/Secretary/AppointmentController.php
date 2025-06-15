@@ -32,6 +32,7 @@ class AppointmentController extends Controller
                 'visit_fee' => $appointment->schedule->doctor->visit_fee ,
                 'price' => $appointment->price,
                 'reservation_date' => $appointment->reservation_date,
+                'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
             ];
@@ -69,6 +70,7 @@ class AppointmentController extends Controller
                 'visit_fee' => $appointment->schedule->doctor->visit_fee ,
                 'price' => $appointment->price,
                 'reservation_date' => $appointment->reservation_date,
+                'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
             ];
@@ -103,6 +105,7 @@ class AppointmentController extends Controller
                 'visit_fee' => $appointment->schedule->doctor->visit_fee ,
                 'price' => $appointment->price,
                 'reservation_date' => $appointment->reservation_date,
+                'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
             ];
@@ -137,6 +140,7 @@ class AppointmentController extends Controller
                 'visit_fee' => $appointment->schedule->doctor->visit_fee ,
                 'price' => $appointment->price,
                 'reservation_date' => $appointment->reservation_date,
+                'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
             ];
@@ -175,6 +179,7 @@ class AppointmentController extends Controller
                 'visit_fee' => $appointment->schedule->doctor->visit_fee ,
                 'price' => $appointment->price,
                 'reservation_date' => $appointment->reservation_date,
+                'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
             ];

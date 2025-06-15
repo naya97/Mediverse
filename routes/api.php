@@ -55,4 +55,5 @@ Route::prefix('patient')->middleware(JwtMiddleware::class)->group(function () {
     require __DIR__ . '/patient/analysis.php';
     require __DIR__ . '/patient/reservation.php';
     require __DIR__ . '/patient/api.php';
+    require __DIR__ . '/patient/payment.php';
 });
