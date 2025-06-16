@@ -7,11 +7,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\AdminAuthContcoller;
+use App\Http\Controllers\Notifications\NotificationController;
 use App\Services\FirebaseService;
 
 Route::get('/user', [AuthController::class, 'getUser']);
 
-Route::post('send_notification', [FirebaseService::class, 'sendToToken']);
+Route::post('send_notification', [NotificationController::class, 'sendPushNotification']);
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);

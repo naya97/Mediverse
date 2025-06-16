@@ -14,26 +14,15 @@ class FirebaseService
     public function __construct()
     {
         $factory = (new Factory)
-            ->withServiceAccount(storage_path('app/firebase/mediverse-1bc4d-firebase-adminsdk-fbsvc-e845b66289.json'))
-            ->withDatabaseUri('https://mediverse-1bc4d.firebaseio.com'); // اضف URI الخاص بك;
-
+            ->withServiceAccount(storage_path('app/firebase/mediverse-1bc4d-firebase-adminsdk-fbsvc-e845b66289.json'));
         $this->messaging = $factory->createMessaging();
     }
 
-    public function sendToToken(Request $request)
+    public function sendNotification($token, $title, $body, $data = [])
     {
-        $request->validate([
-            'token' => 'required|string',
-            'title' => 'required|string',
-            'body' => 'required|string',
-        ]);
-
-        $token = $request->input('token');
-        $title = $request->input('title');
-        $body = $request->input('body');
-
-        $message = CloudMessage::withTarget('token', $token)
-            ->withNotification(Notification::create($title, $body));
+        $message = CloudMessage::new()->withTarget('token', $token)
+            ->withNotification(Notification::create($title, $body))
+            ->withData($data);
 
         return $this->messaging->send($message);
     }
