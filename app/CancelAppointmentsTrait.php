@@ -10,24 +10,40 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Stripe\Refund;
 use Stripe\Stripe;
+use Illuminate\Support\Facades\Validator;
 
 trait CancelAppointmentsTrait
 {
 
+
     public function editDoctorSchedule(Request $request, $doctor)
     {
-        // $schedule = Schedule::where('doctor_id',$request->doctor_id)->where('day',$request->scheduleDay)->first();
+        $validator = Validator::make($request->all(), [
+            'start_leave_date' => 'required|date_format:d-m-Y',
+            'end_leave_date' => 'required|date_format:d-m-Y|after_or_equal:start_leave_date',
+            'start_leave_time' => 'required|date_format:H:i',
+            'end_leave_time' => 'required|date_format:H:i|after_or_equal:start_leave_time',
+        ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->all()
+            ], 400);
+        }
+
+        // Parsing dates and times after validation
         $start_leave_date = Carbon::createFromFormat('d-m-Y', $request->start_leave_date)->format('Y-m-d');
         $end_leave_date = Carbon::createFromFormat('d-m-Y', $request->end_leave_date)->format('Y-m-d');
         $start_leave_time = Carbon::createFromFormat('H:i', $request->start_leave_time)->format('H:i');
         $end_leave_time = Carbon::createFromFormat('H:i', $request->end_leave_time)->format('H:i');
 
-
         $date = Carbon::createFromFormat('d-m-Y', $request->start_leave_date);
         $day = $date->format('l');
         $schedule = Schedule::where('doctor_id', $doctor)->where('day', $day)->first();
-        if (!$schedule) return response()->json(['message' => 'schedule not fount'], 404);
+
+        if (!$schedule) {
+            return response()->json(['message' => 'Schedule not found'], 404);
+        }
 
         $schedule->update([
             'start_leave_date' => $start_leave_date,
@@ -42,12 +58,9 @@ trait CancelAppointmentsTrait
             ->where('status', 'pending')
             ->get();
 
-        // return $appointments;
-
         Stripe::setApiKey(env('STRIPE_SECRET'));
 
         foreach ($appointments as $appointment) {
-
             if ($appointment->payment_status == 'paid' && $appointment->payment_intent_id) {
                 try {
                     Refund::create([
@@ -63,14 +76,23 @@ trait CancelAppointmentsTrait
         }
 
         return response()->json([
-            'message' => 'schedule successfully updated',
-            'message' => 'Appointments canceled and refunds processed (if applicable).',
+            'message' => 'Schedule successfully updated. Appointments canceled and refunds processed (if applicable).',
             'data' => $schedule,
         ], 200);
     }
+
     /////
     public function cancelAnAppointment(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'reservation_id' => 'required|integer|exists:appointments,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->all()
+            ], 400);
+        }
 
         $reservation = Appointment::where('id', $request->reservation_id)->first();
         if (!$reservation) return response()->json(['message' => 'Reservaion Not Found'], 404);
