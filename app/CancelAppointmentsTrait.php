@@ -4,6 +4,7 @@ namespace App;
 
 use App\Models\Appointment;
 use App\Models\Schedule;
+use App\Services\FirebaseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,12 @@ use Illuminate\Support\Facades\Validator;
 trait CancelAppointmentsTrait
 {
 
+    protected $firebaseService;
+    
+    public function __construct(FirebaseService $firebase_service){
+        $this->firebaseService = $firebase_service;
+
+    }
 
     public function editDoctorSchedule(Request $request, $doctor)
     {
@@ -53,10 +60,10 @@ trait CancelAppointmentsTrait
         ]);
         $schedule->save();
 
-        $appointments = Appointment::whereBetween('reservation_date', [$start_leave_date, $end_leave_date])
+        $appointments = Appointment::with('patient.user')->whereBetween('reservation_date', [$start_leave_date, $end_leave_date])
             ->whereBetween('timeSelected', [$start_leave_time, $end_leave_time])
             ->where('status', 'pending')
-            ->get();
+        ->get();
 
         Stripe::setApiKey(env('STRIPE_SECRET'));
 
@@ -73,6 +80,19 @@ trait CancelAppointmentsTrait
 
             $appointment->status = 'cancelled';
             $appointment->save();
+        }
+
+        $patients = $appointments->pluck('patient')->all();
+       
+
+        foreach($patients as $patient) {
+            if($patient->user->fcm_token) {
+                foreach($appointments as $appointment) {
+                    if($appointment->patient->id == $patient->id) {
+                        $this->firebaseService->sendNotification($patient->user->fcm_token, 'your appointment canceled ',  'date '. $appointment->reservation_date, $appointment->toArray());
+                    }
+                }
+            }
         }
 
         return response()->json([
@@ -94,7 +114,7 @@ trait CancelAppointmentsTrait
             ], 400);
         }
 
-        $reservation = Appointment::where('id', $request->reservation_id)->first();
+        $reservation = Appointment::with('patient')->where('id', $request->reservation_id)->first();
         if (!$reservation) return response()->json(['message' => 'Reservaion Not Found'], 404);
 
 
@@ -114,6 +134,11 @@ trait CancelAppointmentsTrait
             'status' => 'cancelled',
         ]);
         $reservation->save();
+
+        $patient = $reservation->patient;
+        if($patient->fcm_token) {
+            $this->firebaseService->sendNotification($patient->fcm_token, 'your appointment canceled ',  'date '. $reservation->reservation_date, $reservation->toArray());
+        }
 
         return response()->json(['message' => 'reservation canceled successfully'], 200);
     }
