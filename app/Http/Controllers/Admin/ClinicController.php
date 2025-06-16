@@ -69,21 +69,26 @@ class ClinicController extends Controller
         }
 
         $path = null;
+
         if ($request->hasFile('photo')) {
             $path = $request->photo->store('images/clinics', 'public');
         }
+    
         $clinic = Clinic::create([
             'name' => $request->name,
-            'photo' => '/storage/' . $path,
+            'photo' => $path ? '/storage/' . $path : null,
+
         ]);
 
 
+        return $clinic->toArray();
         $patients = User::where('role', 'patient')
-             ->whereNotNull('fcm_token')
-        ->pluck('fcm_token');
+            ->whereNotNull('fcm_token')
+            ->pluck('fcm_token')
+        ->all();
 
         foreach ($patients as $token) {
-            $this->firebaseService->sendNotification($token, 'new clinic added' . $clinic->name, $clinic);
+            $this->firebaseService->sendNotification($token, 'new clinic added ',  'clinic: '. $clinic->name, $clinic->toArray());
         }
         
 
