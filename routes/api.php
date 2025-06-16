@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\AdminAuthContcoller;
 use App\Http\Controllers\Notifications\NotificationController;
 use App\Services\FirebaseService;
+use App\Http\Controllers\EmailOtpController;
 
 Route::get('/user', [AuthController::class, 'getUser']);
 
@@ -24,6 +25,11 @@ Route::middleware([JwtMiddleware::class])->group(function () {
 
 Route::post('/auth/google', [GoogleAuthController::class, 'googleLogin']);
 
+//Email Verification
+Route::post('/send-email-otp', [EmailOtpController::class, 'send']);
+Route::post('/verify-email-otp', [EmailOtpController::class, 'verify']);
+Route::post('/resetPassword', [EmailOtpController::class, 'resetPassword']);
+
 
 Route::prefix('admin')->middleware(JwtMiddleware::class)->group(function () {
     require __DIR__ . '/Admin/clinic.php';
@@ -33,7 +39,7 @@ Route::prefix('admin')->middleware(JwtMiddleware::class)->group(function () {
     require __DIR__ . '/Admin/pharmacies.php';
 });
 
-Route::prefix('admin')->group(function() {
+Route::prefix('admin')->group(function () {
     require __DIR__ . '/Admin/auth.php';
 });
 
