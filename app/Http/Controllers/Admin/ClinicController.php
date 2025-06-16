@@ -73,7 +73,7 @@ class ClinicController extends Controller
         ->pluck('fcm_token');
 
         foreach ($patients as $token) {
-            $this->firebaseService->sendToToken($token, 'new clinic added' . $clinic->name, $clinic);
+            $this->firebaseService->sendNotification($token, 'new clinic added' . $clinic->name, $clinic);
         }
         
 

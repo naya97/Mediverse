@@ -14,7 +14,7 @@ class FirebaseService
     public function __construct()
     {
         $factory = (new Factory)
-            ->withServiceAccount(storage_path('app/firebase/mediverse-1bc4d-firebase-adminsdk-fbsvc-e845b66289.json'));
+            ->withServiceAccount(storage_path('app/firebase/mediverse-1bc4d-firebase-adminsdk-fbsvc-601ce038f7.json'));
         $this->messaging = $factory->createMessaging();
     }
 
