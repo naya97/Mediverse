@@ -51,7 +51,7 @@ class ClinicController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
-            'photo' => 'image',
+            'photo' => 'image|nullable',
         ]);
 
         if ($validator->fails()) {
@@ -59,21 +59,34 @@ class ClinicController extends Controller
                 'message' =>  $validator->errors()->all()
             ], 400);
         }
+
+        $existingClinic = Clinic::where('name', $request->name)->first();
+
+        if ($existingClinic) {
+            return response()->json([
+                'message' => 'Clinic with this name already exists.'
+            ], 409);
+        }
+
+        $path = null;
+
         if ($request->hasFile('photo')) {
             $path = $request->photo->store('images/clinics', 'public');
         }
+    
         $clinic = Clinic::create([
             'name' => $request->name,
-            'photo' => '/storage/' . $path,
+            'photo' => $path ? '/storage/' . $path : null,
+
         ]);
 
-
         $patients = User::where('role', 'patient')
-             ->whereNotNull('fcm_token')
-        ->pluck('fcm_token');
+            ->whereNotNull('fcm_token')
+            ->pluck('fcm_token')
+        ->all();
 
         foreach ($patients as $token) {
-            $this->firebaseService->sendNotification($token, 'new clinic added' . $clinic->name, $clinic);
+            $this->firebaseService->sendNotification($token, 'new clinic added ',  'clinic: '. $clinic->name, $clinic->toArray());
         }
         
 
