@@ -80,8 +80,6 @@ class ClinicController extends Controller
 
         ]);
 
-
-        return $clinic->toArray();
         $patients = User::where('role', 'patient')
             ->whereNotNull('fcm_token')
             ->pluck('fcm_token')

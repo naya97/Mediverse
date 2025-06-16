@@ -175,11 +175,6 @@ class AuthController extends Controller
 
         $active_user = User::where('id', $user->id)->first();
         if(!$active_user) return response()->json(['message' => 'user not found'], 404);
-
-        if($active_user->fcm_token) {
-            return response()->json(['message' => 'fcm has been taken'], 409);
-        }
-
         $active_user->fcm_token = $request->fcm_token;
         $active_user->save();
 
