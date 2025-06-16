@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Hash;
@@ -69,5 +70,40 @@ class AdminAuthContcoller extends Controller
         JWTAuth::invalidate(JWTAuth::getToken());
 
         return response()->json(['message' => 'Successfully logged out'], 200);
+    }
+
+    public function saveFcmToken(Request $request)
+    {
+        $user = Auth::user(); 
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if($user->role != 'admin') {
+            return response()->json([
+                'message' => 'you do not have permission to access this page',
+            ], 401);
+        }
+
+
+        $request->validate([
+            'fcm_token' => 'required|string',
+        ]);
+
+        $active_user = User::where('id', $user->id)->where('role', 'admin')->first();
+        if(!$active_user) return response()->json(['message' => 'user not found'], 404);
+
+        if($active_user->fcm_token) {
+            return response()->json(['message' => 'fcm has been taken'], 409);
+        }
+
+        $active_user->fcm_token = $request->fcm_token;
+        $active_user->save();
+
+        return response()->json([
+            'message' => 'Token saved successfully', 
+            'user'=>$user,
+        ], 200);
     }
 }

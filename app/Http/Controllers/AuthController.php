@@ -160,4 +160,32 @@ class AuthController extends Controller
             return response()->json(['error' => 'Invalid Google token'], 401);
         }
     }
+
+    public function saveFcmToken(Request $request)
+    {
+        $user = Auth::user(); 
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $request->validate([
+            'fcm_token' => 'required|string',
+        ]);
+
+        $active_user = User::where('id', $user->id)->first();
+        if(!$active_user) return response()->json(['message' => 'user not found'], 404);
+
+        if($active_user->fcm_token) {
+            return response()->json(['message' => 'fcm has been taken'], 409);
+        }
+
+        $active_user->fcm_token = $request->fcm_token;
+        $active_user->save();
+
+        return response()->json([
+            'message' => 'Token saved successfully', 
+            'user'=>$user,
+        ], 200);
+    }
 }

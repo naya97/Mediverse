@@ -7,14 +7,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\AdminAuthContcoller;
+use App\Services\FirebaseService;
 
 Route::get('/user', [AuthController::class, 'getUser']);
+
+Route::post('send_notification', [FirebaseService::class, 'sendToToken']);
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 
 Route::middleware([JwtMiddleware::class])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('/saveFcmToken', [AuthController::class, 'saveFcmToken']);
 });
 
 Route::post('/auth/google', [GoogleAuthController::class, 'googleLogin']);

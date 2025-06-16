@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Clinic;
 use App\Models\Doctor;
+use App\Models\User;
+use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -12,6 +14,13 @@ use Illuminate\Support\Facades\File;
 
 class ClinicController extends Controller
 {
+
+    protected $firebaseService;
+    
+    public function __construct(FirebaseService $firebase_service){
+        $this->firebaseService = $firebase_service;
+
+    }
 
     public function show()
     {
@@ -32,21 +41,7 @@ class ClinicController extends Controller
 
         if (!$clinic) return response()->json(['message' => 'clinic not found'], 404);
 
-        $doctors_clinic = Doctor::where('clinic_id', $clinic->id)
-            ->select(
-                'first_name',
-                'last_name',
-                'clinic_id',
-                'photo',
-                'speciality',
-                'finalRate',
-                'visit_fee',
-                'treated',
-                'status'
-            )
-            ->get();
-
-        return response()->json($doctors_clinic, 200);
+        return response()->json($clinic, 200);
     }
 
     public function addClinic(Request $request)
@@ -72,7 +67,17 @@ class ClinicController extends Controller
             'photo' => '/storage/' . $path,
         ]);
 
-        return response()->json(['message' => 'created successfully'], 201);
+
+        $patients = User::where('role', 'patient')
+             ->whereNotNull('fcm_token')
+        ->pluck('fcm_token');
+
+        foreach ($patients as $token) {
+            $this->firebaseService->sendToToken($token, 'new clinic added' . $clinic->name, $clinic);
+        }
+        
+
+        return response()->json(['message' => 'created successfully and send notification'], 201);
     }
 
     public function editClinic(Request $request)

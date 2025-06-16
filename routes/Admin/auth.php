@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware([JwtMiddleware::class])->group(function () {
     Route::controller(AdminAuthContcoller::class)->group(function () {
        Route::post('adminLogout',  'logout');
+       Route::post('saveFcmToken',  'saveFcmToken');
     });
 });
 
