@@ -80,7 +80,7 @@ class PaymentController extends Controller
                'message' =>  $validator->errors()->all()
             ], 400);
         }
-        Stripe::setApiKey(config('services.stripe.secret'));
+        Stripe::setApiKey(env('STRIPE_SECRET'));
 
         try {
             $intent = PaymentIntent::retrieve($request->payment_intent_id);
