@@ -89,7 +89,7 @@ trait CancelAppointmentsTrait
             if($patient->user->fcm_token) {
                 foreach($appointments as $appointment) {
                     if($appointment->patient->id == $patient->id) {
-                        $this->firebaseService->sendNotification($patient->user->fcm_token, 'your appointment canceled ',  'date '. $appointment->reservation_date, $appointment->toArray());
+                        $this->firebaseService->sendNotification($patient->user->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date '. $appointment->reservation_date, $appointment->toArray());
                     }
                 }
             }
@@ -137,7 +137,7 @@ trait CancelAppointmentsTrait
 
         $patient = $reservation->patient;
         if($patient->fcm_token) {
-            $this->firebaseService->sendNotification($patient->fcm_token, 'your appointment canceled ',  'date '. $reservation->reservation_date, $reservation->toArray());
+            $this->firebaseService->sendNotification($patient->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date '. $reservation->reservation_date, $reservation->toArray());
         }
 
         return response()->json(['message' => 'reservation canceled successfully'], 200);
