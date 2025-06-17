@@ -114,7 +114,7 @@ trait CancelAppointmentsTrait
             ], 400);
         }
 
-        $reservation = Appointment::with('patient')->where('id', $request->reservation_id)->first();
+        $reservation = Appointment::with('patient.user')->where('id', $request->reservation_id)->first();
         if (!$reservation) return response()->json(['message' => 'Reservaion Not Found'], 404);
 
 
@@ -135,7 +135,7 @@ trait CancelAppointmentsTrait
         ]);
         $reservation->save();
 
-        $patient = $reservation->patient;
+        $patient = $reservation->patient->user;
         if($patient->fcm_token) {
             $this->firebaseService->sendNotification($patient->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date '. $reservation->reservation_date, $reservation->toArray());
         }
