@@ -137,6 +137,12 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Reservation already paid'], 400);
         }
 
+        $patient = Patient::where('id', $reservation->patient_id)->first();
+        if(!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+
+        if($patient->wallet < $doctorAmount) {
+            return response()->json(['message' => 'You do not have enough money to pay'], 400);
+        }
 
         Stripe::setApiKey(env('STRIPE_SECRET'));
 
