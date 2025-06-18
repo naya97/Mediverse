@@ -52,6 +52,8 @@ class AppointmentController extends Controller
                     'doctor_speciality' => $doctor->speciality,
                     'reservation_date' => $appointment->reservation_date,
                     'reservation_hour' => $appointment->timeSelected,
+                    'payment_status' => $appointment->payment_status,
+                    'reminder_offset' => $appointment->reminder_offset,
                 ];
             }   
         }
@@ -102,6 +104,8 @@ class AppointmentController extends Controller
             'status' => $appointment->status,
             'reservation_date' => $appointment->reservation_date,
             'reservation_hour' => $appointment->timeSelected,
+            'payment_status' => $appointment->paymet_status,
+            'reminder_offset' => $appointment->reminder_offset,
         ];
 
         return response()->json($information, 200);
@@ -228,5 +232,26 @@ class AppointmentController extends Controller
             'pdf_base64' => $base64
         ]);
     }
+
+    // public function setReminder(Request $request) {
+    //     $user = Auth::user();
+    //     if (!$user) {
+    //         return response()->json([
+    //             'message' => 'unauthorized'
+    //         ], 401);
+    //     }
+    //     if ($user->role != 'patient') {
+    //         return response()->json([
+    //             'message' => 'you dont have permission'
+    //         ], 401);
+    //     }
+    //     $patient = Patient::where('user_id', $user->id)->first();
+    //     if(!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+
+    //     $appointment = Appointment::where('id', $request->appointment_id)->first();
+    //     if(!$appointment) return response()->json(['message' => 'Appointment Not Fount'], 404);
+
+
+    // }
 
 }
