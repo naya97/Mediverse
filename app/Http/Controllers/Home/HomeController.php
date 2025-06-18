@@ -104,7 +104,7 @@ class HomeController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
-        $clinics = Clinic::select('id', 'name', 'numOfDoctors',)->get();
+        $clinics = Clinic::all();
         return response()->json($clinics, 200);
     }
     /////
