@@ -17,6 +17,10 @@ class EmailOtpController extends Controller
     {
         $request->validate(['email' => 'required|email']);
 
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
         $otp = rand(1000, 9999);
 
         $text = "Your verification code is: $otp\nIf you did not request this code, please ignore this message.";
