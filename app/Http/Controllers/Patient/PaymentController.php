@@ -206,6 +206,9 @@ class PaymentController extends Controller
                 $reservation->price = $reservation->schedule->doctor->visit_fee;
                 $reservation->save();
 
+                $patient->wallet -= $reservation->schedule->doctor->visit_fee;
+                $patient->save();
+
                 return response()->json([
                     'message' => 'Reservation payment confirmed successfully.',
                     'reservation' => $reservation,
@@ -234,7 +237,7 @@ class PaymentController extends Controller
             return response()->json(['message' => $validator->errors()->all()], 400);
         }
 
-        $reservation = Appointment::find($request->reservation_id);
+        $reservation = Appointment::with('schedule.doctor')->find($request->reservation_id);
         if(!$reservation) return response()->json(['message' => 'Reservaion Not Found'], 404);
         $patient = Patient::where('user_id', $user->id)->first();
 
@@ -263,6 +266,9 @@ class PaymentController extends Controller
 
             $reservation->status = 'cancelled';
             $reservation->save();
+
+            $patient->wallet += $reservation->price;
+            $patient->save();
 
             return response()->json([
                 'message' => 'Reservation cancelled and payment refunded.',

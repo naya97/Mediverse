@@ -73,6 +73,11 @@ trait CancelAppointmentsTrait
                     Refund::create([
                         'payment_intent' => $appointment->payment_intent_id,
                     ]);
+
+                    $patient = $appointment->patient;
+                    $patient->wallet += $appointment->price;
+                    $patient->save();
+
                 } catch (\Exception $e) {
                     Log::error("Stripe refund failed for appointment ID {$appointment->id}: " . $e->getMessage());
                 }
@@ -89,7 +94,7 @@ trait CancelAppointmentsTrait
             if($patient->user->fcm_token) {
                 foreach($appointments as $appointment) {
                     if($appointment->patient->id == $patient->id) {
-                        $this->firebaseService->sendNotification($patient->user->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date '. $appointment->reservation_date, $appointment->toArray());
+                        $this->firebaseService->sendNotification($patient->user->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date '. $appointment->reservation_date,);
                     }
                 }
             }
@@ -117,6 +122,7 @@ trait CancelAppointmentsTrait
         $reservation = Appointment::with('patient.user')->where('id', $request->reservation_id)->first();
         if (!$reservation) return response()->json(['message' => 'Reservaion Not Found'], 404);
 
+        $patient = $reservation->patient;
 
         Stripe::setApiKey(env('STRIPE_SECRET'));
 
@@ -125,6 +131,10 @@ trait CancelAppointmentsTrait
                 Refund::create([
                     'payment_intent' => $reservation->payment_intent_id,
                 ]);
+
+                $patient->wallet += $reservation->price;
+                $patient->save();
+
             } catch (\Exception $e) {
                 Log::error("Stripe refund failed for reservation ID {$reservation->id}: " . $e->getMessage());
             }
@@ -137,7 +147,7 @@ trait CancelAppointmentsTrait
 
         $patient = $reservation->patient->user;
         if($patient->fcm_token) {
-            $this->firebaseService->sendNotification($patient->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date '. $reservation->reservation_date, $reservation->toArray());
+            $this->firebaseService->sendNotification($patient->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date '. $reservation->reservation_date,);
         }
 
         return response()->json(['message' => 'reservation canceled successfully'], 200);
