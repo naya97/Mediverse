@@ -23,6 +23,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('showAppointmentInfo', 'showAppointmentInfo');
         Route::get('showAppointmentResults', 'showAppointmentResults');
         Route::post('downloadPrescription', 'downloadPrescription');
+        Route::post('setReminder', 'setReminder');
     });
     Route::post('makeReport', [ReportController::class, 'makeReport']);
 });

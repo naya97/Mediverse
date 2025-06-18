@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 
 class AppointmentController extends Controller
 {
@@ -233,25 +234,39 @@ class AppointmentController extends Controller
         ]);
     }
 
-    // public function setReminder(Request $request) {
-    //     $user = Auth::user();
-    //     if (!$user) {
-    //         return response()->json([
-    //             'message' => 'unauthorized'
-    //         ], 401);
-    //     }
-    //     if ($user->role != 'patient') {
-    //         return response()->json([
-    //             'message' => 'you dont have permission'
-    //         ], 401);
-    //     }
-    //     $patient = Patient::where('user_id', $user->id)->first();
-    //     if(!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+    public function setReminder(Request $request) {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
+        if ($user->role != 'patient') {
+            return response()->json([
+                'message' => 'you dont have permission'
+            ], 401);
+        }
+        $validator = Validator::make($request->all(), [
+            'reminder_offset' => 'required|integer|min:1|max:24',
+        ]);
 
-    //     $appointment = Appointment::where('id', $request->appointment_id)->first();
-    //     if(!$appointment) return response()->json(['message' => 'Appointment Not Fount'], 404);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->all()
+            ], 400);
+        }
 
+        $patient = Patient::where('user_id', $user->id)->first();
+        if(!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
 
-    // }
+        $appointment = Appointment::where('id', $request->appointment_id)->first();
+        if(!$appointment) return response()->json(['message' => 'Appointment Not Fount'], 404);
+
+        $appointment->reminder_offset = $request->reminder_offset;
+        $appointment->save();
+
+        return response()->json(['message' => 'Your Reminder set successfully'], 200);
+
+    }
 
 }
