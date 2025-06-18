@@ -17,7 +17,7 @@ return new class extends Migration
                 ->constrained('patients')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-            $table->enum('type', ['Technical issue', 'Offense', 'Privacy violation', ' Poor cleanliness', 'Bad experience', 'Billing issue', 'Mismanagement', 'Misdiagnosis', 'Unclear instructions', 'other'])->default('other');
+            $table->enum('type', ['Technical issue', 'Offense', 'Privacy violation', 'Poor cleanliness', 'Bad experience', 'Billing issue', 'Mismanagement', 'Misdiagnosis', 'Unclear instructions', 'Other'])->default('other');
             $table->text('description');
             $table->timestamps();
         });
