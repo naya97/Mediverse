@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Secretary;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\Clinic;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,7 +15,7 @@ class PaymentController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $appointment = Appointment::where('status', 'pending')
+        $appointment = Appointment::with('schedule.doctor')->where('status', 'pending')
             ->where('payment_status', 'pending')
             ->where('id', $request->appointment_id)
             ->first();
@@ -24,6 +25,12 @@ class PaymentController extends Controller
         $appointment->price = $request->price;
         $appointment->payment_status = 'paid';
         $appointment->save();
+
+        $clinic = Clinic::where('id', $appointment->doctor->clinic_id)->first();
+        if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
+
+        $clinic->money += $appointment->price;
+        $clinic->save();
 
         return response()->json(['message' => 'successfully payed'], 200);
     }
