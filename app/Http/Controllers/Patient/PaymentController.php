@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Patient;
 use Illuminate\Http\Request;
@@ -209,6 +210,12 @@ class PaymentController extends Controller
                 $patient->wallet -= $reservation->schedule->doctor->visit_fee;
                 $patient->save();
 
+                $clinic = Clinic::where('id', $reservation->doctor->clinic_id)->first();
+                if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
+
+                $clinic->money += $reservation->price;
+                $clinic->save();
+
                 return response()->json([
                     'message' => 'Reservation payment confirmed successfully.',
                     'reservation' => $reservation,
@@ -269,6 +276,12 @@ class PaymentController extends Controller
 
             $patient->wallet += $reservation->price;
             $patient->save();
+
+            $clinic = Clinic::where('id', $reservation->doctor->clinic_id)->first();
+            if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
+
+            $clinic->money -= $reservation->price;
+            $clinic->save();
 
             return response()->json([
                 'message' => 'Reservation cancelled and payment refunded.',

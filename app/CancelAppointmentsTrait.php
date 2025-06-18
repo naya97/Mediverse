@@ -3,6 +3,8 @@
 namespace App;
 
 use App\Models\Appointment;
+use App\Models\Clinic;
+use App\Models\Doctor;
 use App\Models\Schedule;
 use App\Services\FirebaseService;
 use Carbon\Carbon;
@@ -60,7 +62,7 @@ trait CancelAppointmentsTrait
         ]);
         $schedule->save();
 
-        $appointments = Appointment::with('patient.user')->whereBetween('reservation_date', [$start_leave_date, $end_leave_date])
+        $appointments = Appointment::with(['patient.user', 'schedule.doctor'])->whereBetween('reservation_date', [$start_leave_date, $end_leave_date])
             ->whereBetween('timeSelected', [$start_leave_time, $end_leave_time])
             ->where('status', 'pending')
         ->get();
@@ -76,7 +78,13 @@ trait CancelAppointmentsTrait
 
                     $patient = $appointment->patient;
                     $patient->wallet += $appointment->price;
-                    $patient->save();
+                    $patient->save();  
+                    
+                    $clinic = Clinic::where('id', $appointment->doctor->clinic_id)->first();
+                    if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
+
+                    $clinic->money -= $appointment->price;
+                    $clinic->save();
 
                 } catch (\Exception $e) {
                     Log::error("Stripe refund failed for appointment ID {$appointment->id}: " . $e->getMessage());
@@ -119,7 +127,7 @@ trait CancelAppointmentsTrait
             ], 400);
         }
 
-        $reservation = Appointment::with('patient.user')->where('id', $request->reservation_id)->first();
+        $reservation = Appointment::with(['patient.user', 'schedule.doctor'])->where('id', $request->reservation_id)->first();
         if (!$reservation) return response()->json(['message' => 'Reservaion Not Found'], 404);
 
         $patient = $reservation->patient;
@@ -134,6 +142,12 @@ trait CancelAppointmentsTrait
 
                 $patient->wallet += $reservation->price;
                 $patient->save();
+
+                $clinic = Clinic::where('id', $reservation->doctor->clinic_id)->first();
+                if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
+
+                $clinic->money -= $reservation->price;
+                $clinic->save();
 
             } catch (\Exception $e) {
                 Log::error("Stripe refund failed for reservation ID {$reservation->id}: " . $e->getMessage());

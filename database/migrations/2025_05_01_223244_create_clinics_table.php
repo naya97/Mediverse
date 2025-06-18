@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->integer('numOfDoctors')->default(0);
             $table->string('photo')->nullable();
+            $table->decimal('money', 10 ,2)->default(0);
             $table->timestamps();
         });
     }
