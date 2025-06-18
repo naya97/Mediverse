@@ -29,8 +29,7 @@ class EmailOtpController extends Controller
             $message->to($request->email)
                 ->subject('Your OTP Code');
         });
-        Cache::put('otp_' . $request->email, $otp, now()->addMinutes(30));
-
+        Cache::put('otp_email_' . $request->email, $otp, now()->addMinutes(30));
         return response()->json([
             'message' => 'OTP sent successfully',
         ], 200);
@@ -43,13 +42,13 @@ class EmailOtpController extends Controller
             'otp' => 'required|digits:4',
         ]);
 
-        $cachedOtp = Cache::get('otp_' . $request->email);
+        $cachedOtp = Cache::get('otp_email_' . $request->email);
 
         if ($cachedOtp && $cachedOtp == $request->otp) {
-            Cache::forget('otp_' . $request->email);
+            Cache::forget('otp_email_' . $request->email);
 
             $resetToken = Str::random(64);
-            Cache::put('reset_token_' . $request->email, $resetToken, now()->addMinutes(10)); // صالح لمدة 10 دقايق
+            Cache::put('reset_token_' . $request->email, $resetToken, now()->addMinutes(15));
 
             return response()->json([
                 'message' => 'OTP verified successfully',

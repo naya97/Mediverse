@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminAuthContcoller;
 use App\Http\Controllers\Notifications\NotificationController;
 use App\Services\FirebaseService;
 use App\Http\Controllers\EmailOtpController;
+use App\Http\Controllers\SmsOtpController;
 
 Route::get('/user', [AuthController::class, 'getUser']);
 
@@ -30,6 +31,10 @@ Route::post('/send-email-otp', [EmailOtpController::class, 'send']);
 Route::post('/verify-email-otp', [EmailOtpController::class, 'verify']);
 Route::post('/resetPassword', [EmailOtpController::class, 'resetPassword']);
 
+//SMS Verification
+Route::post('/send-sms-otp', [SmsOtpController::class, 'send']);
+Route::post('/verify-sms-otp', [SmsOtpController::class, 'verify']);
+Route::post('/resetPassword', [SmsOtpController::class, 'resetPassword']);
 
 Route::prefix('admin')->middleware(JwtMiddleware::class)->group(function () {
     require __DIR__ . '/Admin/clinic.php';

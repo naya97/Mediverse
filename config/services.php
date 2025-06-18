@@ -34,6 +34,11 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    // config/services.php
+    'sms_gateway' => [
+        'url' => env('SMS_GATEWAY_URL'),
+        'token' => env('SMS_GATEWAY_TOKEN'),
+    ],
 
 
 ];

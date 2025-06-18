@@ -12,6 +12,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('addMedicine', 'addMedicine');
         Route::post('completPrescription', 'completPrescription');
         Route::post('showPatientAnalysis', 'showPatientAnalysis');
+        Route::get('showClinics', 'showClinics');
         Route::post('showPatientAnalysisByClinic', 'showPatientAnalysisByClinic');
         Route::post('addMedicalInfo', 'addMedicalInfo');
         Route::get('showPatientProfile', 'showPatientProfile');

@@ -129,7 +129,7 @@ class AppointmentController extends Controller
                 $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->whereNotNull('parent_id')->get();
             } else {
                 $today = now()->format('Y-m-d');
-                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->whereNotNull('parent_id')->get();
+                $appointments = Appointment::with(' ')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->whereNotNull('parent_id')->get();
             }
             $type = 'check up';
         }

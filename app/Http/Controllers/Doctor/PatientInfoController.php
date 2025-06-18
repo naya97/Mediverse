@@ -174,6 +174,14 @@ class PatientInfoController extends Controller
         return response()->json($analysis, 200);
     }
     /////
+    public function showClinics()
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $clinics = Clinic::select('id', 'name', 'numOfDoctors')->get();
+        return response()->json($clinics, 200);
+    }
+    ////
     public function showPatientAnalysisByClinic(Request $request) //by status and clinic
     {
         $auth = $this->auth();
