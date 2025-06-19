@@ -32,6 +32,11 @@ class AppointmentController extends Controller
             ], 401);
         }
         $patient = Patient::where('user_id', $user->id)->first();
+        if (!$patient) {
+            return response()->json([
+                'message' => 'Patient not found'
+            ], 404);
+        }
 
         $appointments = Appointment::with('schedule.doctor')
             ->where('patient_id', $patient->id)
