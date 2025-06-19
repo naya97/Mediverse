@@ -14,8 +14,11 @@ class Appointment extends Model
         'timeSelected',
         'parent_id',
         'reservation_date',
-        // 'reservation_hour',
         'status',
+        'payment_intent_id',
+        'payment_status',
+        'reminder_offset',
+        'reminder_sent'
     ];
 
     public function patient() : BelongsTo {
