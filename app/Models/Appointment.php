@@ -18,7 +18,8 @@ class Appointment extends Model
         'payment_intent_id',
         'payment_status',
         'reminder_offset',
-        'reminder_sent'
+        'reminder_sent',
+        'price',
     ];
 
     public function patient() : BelongsTo {
