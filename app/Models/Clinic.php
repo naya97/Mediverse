@@ -14,7 +14,8 @@ class Clinic extends Model
     protected $fillable = [
         'name',
         'numOfDoctors',
-        'photo'
+        'photo',
+        'money'
     ];
 
     public function doctors(): HasMany

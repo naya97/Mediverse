@@ -210,7 +210,7 @@ class PaymentController extends Controller
                 $patient->wallet -= $reservation->schedule->doctor->visit_fee;
                 $patient->save();
 
-                $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic_id)->first();
+                $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic->id)->first();
                 if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
                 $clinic->money += $reservation->price;
@@ -277,7 +277,7 @@ class PaymentController extends Controller
             $patient->wallet += $reservation->price;
             $patient->save();
 
-            $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic_id)->first();
+            $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic->id)->first();
             if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
             $clinic->money -= $reservation->price;
