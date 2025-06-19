@@ -25,6 +25,7 @@ return new class extends Migration
             $table->date('end_leave_date')->nullable();
             $table->time('start_leave_time')->nullable();
             $table->time('end_leave_time')->nullable();
+            $table->enum('status', ['available', 'notAvailable'])->default('notAvailable');
             $table->timestamps();
         });
     }

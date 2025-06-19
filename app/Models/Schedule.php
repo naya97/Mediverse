@@ -17,6 +17,7 @@ class Schedule extends Model
         'end_leave_date',
         'start_leave_time',
         'end_leave_time',
+        'status',
     ];
 
     public function doctor(): BelongsTo
@@ -24,7 +25,8 @@ class Schedule extends Model
         return $this->belongsTo(Doctor::class);
     }
 
-    public function appointments() : HasMany {
+    public function appointments(): HasMany
+    {
         return $this->hasMany(Appointment::class);
     }
 }

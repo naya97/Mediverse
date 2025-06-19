@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Patient;
@@ -15,9 +16,19 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+use Stripe\Refund;
+use Stripe\Stripe;
+use App\Services\FirebaseService;
 
 class DoctorProfileController extends Controller
 {
+    protected $firebaseService;
+    public function __construct(FirebaseService $firebase_service)
+    {
+        $this->firebaseService = $firebase_service;
+    }
+    /////
     public function profile()
     {
         $auth = $this->auth();
@@ -34,6 +45,7 @@ class DoctorProfileController extends Controller
         $schedule = [];
         foreach ($workDays as $workDay) {
             $schedule[] = [
+                'id' => $workDay->id,
                 'day' => $workDay->day,
                 'Shift' => $workDay->Shift,
             ];
@@ -142,7 +154,7 @@ class DoctorProfileController extends Controller
         }
         $doctor = Doctor::where('user_id', $user->id)->first();
         if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
-        Schedule::where('doctor_id', $doctor->id)->delete();
+        //Schedule::where('doctor_id', $doctor->id)->delete();
         foreach ($request->RosterDays as $RosterDay) {
             $day = $RosterDay['day'];
             $Shift = $RosterDay['Shift'];
@@ -151,6 +163,7 @@ class DoctorProfileController extends Controller
                 'doctor_id' => $doctor->id,
                 'day' => $day,
                 'Shift' => $Shift,
+                'status' => 'notAvailable',
             ]);
         }
         $doctor->status = 'available';
@@ -186,7 +199,8 @@ class DoctorProfileController extends Controller
                 $isTaken = Schedule::where('clinic_id', $doctor->clinic_id)
                     ->where('day', $day)
                     ->where('Shift', $shift)
-                    ->where('doctor_id', '!=', $doctor->id)
+                    ->where('status', 'notAvailable')
+                    //->where('doctor_id', '!=', $doctor->id)
                     ->exists();
 
                 if (!$isTaken) {
@@ -204,7 +218,74 @@ class DoctorProfileController extends Controller
 
         return response()->json($availableSchedule, 200);
     }
+    /////
+    public function deleteFromSchedule(Request $request)
+    {
+        if ($auth = $this->auth()) {
+            return $auth;
+        }
+        $validator = Validator::make($request->all(), [
+            'schedule_id' => 'required',
+        ]);
 
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()->all()], 422);
+        }
+        $schedule = Schedule::find($request->schedule_id);
+        if (!$schedule) {
+            return response()->json(['message' => 'Schedule Not Found'], 404);
+        }
+        $schedule->status = 'available';
+        $schedule->save();
+        $appointments = Appointment::with(['patient.user', 'schedule.doctor'])
+            ->where('schedule_id', $request->schedule_id)
+            ->where('status', 'pending')
+            ->get();
+
+        Stripe::setApiKey(env('STRIPE_SECRET'));
+
+        foreach ($appointments as $appointment) {
+            if ($appointment->payment_status == 'paid' && $appointment->payment_intent_id) {
+                try {
+                    Refund::create([
+                        'payment_intent' => $appointment->payment_intent_id,
+                    ]);
+
+                    $patient = $appointment->patient;
+                    $patient->wallet += $appointment->price;
+                    $patient->save();
+
+                    $clinic = Clinic::where('id', $appointment->doctor->clinic_id)->first();
+                    if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
+
+                    $clinic->money -= $appointment->price;
+                    $clinic->save();
+                } catch (\Exception $e) {
+                    Log::error("Stripe refund failed for appointment ID {$appointment->id}: " . $e->getMessage());
+                }
+            }
+
+            $appointment->status = 'cancelled';
+            $appointment->save();
+        }
+
+        $patients = $appointments->pluck('patient')->all();
+
+
+        foreach ($patients as $patient) {
+            if ($patient->user->fcm_token) {
+                foreach ($appointments as $appointment) {
+                    if ($appointment->patient->id == $patient->id) {
+                        $this->firebaseService->sendNotification($patient->user->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date ' . $appointment->reservation_date,);
+                    }
+                }
+            }
+        }
+        return response()->json([
+            'message' => 'Schedule successfully deleted. Appointments canceled and refunds processed (if applicable).',
+        ], 200);
+    }
+    /////
     public function showDoctorReviews()
     {
 
