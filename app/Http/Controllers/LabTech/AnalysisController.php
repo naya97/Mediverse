@@ -5,19 +5,27 @@ namespace App\Http\Controllers\LabTech;
 use App\Http\Controllers\Controller;
 use App\Models\Analyse;
 use App\Models\Clinic;
+use App\Models\Doctor;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-
+use App\Services\FirebaseService;
 
 class AnalysisController extends Controller
 {
+    protected $firebaseService;
+
+    public function __construct(FirebaseService $firebase_service)
+    {
+        $this->firebaseService = $firebase_service;
+    }
+    /////
     public function showClinics()
     {
         $auth = $this->auth();
         if ($auth) return $auth;
-        $clinics = Clinic::select('id', 'name', 'numOfDoctors' )->get();
+        $clinics = Clinic::select('id', 'name', 'numOfDoctors')->get();
         return response()->json($clinics, 200);
     }
 
@@ -139,7 +147,7 @@ class AnalysisController extends Controller
                 'message' =>  $validator->errors()->all()
             ], 422);
         }
-        $analyse = Analyse::find($request->id);
+        $analyse = Analyse::with(['patient.user'])->find($request->id);
         if (!$analyse) {
             return response()->json(['error' => 'Analyse not found'], 404);
         }
@@ -156,6 +164,32 @@ class AnalysisController extends Controller
         }
         $analyse->status = 'finished';
         $analyse->save();
+
+        //patient notification
+        $patient = $analyse->patient->user;
+        if ($patient->fcm_token) {
+            $this->firebaseService->sendNotification(
+                $patient->fcm_token,
+                'Analysis Result Available',
+                'Your test result is now available. Please check the app.',
+                ['analyse_id' => $analyse->id]
+            );
+        }
+        //doctor notification
+        if ($analyse->doctor_id != null) {
+            $doctor = Doctor::with(['user'])->find($analyse->doctor_id);
+            $user = $doctor->user;
+            if ($user->fcm_token) {
+                $fullName = $analyse->patient->user->first_name . ' ' . $analyse->patient->user->last_name;
+                $this->firebaseService->sendNotification(
+                    $user->fcm_token,
+                    'Analysis Result Available',
+                    'The test result for patient ' . $fullName . ' is now available.',
+                    ['analyse_id' => $analyse->id]
+                );
+            }
+        }
+
         return response()->json(['message' => 'added successfully'], 200);
     }
     /////

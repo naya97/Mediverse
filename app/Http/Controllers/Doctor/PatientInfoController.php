@@ -14,10 +14,17 @@ use App\Models\Prescription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-
+use App\Services\FirebaseService;
 
 class PatientInfoController extends Controller
 {
+    protected $firebaseService;
+
+    public function __construct(FirebaseService $firebase_service)
+    {
+        $this->firebaseService = $firebase_service;
+    }
+    /////
     public function addPrescription(Request $request)
     {
         $auth = $this->auth();
@@ -216,7 +223,7 @@ class PatientInfoController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
         $validator = Validator::make($request->all(), [
-            'prescription_id' => 'required|exists:prescriptions,id',
+            'prescription_id' => 'exists:prescriptions,id',
             'appointment_id' => 'required|exists:appointments,id',
             'symptoms' => 'nullable|string',
             'diagnosis' => 'nullable|string',
@@ -237,7 +244,7 @@ class PatientInfoController extends Controller
             'doctorNote' => $request->doctorNote,
             'patientNote' => $request->patientNote,
         ]);
-        $appointment = Appointment::find($request->appointment_id);
+        $appointment = Appointment::with(['patient.user'])->find($request->appointment_id);
         if (!$appointment) {
             return response()->json(['message' => 'Appointment not found'], 404);
         }
@@ -252,6 +259,17 @@ class PatientInfoController extends Controller
         }
         $appointment->status = 'visited';
         $appointment->save();
+        //patient notification
+        $patient = $appointment->patient->user;
+        if (!empty($patient->fcm_token)) {
+            $this->firebaseService->sendNotification(
+                $patient->fcm_token,
+                'Appointment Visited',
+                'Your recent appointment has been marked as visited.',
+                ['appointment_id' => $appointment->id]
+            );
+        }
+
         return response()->json([
             'message' => 'Medical information added successfully',
             'data' => $madicalTnfo,
