@@ -36,6 +36,16 @@ Route::post('/send-sms-otp', [SmsOtpController::class, 'send']);
 Route::post('/verify-sms-otp', [SmsOtpController::class, 'verify']);
 Route::post('/resetPassword', [SmsOtpController::class, 'resetPassword']);
 
+//Notifications
+Route::middleware([JwtMiddleware::class])->group(function () {
+    Route::controller(NotificationController::class)->group(function () {
+        Route::get('getAllNotifications', 'getAllNotifications');
+        Route::get('getUnreadNotificationsCount', 'getUnreadNotificationsCount');
+        Route::post('markNotificationAsRead', 'markNotificationAsRead');
+    });
+});
+
+
 Route::prefix('admin')->middleware(JwtMiddleware::class)->group(function () {
     require __DIR__ . '/Admin/clinic.php';
     require __DIR__ . '/Admin/dashboard.php';

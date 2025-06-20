@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\User;
+use App\Notifications\NewClinicCreated;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -82,11 +83,11 @@ class ClinicController extends Controller
 
         $patients = User::where('role', 'patient')
             ->whereNotNull('fcm_token')
-            ->pluck('fcm_token')
         ->all();
 
-        foreach ($patients as $token) {
-            $this->firebaseService->sendNotification($token, 'new clinic added ',  'clinic: '. $clinic->name, $clinic->toArray());
+        foreach ($patients as $patient) {
+            $this->firebaseService->sendNotification($patient->fcm_token, 'new clinic added ',  'clinic: '. $clinic->name, $clinic->toArray());
+            $patient->notify(new NewClinicCreated($clinic));
         }
         
 
