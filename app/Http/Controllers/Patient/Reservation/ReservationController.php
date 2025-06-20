@@ -54,7 +54,7 @@ class ReservationController extends Controller
             ], 400);
         }
 
-        $schedules = Schedule::where('doctor_id', $request->doctor_id)->get();
+        $schedules = Schedule::where('doctor_id', $request->doctor_id)->where('status', 'notAvailable')->get();
         $workingDays = $schedules->pluck('day');
 
         $startDate = Carbon::today();
@@ -134,7 +134,7 @@ class ReservationController extends Controller
         $date = Carbon::createFromFormat('d/m/y', $request->date);
         $day = $date->format('l');
 
-        $schedule = Schedule::where('doctor_id', $request->doctor_id)->where('day', $day)->first();
+        $schedule = Schedule::where('doctor_id', $request->doctor_id)->where('status', 'notAvailable')->where('day', $day)->first();
 
         $mysqlDate = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
 
@@ -225,6 +225,7 @@ class ReservationController extends Controller
         $day = $date->format('l');
 
         $schedule = Schedule::where('doctor_id', $request->doctor_id)
+            ->where('status', 'notAvailable')
             ->where('day', $day)
             ->first();
         if (!$schedule) return response()->json(['message' => 'Schedule Not Found'], 404);
@@ -283,7 +284,7 @@ class ReservationController extends Controller
 
         if ($numOfPatientReservation > 0) {
             return response()->json([
-                'message' => 'You already appointment at this time'
+                'message' => 'You already appointment at this date'
             ], 400);
         }
 
@@ -345,6 +346,7 @@ class ReservationController extends Controller
         $new_day = $new_date->format('l');
 
         $schedule = Schedule::where('doctor_id', $request->doctor_id)
+            ->where('status', 'notAvailable')
             ->where('day', $new_day)
             ->first();
 
@@ -411,48 +413,4 @@ class ReservationController extends Controller
 
         return response()->json(['message' => 'this time is full'], 400);
     }
-
-    // public function cancelReservation(Request $request)
-    // {
-    //     $user = Auth::user(); // 
-
-    //     //check the auth
-    //     if (!$user) {
-    //         return response()->json([
-    //             'message' => 'unauthorized'
-    //         ], 401);
-    //     }
-
-    //     if ($user->role != 'patient') {
-    //         return response()->json([
-    //             'message' => 'you dont have permission'
-    //         ], 401);
-    //     }
-
-    //     // $patient = Patient::where('user_id',$user->id)->first();
-
-    //     $reservation = Appointment::where('id', $request->reservation_id)->first();
-    //     if (!$reservation) return response()->json(['message' => 'Reservaion Not Found'], 404);
-
-    //     Stripe::setApiKey(env('STRIPE_SECRET'));
-
-
-    //     if ($reservation->payment_status == 'paid' && $reservation->payment_intent_id) {
-    //         try {
-    //             Refund::create([
-    //                 'payment_intent' => $reservation->payment_intent_id,
-    //             ]);
-    //         } catch (\Exception $e) {
-    //             Log::error("Stripe refund failed for reservation ID {$reservation->id}: " . $e->getMessage());
-    //         }
-    //     }
-
-
-    //     $reservation->update([
-    //         'status' => 'canceled',
-    //     ]);
-    //     $reservation->save();
-
-    //     return response()->json(['message' => 'reservation canceled successfully'], 200);
-    // }
 }
