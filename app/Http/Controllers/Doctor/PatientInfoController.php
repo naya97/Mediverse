@@ -11,6 +11,7 @@ use App\Models\MedicalInfo;
 use App\Models\Medicine;
 use App\Models\Patient;
 use App\Models\Prescription;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -148,6 +149,19 @@ class PatientInfoController extends Controller
             'clinic_id' => $clinic->id,
             'doctor_id' => $doctor->id
         ]);
+
+        //labtech notification
+        $user = User::where('role', 'labtech')->first();
+        if ($user->fcm_token) {
+            $fullName = $doctor->first_name . ' ' . $doctor->last_name;
+            $this->firebaseService->sendNotification(
+                $user->fcm_token,
+                'New Lab Test Request',
+                'A new lab test has been requested by Dr. ' . $fullName,
+                ['analyse_id' => $analyse->id]
+            );
+        }
+
         return response()->json([
             'message' => 'analyse created successfully',
             'data' => $analyse
