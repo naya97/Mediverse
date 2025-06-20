@@ -7,16 +7,24 @@ use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\PatientReview;
 use App\Models\Review;
+use App\Notifications\DoctorRated;
+use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class RateController extends Controller
 {
+    protected $firebaseService;
+    
+    public function __construct(FirebaseService $firebase_service){
+        $this->firebaseService = $firebase_service;
+
+    }
+
     public function patientRate(Request $request) {
         $user = Auth::user();
 
-        $user = Auth::user();
         //check the auth
         if(!$user) {
             return response()->json([
@@ -47,7 +55,7 @@ class RateController extends Controller
             'comment' => $request->comment,
         ]);
 
-        $patient = Patient::where('user_id',$user->id)->first();
+        $patient = Patient::with('user')->where('user_id',$user->id)->first();
 
         $patient_review = PatientReview::create([
             'patient_id' => $patient->id,
@@ -56,7 +64,7 @@ class RateController extends Controller
         ]);
 
         // update final doctor rate 
-        $doctor = Doctor::where('id',$request->doctor_id)->first();
+        $doctor = Doctor::with('user')->where('id',$request->doctor_id)->first();
         if(!$doctor) return response()->json(['message' => 'Not Found', 404]);
         $lastRate = $doctor->finalRate;
         $newRate = $request->rate;
@@ -65,6 +73,20 @@ class RateController extends Controller
         $doctor->update([
             'finalRate' => $finalRate,
         ]);
+
+        //notification rate
+        if($doctor->user->fcm_token) {
+            $this->firebaseService->sendNotification($doctor->user->fcm_token, 
+                $patient->user->first_name. ' '. $patient->user->last_name.' , rated you ',  
+                'rate '. $request->rate,
+            );
+
+            $doctor->user->notify(new DoctorRated([
+                'user_id' => $patient->user->id,
+                'user_name' => $patient->user->first_name . ' ' . $patient->user->last_name,
+                'rating' => $request->rate,
+            ]));
+        }
 
         return response()->json([
             'message' => 'ok',

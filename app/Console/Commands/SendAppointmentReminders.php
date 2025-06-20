@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Appointment;
+use App\Notifications\AppointmentReminder;
 use App\Services\FirebaseService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -64,6 +65,7 @@ class SendAppointmentReminders extends Command
                         'type' => 'appointment_reminder',
                     ];
                     $this->firebase->sendNotification($token, $title, $body, $data); 
+                    $appointment->patient->user->notify(new AppointmentReminder($appointment));
                 }
 
                 $appointment->reminder_sent = true;

@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Schedule;
+use App\Notifications\AppointmentCancelled;
 use App\Services\FirebaseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -103,6 +104,8 @@ trait CancelAppointmentsTrait
                 foreach($appointments as $appointment) {
                     if($appointment->patient->id == $patient->id) {
                         $this->firebaseService->sendNotification($patient->user->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date '. $appointment->reservation_date,);
+                        $patient->notify(new AppointmentCancelled($appointment));
+
                     }
                 }
             }
@@ -162,6 +165,7 @@ trait CancelAppointmentsTrait
         $patient = $reservation->patient->user;
         if($patient->fcm_token) {
             $this->firebaseService->sendNotification($patient->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date '. $reservation->reservation_date,);
+            $patient->notify(new AppointmentCancelled($reservation));
         }
 
         return response()->json(['message' => 'reservation canceled successfully'], 200);
