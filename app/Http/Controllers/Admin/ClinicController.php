@@ -45,6 +45,18 @@ class ClinicController extends Controller
         return response()->json($clinic, 200);
     }
 
+    public function showDoctorsClinic(Request $request) {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $clinic = Clinic::where('id', $request->clinic_id)->first();
+        if (!$clinic) return response()->json(['message' => 'clinic not found'], 404);
+
+        $doctors = Doctor::where('clinic_id', $request->clinic_id)->get();
+
+        return response()->json($doctors, 200);
+    }
+
     public function addClinic(Request $request)
     {
         $auth = $this->auth();
