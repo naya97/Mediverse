@@ -11,5 +11,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::delete('/removeDoctor', 'removeDoctor');
         Route::get('/showDoctorReviews', 'showDoctorReviews');
         Route::get('/showDoctorDetails', 'showDoctorDetails');
+        Route::get('/getReviewById', 'getReviewById');
+        Route::delete('/deleteReview', 'deleteReview');
     });
 });

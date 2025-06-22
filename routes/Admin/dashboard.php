@@ -13,6 +13,8 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('/showPaymentDetails', 'showPaymentDetails');
         Route::get('/showPaymentDetailsByDoctor', 'showPaymentDetailsByDoctor');
         Route::post('/showPaymentDetailsByDate', 'showPaymentDetailsByDate');
+        Route::get('/showPatients', 'showPatients');
+        Route::get('/showPatientDetails', 'showPatientDetails');
     });
     Route::controller(ReportController::class)->group(function () {
         Route::get('/showAllReports', 'showAllReports');

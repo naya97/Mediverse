@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Clinic;
 use App\Models\Doctor;
+use App\Models\Patient;
 use App\Models\PatientReview;
 use App\Models\Review;
 use App\Models\User;
@@ -161,10 +162,50 @@ class DoctorController extends Controller
 
         $response = [] ;
         foreach($review_ids as $review_id) {
-            $response [] = Review::where('id', $review_id)->first();
+            $patientReview = PatientReview::where('review_id', $review_id)->first();
+            $review = Review::where('id', $review_id)->first();
+            $response [] = [
+                'patient_id' => $patientReview->patient_id,
+                'review_id' => $review->id,
+                'rate' => $review->rate,
+                'comment' => $review->comment,
+            ];
         }
 
         return response()->json($response, 200);
+    }
+
+    public function getReviewById(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $review = PatientReview::with('review')->where('review_id', $request->review_id)->first();
+        if(!$review) return response()->json(['message' => 'review not found'], 404);
+
+        return response()->json([
+            'patient_id' => $review->patient_id,
+            'doctor_id' => $review->doctor_id,
+            'review_id' => $review->review_id,
+            'rate' => $review->review->rate,
+            'comment' => $review->review->comment,
+        ]);
+
+    }
+
+    public function deleteReview(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $patient_review = PatientReview::with('review')->where('review_id', $request->review_id)->first();
+        if(!$patient_review) return response()->json(['message' => 'review not found'], 404);
+
+        $review = $patient_review->review;
+
+        $patient_review->delete();
+        $review->delete();
+
+        return response()->json(['message' => 'comment deleted successfully'], 200);
+
     }
 
     public function auth() {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\Patient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -169,6 +170,29 @@ class DashBoardController extends Controller
             'averagePayment' => $averagePayment,
         ], 200);
 
+    }
+
+    public function showPatients() {
+        $auth = $this->auth();
+        if($auth) return $auth;
+        
+        $patients = Patient::select('id', 'first_name', 'last_name', 'user_id', 'gender', 'age', 'address')
+        ->get();
+
+        return response()->json($patients, 200);
+
+    }
+
+    public function showPatientDetails(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $patient = Patient::where('id', $request->patient_id)
+            ->select('id', 'first_name', 'last_name', 'user_id', 'gender', 'age', 'address')
+        ->first();
+        if(!$patient) return response()->json(['message' => 'patient not found'], 404);
+
+        return response()->json($patient, 200);
     }
 
     public function auth() {
