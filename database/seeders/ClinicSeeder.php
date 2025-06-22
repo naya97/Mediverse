@@ -15,15 +15,15 @@ class ClinicSeeder extends Seeder
     {
         Clinic::create([
             'name' => 'Heart',
-            'numOfDoctors' => 2,
+            'numOfDoctors' => 0,
         ]);
         Clinic::create([
             'name' => 'Mental',
-            'numOfDoctors' => 2,
+            'numOfDoctors' => 0,
         ]);
         Clinic::create([
             'name' => 'Dental',
-            'numOfDoctors' => 2,
+            'numOfDoctors' => 0,
         ]);
     }
 }

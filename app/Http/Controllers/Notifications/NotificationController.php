@@ -45,6 +45,15 @@ class NotificationController extends Controller
         $user = User::where('id', $auth->id)->first();
         if(!$user) return response()->json(['message' => 'user not found'], 404);
 
+        $unreadNotifications = $user->notifications()->where('is_read', false)->get();
+
+        foreach($unreadNotifications as $unreadNotification) {
+            $unreadNotification->is_read = true;
+            $unreadNotification->read_at = now();
+            $unreadNotification->save();
+        }
+
+
         $notifications = $user->notifications()->orderBy('created_at', 'desc')->get()->map(function($notification) {
             return [
                 'id' => $notification->id,
