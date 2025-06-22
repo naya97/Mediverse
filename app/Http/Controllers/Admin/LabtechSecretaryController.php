@@ -15,14 +15,25 @@ class LabtechSecretaryController extends Controller
         $auth = $this->auth();
         if($auth) return $auth;
 
-        if($request->is_secretary == 1) {
-            $secretaries = User::where('role', 'secretary')->get();
-            return response()->json($secretaries, 200);
+        if ($request->has('is_secretary')) {
+            if($request->is_secretary == 1) {
+                $secretaries = User::where('role', 'secretary')->get();
+                return response()->json($secretaries, 200);
+            }
+            else if($request->is_secretary == 0) {
+                $labtechs = User::where('role', 'labtech')->get();
+                return response()->json($labtechs, 200);
+            }
+            else  {
+                $employees = User::whereIn('role', ['labtech', 'secretary'])->get();
+                return response()->json($employees, 200);
+
+            }
+        }else {
+            $employees = User::whereIn('role', ['secretary', 'labtech'])->get();
         }
-        else {
-            $labtechs = User::where('role', 'labtech')->get();
-            return response()->json($labtechs, 200);
-        }
+
+        return response()->json($employees, 200);
     }
 
     public function addEmployee(Request $request) {
@@ -130,6 +141,16 @@ class LabtechSecretaryController extends Controller
         $user->delete();
 
         return response()->json('deleted successfully', 200);
+    }
+
+    public function showEmployeeByID(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $user = User::where('id',$request->user_id)->whereIn('role', ['labtech', 'secretary'])->first();
+        if(!$user) return response(['message'=>'employee not found'],404);
+
+        return response()->json($user, 200);
     }
 
     public function auth() {
