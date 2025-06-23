@@ -112,8 +112,124 @@ class PaymentController extends Controller
     //-------------------------------------Reservation Payment------------------------------------------------
 
 
-    public function createReservationPaymentIntent(Request $request)
-    {
+    // public function createReservationPaymentIntent(Request $request)
+    // {
+    //     $auth = $this->auth();
+    //     if($auth) return $auth;
+
+    //     $validator = Validator::make($request->all(), [
+    //         'reservation_id' => 'required|exists:appointments,id',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json(['message' => $validator->errors()->all()], 400);
+    //     }
+
+    //     $reservation = Appointment::with('schedule.doctor')->find($request->reservation_id);
+    //     if(!$reservation) return response()->json(['message' => 'reservation not found'], 404);
+
+    //     $doctorAmount = $reservation->schedule->doctor->visit_fee ?? null;
+
+    //     if (!$doctorAmount || $doctorAmount < 0.5) {
+    //         return response()->json(['message' => 'Invalid doctor fee amount. Must be at least $0.50'], 400);
+    //     }
+
+    //     if ($reservation->payment_status == 'paid') {
+    //         return response()->json(['message' => 'Reservation already paid'], 400);
+    //     }
+
+    //     $patient = Patient::where('id', $reservation->patient_id)->first();
+    //     if(!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+
+    //     if($patient->wallet < $doctorAmount) {
+    //         return response()->json(['message' => 'You do not have enough money to pay'], 400);
+    //     }
+
+    //     Stripe::setApiKey(env('STRIPE_SECRET'));
+
+    //     try {
+    //         $paymentIntent = PaymentIntent::create([
+    //             'amount' => $doctorAmount * 100, 
+    //             'currency' => 'usd',
+    //             'payment_method_types' => ['card'],
+    //             'description' => "Payment for reservation #{$reservation->id}",
+    //         ]);
+
+    //         $reservation->payment_intent_id = $paymentIntent->id;
+    //         $reservation->save();
+
+    //         return response()->json([
+    //             'clientSecret' => $paymentIntent->client_secret,
+    //             'paymentIntentId' => $paymentIntent->id,
+    //         ], 200);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => $e->getMessage()], 500);
+    //     }
+    // }
+
+    // public function confirmReservationPayment(Request $request)
+    // {
+    //      $user = Auth::user();
+    //         if (!$user) {
+    //             return response()->json([
+    //                 'message' => 'unauthorized'
+    //             ], 401);
+    //         }
+    //     if ($user->role != 'patient') {
+    //         return response()->json('You do not have permission in this page', 400);
+    //     }
+
+    //     $patient = Patient::where('user_id', $user->id)->first();
+
+    //     $validator = Validator::make($request->all(), [
+    //         'payment_intent_id' => 'required|string',
+    //         'reservation_id' => 'required|exists:appointments,id',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json(['message' => $validator->errors()->all()], 400);
+    //     }
+
+    //     $reservation = Appointment::with('schedule.doctor')->find($request->reservation_id);
+
+    //     if ($reservation->patient_id !== $patient->id) {
+    //         return response()->json(['message' => 'You do not have permission to confirm this reservation'], 403);
+    //     }
+
+    //     Stripe::setApiKey(env('STRIPE_SECRET'));
+
+    //     try {
+    //         $intent = PaymentIntent::retrieve($request->payment_intent_id);
+
+    //         if ($intent->status === 'succeeded' && $reservation->payment_intent_id === $request->payment_intent_id) {
+    //             $reservation->payment_status = 'paid';
+    //             $reservation->price = $reservation->schedule->doctor->visit_fee;
+    //             $reservation->save();
+
+    //             $patient->wallet -= $reservation->schedule->doctor->visit_fee;
+    //             $patient->save();
+
+    //             $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic->id)->first();
+    //             if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
+
+    //             $clinic->money += $reservation->price;
+    //             $clinic->save();
+
+    //             return response()->json([
+    //                 'message' => 'Reservation payment confirmed successfully.',
+    //                 'reservation' => $reservation,
+    //             ], 200);
+    //         }
+
+    //         return response()->json(['message' => 'Payment not successful or does not match reservation'], 400);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => $e->getMessage()], 500);
+    //     }
+    // }
+
+    public function ReservationPayment(Request $request) {
         $auth = $this->auth();
         if($auth) return $auth;
 
@@ -145,89 +261,27 @@ class PaymentController extends Controller
             return response()->json(['message' => 'You do not have enough money to pay'], 400);
         }
 
-        Stripe::setApiKey(env('STRIPE_SECRET'));
+        $reservation->payment_status = 'paid';
+        $reservation->price = $reservation->schedule->doctor->visit_fee;
+        $reservation->save();
 
-        try {
-            $paymentIntent = PaymentIntent::create([
-                'amount' => $doctorAmount * 100, 
-                'currency' => 'usd',
-                'payment_method_types' => ['card'],
-                'description' => "Payment for reservation #{$reservation->id}",
-            ]);
+        $patient->wallet -= $reservation->schedule->doctor->visit_fee;
+        $patient->save();
 
-            $reservation->payment_intent_id = $paymentIntent->id;
-            $reservation->save();
+        $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic->id)->first();
+        if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
-            return response()->json([
-                'clientSecret' => $paymentIntent->client_secret,
-                'paymentIntentId' => $paymentIntent->id,
-            ], 200);
+        $clinic->money += $reservation->price;
+        $clinic->save();
 
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        return response()->json([
+            'message' => 'Reservation payment confirmed successfully.',
+            'reservation' => $reservation,
+        ], 200);
+        
     }
 
-    public function confirmReservationPayment(Request $request)
-    {
-         $user = Auth::user();
-            if (!$user) {
-                return response()->json([
-                    'message' => 'unauthorized'
-                ], 401);
-            }
-        if ($user->role != 'patient') {
-            return response()->json('You do not have permission in this page', 400);
-        }
 
-        $patient = Patient::where('user_id', $user->id)->first();
-
-        $validator = Validator::make($request->all(), [
-            'payment_intent_id' => 'required|string',
-            'reservation_id' => 'required|exists:appointments,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors()->all()], 400);
-        }
-
-        $reservation = Appointment::with('schedule.doctor')->find($request->reservation_id);
-
-        if ($reservation->patient_id !== $patient->id) {
-            return response()->json(['message' => 'You do not have permission to confirm this reservation'], 403);
-        }
-
-        Stripe::setApiKey(env('STRIPE_SECRET'));
-
-        try {
-            $intent = PaymentIntent::retrieve($request->payment_intent_id);
-
-            if ($intent->status === 'succeeded' && $reservation->payment_intent_id === $request->payment_intent_id) {
-                $reservation->payment_status = 'paid';
-                $reservation->price = $reservation->schedule->doctor->visit_fee;
-                $reservation->save();
-
-                $patient->wallet -= $reservation->schedule->doctor->visit_fee;
-                $patient->save();
-
-                $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic->id)->first();
-                if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
-
-                $clinic->money += $reservation->price;
-                $clinic->save();
-
-                return response()->json([
-                    'message' => 'Reservation payment confirmed successfully.',
-                    'reservation' => $reservation,
-                ], 200);
-            }
-
-            return response()->json(['message' => 'Payment not successful or does not match reservation'], 400);
-
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
 
     public function cancelReservationAndRefund(Request $request)
     {
@@ -244,7 +298,7 @@ class PaymentController extends Controller
             return response()->json(['message' => $validator->errors()->all()], 400);
         }
 
-        $reservation = Appointment::with('schedule.doctor')->find($request->reservation_id);
+        $reservation = Appointment::with('schedule.doctor')->where('status', 'pending')->find($request->reservation_id);
         if(!$reservation) return response()->json(['message' => 'Reservaion Not Found'], 404);
         $patient = Patient::where('user_id', $user->id)->first();
 
@@ -260,37 +314,24 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Reservation cancelled (not paid).'], 200);
         }
 
-        if (!$reservation->payment_intent_id) {
-            return response()->json(['message' => 'No payment intent associated with this reservation'], 400);
-        }
 
-        try {
-            Stripe::setApiKey(env('STRIPE_SECRET'));
+        $reservation->status = 'cancelled';
+        $reservation->save();
 
-            $refund = Refund::create([
-                'payment_intent' => $reservation->payment_intent_id,
-            ]);
+        $patient->wallet += $reservation->price;
+        $patient->save();
 
-            $reservation->status = 'cancelled';
-            $reservation->save();
+        $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic->id)->first();
+        if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
-            $patient->wallet += $reservation->price;
-            $patient->save();
+        $clinic->money -= $reservation->price;
+        $clinic->save();
 
-            $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic->id)->first();
-            if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
+        return response()->json([
+            'message' => 'Reservation cancelled and payment refunded.',
+        ], 200);
 
-            $clinic->money -= $reservation->price;
-            $clinic->save();
-
-            return response()->json([
-                'message' => 'Reservation cancelled and payment refunded.',
-                'refund_status' => $refund->status,
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        
     }
 
     public function showWalletRange() {

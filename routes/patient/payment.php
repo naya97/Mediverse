@@ -10,9 +10,10 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::controller(PaymentController::class)->group(function () {
         Route::post('/createPaymentIntent','createPaymentIntent');
         Route::post('/confirmWalletRecharge','confirmWalletRecharge');
-        Route::post('/createReservationPaymentIntent','createReservationPaymentIntent');
-        Route::post('/confirmReservationPayment','confirmReservationPayment');
+        // Route::post('/createReservationPaymentIntent','createReservationPaymentIntent');
+        // Route::post('/confirmReservationPayment','confirmReservationPayment');
         Route::post('/cancelReservationAndRefund','cancelReservationAndRefund');
+        Route::post('/ReservationPayment','ReservationPayment');
         Route::get('/showWalletRange','showWalletRange');
     });
 });
