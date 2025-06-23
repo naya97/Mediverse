@@ -150,42 +150,161 @@ class ReservationController extends Controller
         // filter the times 
         $available_times = [];
 
-        if ($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
+        if($schedule->doctor->booking_type == 'manual') {
+
+            if ($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
             $start = new DateTime('09:00');
             $end = new DateTime('15:00');
-        } else {
-            $start = new DateTime('15:00');
-            $end = new DateTime('21:00');
-        }
+            } else {
+                $start = new DateTime('15:00');
+                $end = new DateTime('21:00');
+            }
 
-        $interval = new DateInterval('PT1H');
-        $period = new DatePeriod($start, $interval, $end);
+            $interval = new DateInterval('PT1H');
+            $period = new DatePeriod($start, $interval, $end);
 
-        foreach ($period as $time) {
+            foreach ($period as $time) {
 
-            $timeFormatted = $time->format('H:i:s');
-            $count = $appointments->where('timeSelected', $timeFormatted)->where('status', 'pending')->count();
-            if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
-                if ($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time) {
-                    continue;
+                $timeFormatted = $time->format('H:i:s');
+                $count = $appointments->where('timeSelected', $timeFormatted)->where('status', 'pending')->count();
+                if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
+                    if ($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time) {
+                        continue;
+                    }
+                }
+                if ($count < $numOfPeopleInHour) {
+                    $available_times[] = $time->format('H:i');
                 }
             }
-            if ($count < $numOfPeopleInHour) {
-                $available_times[] = $time->format('H:i');
-            }
-        }
-
-        if ($available_times == []) {
+            if ($available_times == []) {
             return response()->json([
                 'message' => 'this doctor is not available in this date'
             ], 400);
+            }
         }
 
         return response()->json($available_times, 200);
     }
 
-    public function addReservation(Request $request)
-    {
+    // public function addReservation(Request $request)
+    // {
+    //     $user = Auth::user();
+
+    //     //check the auth
+    //     if (!$user) {
+    //         return response()->json([
+    //             'message' => 'unauthorized'
+    //         ], 401);
+    //     }
+
+    //     if ($user->role != 'patient') {
+    //         return response()->json([
+    //             'message' => 'you dont have permission'
+    //         ], 401);
+    //     }
+
+    //     $patient = Patient::where('user_id', $user->id)->first();
+
+    //     $validator = Validator::make($request->all(), [
+    //         // 'clinic_id' => 'required|exists:clinics,id',
+    //         'doctor_id' => 'required|exists:doctors,id',
+    //         'date' => 'required|date_format:d/m/y',
+    //         'time' => 'required|date_format:H:i'
+    //     ]);
+
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'message' =>  $validator->errors()->all()
+    //         ], 400);
+    //     }
+
+    //     $dateFormatted = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
+    //     $timeFormatted = Carbon::parse($request->time)->format('H:i:s');
+
+    //     $date = Carbon::createFromFormat('d/m/y', $request->date);
+    //     $time = Carbon::createFromFormat('H:i', $request->time);
+    //     $day = $date->format('l');
+
+    //     $schedule = Schedule::where('doctor_id', $request->doctor_id)
+    //         ->where('status', 'notAvailable')
+    //         ->where('day', $day)
+    //         ->first();
+    //     if (!$schedule) return response()->json(['message' => 'Schedule Not Found'], 404);
+    //     $doctor = Doctor::where('id', $request->doctor_id)->first();
+    //     if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
+
+    //     $appointmentsNum = Appointment::where('schedule_id', $schedule->id)
+    //         ->where('reservation_date', $dateFormatted)
+    //         ->where('status', 'pending')
+    //         ->where('timeSelected', $timeFormatted)
+    //         ->count();
+
+    //     $visitTime = Doctor::where('id', $request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
+    //     if (!$visitTime) return response()->json(['message' => 'Visit Time Not Availabe'], 404);
+    //     $visitTime = (float) $visitTime;
+
+    //     if ($visitTime == 0 || $doctor->status == 'notAvailable') {
+    //         return response()->json(['message' => 'this doctor not available'], 503);
+    //     }
+
+    //     $numOfPeopleInHour = floor(60 / $visitTime);
+
+    //     $userTime = new DateTime($request->input('time'));
+    //     if ($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
+    //         $start = new DateTime('09:00');
+    //         $end = new DateTime('15:00');
+    //     } else {
+    //         $start = new DateTime('15:00');
+    //         $end = new DateTime('21:00');
+    //     }
+
+    //     if ($userTime < $start || $userTime >= $end) {
+    //         return response()->json([
+    //             'message' => 'this time not available in this schedule',
+    //         ], 400);
+    //     }
+
+    //     if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
+    //         if ($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time) {
+    //             return response()->json([
+    //                 'message' => 'this doctor is not available in this date '
+    //             ], 400);
+    //         }
+    //     }
+
+    //     $newTimeFormatted = Carbon::parse($request->time);
+    //     if ($appointmentsNum == $numOfPeopleInHour) $timeSelected = $newTimeFormatted->addHours(1)->toTimeString();
+    //     else $timeSelected = $timeFormatted;
+
+    //     $numOfPatientReservation = Appointment::where('patient_id', $patient->id)
+    //         ->where('schedule_id', $schedule->id)
+    //         ->where('reservation_date', $dateFormatted)
+    //         ->where('status', 'pending')
+    //         ->count();
+
+    //     if ($numOfPatientReservation > 0) {
+    //         return response()->json([
+    //             'message' => 'You already appointment at this date'
+    //         ], 400);
+    //     }
+
+    //     if ($appointmentsNum < $numOfPeopleInHour) {
+    //         $appointment = Appointment::create([
+    //             'patient_id' => $patient->id,
+    //             'schedule_id' => $schedule->id,
+    //             'timeSelected' => $timeSelected,
+    //             'reservation_date' => $dateFormatted,
+    //         ]);
+
+    //         return response()->json($appointment, 200);
+    //     }
+
+    //     return response()->json(['message' => 'this time is full'], 400);
+    // }
+
+    public function addManualReservation(Request $request) {
         $user = Auth::user();
 
         //check the auth
@@ -202,20 +321,6 @@ class ReservationController extends Controller
         }
 
         $patient = Patient::where('user_id', $user->id)->first();
-
-        $validator = Validator::make($request->all(), [
-            // 'clinic_id' => 'required|exists:clinics,id',
-            'doctor_id' => 'required|exists:doctors,id',
-            'date' => 'required|date_format:d/m/y',
-            'time' => 'required|date_format:H:i'
-        ]);
-
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' =>  $validator->errors()->all()
-            ], 400);
-        }
 
         $dateFormatted = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
         $timeFormatted = Carbon::parse($request->time)->format('H:i:s');
@@ -237,7 +342,7 @@ class ReservationController extends Controller
             ->where('reservation_date', $dateFormatted)
             ->where('status', 'pending')
             ->where('timeSelected', $timeFormatted)
-            ->count();
+        ->count();
 
         $visitTime = Doctor::where('id', $request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
         if (!$visitTime) return response()->json(['message' => 'Visit Time Not Availabe'], 404);
@@ -280,7 +385,7 @@ class ReservationController extends Controller
             ->where('schedule_id', $schedule->id)
             ->where('reservation_date', $dateFormatted)
             ->where('status', 'pending')
-            ->count();
+        ->count();
 
         if ($numOfPatientReservation > 0) {
             return response()->json([
@@ -301,6 +406,152 @@ class ReservationController extends Controller
 
         return response()->json(['message' => 'this time is full'], 400);
     }
+
+    public function addAutoReservation(Request $request) {
+        $user = Auth::user();
+
+        //check the auth
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
+
+        if ($user->role != 'patient') {
+            return response()->json([
+                'message' => 'you dont have permission'
+            ], 401);
+        }
+
+        $patient = Patient::where('user_id', $user->id)->first();
+
+        $dateFormatted = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
+
+        $date = Carbon::createFromFormat('d/m/y', $request->date);
+        $day = $date->format('l');
+
+        $schedule = Schedule::where('doctor_id', $request->doctor_id)
+            ->where('status', 'notAvailable')
+            ->where('day', $day)
+        ->first();
+
+        if (!$schedule) return response()->json(['message' => 'Schedule Not Found'], 404);
+        $doctor = Doctor::where('id', $request->doctor_id)->first();
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
+        $lastReservationTime = Appointment::where('schedule_id', $schedule->id)
+            ->whereDate('reservation_date', $dateFormatted)
+            ->orderByDesc('timeSelected')
+        ->first();
+
+        if(!$lastReservationTime) {
+            $shift = $schedule->Shift;
+
+            if($shift == 'morning shift:from 9 AM to 3 PM') {
+                $reservationTime = new DateTime('09:00');
+            }
+            else {
+                $reservationTime = new DateTime('15:00');
+            }
+
+        }else {
+            $reservationTime = new DateTime($lastReservationTime->timeSelected);
+        }
+
+        $appointmentsNum = Appointment::where('schedule_id', $schedule->id)
+            ->where('reservation_date', $dateFormatted)
+            ->where('status', 'pending')
+            ->where('timeSelected' , $reservationTime)
+        ->count();
+
+        $visitTime = Doctor::where('id', $request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
+        if (!$visitTime) return response()->json(['message' => 'Visit Time Not Availabe'], 404);
+        $visitTime = (float) $visitTime;
+
+        if ($visitTime == 0 || $doctor->status == 'notAvailable') {
+            return response()->json(['message' => 'this doctor not available'], 503);
+        }
+        $numOfPeopleInHour = floor(60 / $visitTime);
+
+        $reservationCarbonTime = Carbon::createFromFormat('H:i', $reservationTime->format('H:i'));
+
+        if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
+            if ($reservationCarbonTime->format('H:i') >= $schedule->start_leave_time && $reservationCarbonTime->format('H:i') <= $schedule->end_leave_time) {
+                return response()->json([
+                    'message' => 'this doctor is not available in this date '
+                ], 400);
+            }
+        }
+
+        $newTimeFormatted = Carbon::parse($reservationTime);
+        if ($appointmentsNum == $numOfPeopleInHour) $timeSelected = $newTimeFormatted->addHours(1)->toTimeString();
+        else $timeSelected = $newTimeFormatted->toTimeString();
+        
+
+        $numOfPatientReservation = Appointment::where('patient_id', $patient->id)
+            ->where('schedule_id', $schedule->id)
+            ->where('reservation_date', $dateFormatted)
+            ->where('status', 'pending')
+        ->count();
+
+        if ($numOfPatientReservation > 0) {
+            return response()->json([
+                'message' => 'You already appointment at this date'
+            ], 400);
+        }
+
+        if ($appointmentsNum < $numOfPeopleInHour) {
+            $appointment = Appointment::create([
+                'patient_id' => $patient->id,
+                'schedule_id' => $schedule->id,
+                'timeSelected' => $timeSelected,
+                'reservation_date' => $dateFormatted,
+            ]);
+
+            return response()->json($appointment, 200);
+        }
+
+        return response()->json(['message' => 'this time is full'], 400);
+
+    }
+
+    public function addReservation(Request $request) {
+        $user = Auth::user();
+
+        //check the auth
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
+
+        if ($user->role != 'patient') {
+            return response()->json([
+                'message' => 'you dont have permission'
+            ], 401);
+        }
+
+        $doctor = Doctor::findOrFail($request->doctor_id);
+
+        if($doctor->booking_type == 'manual') {
+
+            $validator = Validator::make($request->all(), [
+                'time' => 'required|date_format:H:i',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' =>  $validator->errors()->all()
+                ], 400);
+            }
+
+            return $this->addManualReservation($request);
+        }
+        else {
+            return $this->addAutoReservation($request);
+        }
+    }
+
 
     public function editReservation(Request $request)
     {

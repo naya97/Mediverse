@@ -62,6 +62,7 @@ class DoctorProfileController extends Controller
             'visit_fee' => $doctor->visit_fee,
             'experience' => $doctor->experience,
             'treated' => $doctor->treated,
+            'booking_type' => $doctor->booking_type,
             'status' => $doctor->status,
             'sign' => $doctor->sign,
             'schedule' => $schedule
@@ -88,7 +89,8 @@ class DoctorProfileController extends Controller
             'visit_fee' => 'numeric|nullable',
             'experience' => 'integer|nullable',
             'sign' => 'image',
-            'status' => 'string|nullable'
+            'status' => 'string|nullable',
+            'booking_type' => ['nullable', Rule::in(['manual', 'auto'])],
         ]);
 
         if ($validator->fails()) {

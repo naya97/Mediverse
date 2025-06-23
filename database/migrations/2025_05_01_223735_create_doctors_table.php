@@ -31,6 +31,7 @@ return new class extends Migration
             $table->integer('experience')->nullable();
             $table->integer('treated')->default(0);
             $table->enum('status', ['available', 'notAvailable'])->default('notAvailable');
+            $table->enum('booking_type', ['auto', 'manual'])->default('manual');
             $table->timestamps();
         });
     }
