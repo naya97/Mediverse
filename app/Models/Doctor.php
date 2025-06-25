@@ -34,7 +34,7 @@ class Doctor extends Model
         'experience',
     ];
 
-    use Notifiable;
+    // use Notifiable;
 
     public function user(): BelongsTo
     {

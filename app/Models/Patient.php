@@ -19,7 +19,7 @@ class Patient extends Model
         'address',
     ];
 
-    use Notifiable;
+    // use Notifiable;
 
     public function user(): BelongsTo
     {
