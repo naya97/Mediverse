@@ -40,8 +40,7 @@ class HomeController extends Controller
         $response = [];
         foreach ($results as $result) {
             $response[] = [
-                'id',
-                $result->id,
+                'id' => $result->id,
                 'first_name' => $result->first_name,
                 'last_name' => $result->last_name,
                 'photo' => $result->photo,
@@ -62,13 +61,14 @@ class HomeController extends Controller
         if(!$doctor) return response()->json(['message' => 'doctor not found'], 404);
 
         $department = Clinic::where('id', $doctor->clinic_id)->select('name')->first();
-        $doctor_details = User::where('id', $doctor->user_id)->select('first_name', 'last_name', 'phone')->first();
+        $doctor_details = User::where('id', $doctor->user_id)->select('first_name', 'last_name', 'phone', 'email')->first();
 
         $response = [
-            'id' => $doctor_details->id,
+            'id' => $doctor->id,
             'first_name' => $doctor_details->first_name,
             'last_name' => $doctor_details->last_name,
             'phone' => $doctor_details->phone,
+            'email' => $doctor_details->email,
             'clinic' => $department->name,
             'photo' => $doctor->photo,
             'treated' => $doctor->treated,
