@@ -7,6 +7,8 @@ use App\Models\Analyse;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Patient;
+use App\Notifications\DoctorAnalyseResult;
+use App\Notifications\PatientAnalyseResult;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -174,6 +176,9 @@ class AnalysisController extends Controller
                 'Your test result is now available. Please check the app.',
                 ['analyse_id' => $analyse->id]
             );
+            $patient->notify(new PatientAnalyseResult([
+                'analyse_id' => $analyse->id,
+            ]));
         }
         //doctor notification
         if ($analyse->doctor_id != null) {
@@ -187,6 +192,11 @@ class AnalysisController extends Controller
                     'The test result for patient ' . $fullName . ' is now available.',
                     ['analyse_id' => $analyse->id]
                 );
+                $user->notify(new DoctorAnalyseResult([
+                    'analyse_id' => $analyse->id,
+                    'patient_id' => $analyse->patient->id,
+                    'patient_name' => $fullName,
+                ]));
             }
         }
 

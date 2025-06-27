@@ -12,6 +12,8 @@ use App\Models\Medicine;
 use App\Models\Patient;
 use App\Models\Prescription;
 use App\Models\User;
+use App\Notifications\AnalyseRequest;
+use App\Notifications\AppointmentVisited;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -160,6 +162,12 @@ class PatientInfoController extends Controller
                 'A new lab test has been requested by Dr. ' . $fullName,
                 ['analyse_id' => $analyse->id]
             );
+            $user->notify(new AnalyseRequest([
+                'analyse_id' => $analyse->id,
+                'doctor_id' => $doctor->id,
+                'clinic_id' => $clinic->id,
+                'doctor_name' => $doctor->first_name . ' ' . $doctor->last_name,
+            ]));
         }
 
         return response()->json([
@@ -282,6 +290,9 @@ class PatientInfoController extends Controller
                 'Your recent appointment has been marked as visited.',
                 ['appointment_id' => $appointment->id]
             );
+            $patient->notify(new AppointmentVisited([
+                'appointment_id' => $appointment->id,
+            ]));
         }
 
         return response()->json([

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\Doctor;
 use App\Models\Schedule;
 use App\Models\Appointment;
+use App\Notifications\ShiftCompleted;
 use App\Services\FirebaseService;
 
 class NotificationDoctorService
@@ -51,6 +52,11 @@ class NotificationDoctorService
             $body = "Dr. {$user->first_name}, your $shiftType on $todayName has ended. You treated $visitsCount patient(s) today.";
 
             $this->firebase->sendNotification($user->fcm_token, $title, $body,);
+            $user->notify(new ShiftCompleted([
+                'shift' => $shiftType,
+                'day' => $todayName,
+                'visits' => $visitsCount,
+            ]));
         }
     }
 }
