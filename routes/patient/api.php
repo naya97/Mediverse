@@ -13,7 +13,10 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::controller(PatientController::class)->group(function () {
         Route::post('/completeInfo', 'completePatientInfo');
         Route::post('/editProfile', 'editProfile');
+        Route::post('/addChild', 'addChild');
+        Route::delete('deleteChild', 'deleteChild');
         Route::get('/showProfile', 'showProfile');
+        Route::get('/showAllChildren', 'showAllChildren');
     });
     Route::controller(RateController::class)->group(function () {
         Route::post('/rate', 'patientRate');

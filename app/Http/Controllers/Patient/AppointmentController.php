@@ -31,19 +31,20 @@ class AppointmentController extends Controller
                 'message' => 'you dont have permission'
             ], 401);
         }
-        $patient = Patient::where('user_id', $user->id)->first();
-        if (!$patient) {
-            return response()->json([
-                'message' => 'Patient not found'
-            ], 404);
+
+        if ($request->has('child_id')) {
+            $patient = Patient::where('id', $request->child_id)->first();
+        } else {
+            $patient = Patient::where('user_id', $user->id)->first();
         }
+        if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
 
         $appointments = Appointment::with('schedule.doctor')
             ->where('patient_id', $patient->id)
             ->where('status', $request->status)
-        ->get();
+            ->get();
 
-        if(!$appointments) return response()->json(['message' => 'No Appointments yet'], 404);
+        if (!$appointments) return response()->json(['message' => 'No Appointments yet'], 404);
 
         $response = [];
         foreach ($appointments as $appointment) {
@@ -61,12 +62,13 @@ class AppointmentController extends Controller
                     'payment_status' => $appointment->payment_status,
                     'reminder_offset' => $appointment->reminder_offset,
                 ];
-            }   
+            }
         }
         return response()->json($response, 200);
     }
 
-    public function showAppointmentInfo(Request $request) {
+    public function showAppointmentInfo(Request $request)
+    {
         $user = Auth::user();
         if (!$user) {
             return response()->json([
@@ -78,17 +80,23 @@ class AppointmentController extends Controller
                 'message' => 'you dont have permission'
             ], 401);
         }
-        $patient = Patient::where('user_id', $user->id)->first();
+        if ($request->has('child_id')) {
+            $patient = Patient::where('id', $request->child_id)->first();
+        } else {
+            $patient = Patient::where('user_id', $user->id)->first();
+        }
+        if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+
 
         $appointment = Appointment::with('schedule.doctor')
             ->where('id', $request->appointment_id)
             ->where('patient_id', $patient->id)
-        ->first();
+            ->first();
 
-        if(!$appointment) return response()->json(['message' => 'Appointment Not Found'], 404);
+        if (!$appointment) return response()->json(['message' => 'Appointment Not Found'], 404);
 
         $doctor = $appointment->schedule->doctor;
-        if(!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
 
 
         $clinic = $doctor->clinic;
@@ -98,8 +106,8 @@ class AppointmentController extends Controller
 
         $information = [
             'appointment_id' => $appointment->id,
-            'clinic_id' => $doctor->clinic_id ,
-            'clinic_name'=> $clinic->name ,
+            'clinic_id' => $doctor->clinic_id,
+            'clinic_name' => $clinic->name,
             'type' => $type,
             'doctor_photo' => $doctor->photo,
             'doctor_name' => $doctor->first_name . ' ' . $doctor->last_name,
@@ -117,7 +125,8 @@ class AppointmentController extends Controller
         return response()->json($information, 200);
     }
 
-    public function showAppointmentResults(Request $request) {
+    public function showAppointmentResults(Request $request)
+    {
 
         $user = Auth::user();
         if (!$user) {
@@ -130,14 +139,20 @@ class AppointmentController extends Controller
                 'message' => 'you dont have permission'
             ], 401);
         }
-        $patient = Patient::where('user_id', $user->id)->first();
+        if ($request->has('child_id')) {
+            $patient = Patient::where('id', $request->child_id)->first();
+        } else {
+            $patient = Patient::where('user_id', $user->id)->first();
+        }
+        if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+
 
         $appointment = Appointment::with('schedule.doctor')
             ->where('id', $request->appointment_id)
             ->where('patient_id', $patient->id)
-        ->first();
+            ->first();
 
-        if(!$appointment) return response()->json(['message' => 'Appointment Not Found'], 404);
+        if (!$appointment) return response()->json(['message' => 'Appointment Not Found'], 404);
 
 
         $medicalInfo = MedicalInfo::with('prescription.medicines')->where('appointment_id', $appointment->id)->first();
@@ -163,7 +178,7 @@ class AppointmentController extends Controller
                 ];
             });
         }
-    
+
         $formattedMedicalInfo = [
             'id' => $medicalInfo->id,
             'diagnosis' => $medicalInfo->diagnosis,
@@ -179,7 +194,8 @@ class AppointmentController extends Controller
         return response()->json($formattedMedicalInfo, 200);
     }
 
-    public function downloadPrescription(Request $request) {
+    public function downloadPrescription(Request $request)
+    {
         $user = Auth::user();
         if (!$user) {
             return response()->json([
@@ -191,10 +207,16 @@ class AppointmentController extends Controller
                 'message' => 'you dont have permission'
             ], 401);
         }
-        $patient = Patient::where('user_id', $user->id)->first();
+        if ($request->has('child_id')) {
+            $patient = Patient::where('id', $request->child_id)->first();
+        } else {
+            $patient = Patient::where('user_id', $user->id)->first();
+        }
+        if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+
 
         $prescription = Prescription::with('medicines')->where('id', $request->prescription_id)->first();
-        if(!$prescription) return response()->json(['message' => 'Pres$prescription Not Found'], 404);
+        if (!$prescription) return response()->json(['message' => 'Pres$prescription Not Found'], 404);
 
 
         $medicines = $prescription->medicines;
@@ -202,12 +224,12 @@ class AppointmentController extends Controller
         $doctor = Doctor::with('clinic')->where('id', $prescription->doctor_id)->first();
 
         if (!$prescription || !$patient || !$doctor) {
-        return response()->json(['message' => 'data not found'], 404);
+            return response()->json(['message' => 'data not found'], 404);
         }
 
         $pdf = App::make('dompdf.wrapper');
 
-    
+
         // $signatureFile = $doctor->sign ?? null;
         // $signatureRelativePath = public_path($signatureFile);
         // $signatureExists =  File::exists($signatureRelativePath);
@@ -239,7 +261,8 @@ class AppointmentController extends Controller
         ]);
     }
 
-    public function setReminder(Request $request) {
+    public function setReminder(Request $request)
+    {
         $user = Auth::user();
         if (!$user) {
             return response()->json([
@@ -262,16 +285,14 @@ class AppointmentController extends Controller
         }
 
         $patient = Patient::where('user_id', $user->id)->first();
-        if(!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+        if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
 
         $appointment = Appointment::where('id', $request->appointment_id)->first();
-        if(!$appointment) return response()->json(['message' => 'Appointment Not Fount'], 404);
+        if (!$appointment) return response()->json(['message' => 'Appointment Not Fount'], 404);
 
         $appointment->reminder_offset = $request->reminder_offset;
         $appointment->save();
 
         return response()->json(['message' => 'Your Reminder set successfully'], 200);
-
     }
-
 }

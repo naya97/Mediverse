@@ -17,6 +17,7 @@ class Patient extends Model
         'gender',
         'blood_type',
         'address',
+        'parent_id',
     ];
 
     // use Notifiable;

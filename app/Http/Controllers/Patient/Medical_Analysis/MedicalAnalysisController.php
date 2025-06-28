@@ -12,23 +12,29 @@ use Illuminate\Support\Facades\Validator;
 
 class MedicalAnalysisController extends Controller
 {
-    public function showAnalysis() {
+    public function showAnalysis(Request $request)
+    {
         $user = Auth::user(); // 
 
-         //check the auth
-         if(!$user) {
+        //check the auth
+        if (!$user) {
             return response()->json([
                 'message' => 'unauthorized'
-            ],401);
+            ], 401);
         }
 
-        if($user->role != 'patient') {
+        if ($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
-            ],401);
+            ], 401);
         }
 
-        $patient = Patient::where('user_id',$user->id)->first();
+        if ($request->has('child_id')) {
+            $patient = Patient::where('id', $request->child_id)->first();
+        } else {
+            $patient = Patient::where('user_id', $user->id)->first();
+        }
+        if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
 
         $analysis = Analyse::where('patient_id', $patient->id)
             ->select(
@@ -39,29 +45,35 @@ class MedicalAnalysisController extends Controller
                 'result_photo',
                 'status',
             )
-        ->get();
+            ->get();
 
-        return response()->json($analysis , 200);
-
+        return response()->json($analysis, 200);
     }
 
-    public function filteringAnalysis(Request $request) {
+    public function filteringAnalysis(Request $request)
+    {
         $user = Auth::user(); // 
 
-         //check the auth
-         if(!$user) {
+        //check the auth
+        if (!$user) {
             return response()->json([
                 'message' => 'unauthorized'
-            ],401);
+            ], 401);
         }
 
-        if($user->role != 'patient') {
+        if ($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
-            ],401);
+            ], 401);
         }
 
-        $patient = Patient::where('user_id',$user->id)->first();
+        if ($request->has('child_id')) {
+            $patient = Patient::where('id', $request->child_id)->first();
+        } else {
+            $patient = Patient::where('user_id', $user->id)->first();
+        }
+        if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+
 
         $analysis = Analyse::where('patient_id', $patient->id)
             ->where('status', $request->status)
@@ -73,28 +85,29 @@ class MedicalAnalysisController extends Controller
                 'result_photo',
                 'status',
             )
-        ->get();
+            ->get();
 
-        if(! $analysis) return response()->json(['message' => 'Not Found'], 404);
+        if (! $analysis) return response()->json(['message' => 'Not Found'], 404);
 
         return response()->json($analysis, 200);
     }
 
 
-    public function addAnalysis(Request $request) {
-       $user = Auth::user(); // 
+    public function addAnalysis(Request $request)
+    {
+        $user = Auth::user(); // 
 
-         //check the auth
-         if(!$user) {
+        //check the auth
+        if (!$user) {
             return response()->json([
                 'message' => 'unauthorized'
-            ],401);
+            ], 401);
         }
 
-        if($user->role != 'patient') {
+        if ($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
-            ],401);
+            ], 401);
         }
 
         $validator = Validator::make($request->all(), [
@@ -105,11 +118,16 @@ class MedicalAnalysisController extends Controller
         ]);
         if ($validator->fails()) {
             return response()->json([
-               'message' =>  $validator->errors()->all()
+                'message' =>  $validator->errors()->all()
             ], 422);
         }
 
-        $patient = Patient::where('user_id',$user->id)->first();
+        if ($request->has('child_id')) {
+            $patient = Patient::where('id', $request->child_id)->first();
+        } else {
+            $patient = Patient::where('user_id', $user->id)->first();
+        }
+        if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
 
         $analyse = Analyse::create([
             'patient_id' => $patient->id,
@@ -118,7 +136,7 @@ class MedicalAnalysisController extends Controller
             'status' => 'finished',
         ]);
 
-        if($request->hasFile('result_file')){
+        if ($request->hasFile('result_file')) {
             $file_path = $request->result_file->store('files/patients/analysis', 'public');
             $result_file = '/storage/' . $file_path;
 
@@ -128,7 +146,7 @@ class MedicalAnalysisController extends Controller
             $analyse->save();
         }
 
-        if($request->hasFile('result_photo')){
+        if ($request->hasFile('result_photo')) {
             $photo_path = $request->result_photo->store('files/patients/analysis', 'public');
             $result_photo = '/storage/' . $photo_path;
 
@@ -139,40 +157,40 @@ class MedicalAnalysisController extends Controller
         }
 
         return response()->json($analyse, 201);
-
     }
 
-    public function deleteAnalysis(Request $request) {
+    public function deleteAnalysis(Request $request)
+    {
         $user = Auth::user(); // 
 
-         //check the auth
-         if(!$user) {
+        //check the auth
+        if (!$user) {
             return response()->json([
                 'message' => 'unauthorized'
-            ],401);
+            ], 401);
         }
 
-        if($user->role != 'patient') {
+        if ($user->role != 'patient') {
             return response()->json([
                 'message' => 'you dont have permission'
-            ],401);
+            ], 401);
         }
 
         $analyse = Analyse::where('id', $request->analyse_id)->first();
 
-        if(!$analyse) {
+        if (!$analyse) {
             return response()->json([
                 'message' => 'Not Found'
             ], 404);
         }
 
-        if($analyse->result_photo) {
+        if ($analyse->result_photo) {
             $image_path = public_path($analyse->result_photo);
-            if(File::exists($image_path)) File::delete($image_path);
+            if (File::exists($image_path)) File::delete($image_path);
         }
-        if($analyse->result_file) {
+        if ($analyse->result_file) {
             $file_path = public_path($analyse->result_file);
-            if(File::exists($file_path)) File::delete($file_path);
+            if (File::exists($file_path)) File::delete($file_path);
         }
 
         $analyse->delete();

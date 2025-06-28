@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
-            $table->foreignId('user_id')->constrained('users')
+            $table->foreignId('user_id')->nullable()->constrained('users')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->integer('age')->nullable();
@@ -23,6 +23,10 @@ return new class extends Migration
             $table->enum('blood_type', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])->nullable();
             $table->string('address')->nullable();
             $table->decimal('wallet', 10, 2)->default(0);
+            $table->foreignId('parent_id')->nullable()
+                ->constrained('patients')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
             $table->timestamps();
         });
     }
