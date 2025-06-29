@@ -48,6 +48,9 @@ class AppServiceProvider extends ServiceProvider
             ->group(base_path('routes/Home/home.php'));
         //Doctor
         Route::middleware('api')
+            ->prefix('Doctor/auth')
+            ->group(base_path('routes/Doctor/auth.php'));
+        Route::middleware('api')
             ->prefix('Doctor')
             ->group(base_path('routes/Doctor/profile.php'));
         Route::middleware('api')
@@ -71,6 +74,9 @@ class AppServiceProvider extends ServiceProvider
             ->prefix('labTech')
             ->group(base_path('routes/LabTech/analysis.php'));
         //Secretary
+        Route::middleware('api')
+            ->prefix('Secretary')
+            ->group(base_path('routes/Secretary/auth.php'));
         Route::middleware('api')
             ->prefix('Secretary')
             ->group(base_path('routes/Secretary/appointment.php'));
