@@ -5,7 +5,9 @@ namespace App;
 use App\Models\Appointment;
 use App\Models\Clinic;
 use App\Models\Doctor;
+use App\Models\Patient;
 use App\Models\Schedule;
+use App\Models\User;
 use App\Notifications\AppointmentCancelled;
 use App\Services\FirebaseService;
 use Carbon\Carbon;
@@ -20,10 +22,10 @@ trait CancelAppointmentsTrait
 {
 
     protected $firebaseService;
-    
-    public function __construct(FirebaseService $firebase_service){
-        $this->firebaseService = $firebase_service;
 
+    public function __construct(FirebaseService $firebase_service)
+    {
+        $this->firebaseService = $firebase_service;
     }
 
     public function editDoctorSchedule(Request $request, $doctor)
@@ -66,7 +68,7 @@ trait CancelAppointmentsTrait
         $appointments = Appointment::with(['patient.user', 'schedule.doctor'])->whereBetween('reservation_date', [$start_leave_date, $end_leave_date])
             ->whereBetween('timeSelected', [$start_leave_time, $end_leave_time])
             ->where('status', 'pending')
-        ->get();
+            ->get();
 
         Stripe::setApiKey(env('STRIPE_SECRET'));
 
@@ -79,14 +81,13 @@ trait CancelAppointmentsTrait
 
                     $patient = $appointment->patient;
                     $patient->wallet += $appointment->price;
-                    $patient->save();  
-                    
+                    $patient->save();
+
                     $clinic = Clinic::where('id', $appointment->doctor->clinic_id)->first();
-                    if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
+                    if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
                     $clinic->money -= $appointment->price;
                     $clinic->save();
-
                 } catch (\Exception $e) {
                     Log::error("Stripe refund failed for appointment ID {$appointment->id}: " . $e->getMessage());
                 }
@@ -97,15 +98,19 @@ trait CancelAppointmentsTrait
         }
 
         $patients = $appointments->pluck('patient')->all();
-       
 
-        foreach($patients as $patient) {
-            if($patient->user->fcm_token) {
-                foreach($appointments as $appointment) {
-                    if($appointment->patient->id == $patient->id) {
-                        $this->firebaseService->sendNotification($patient->user->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date '. $appointment->reservation_date,);
+        foreach ($patients as $patient) {
+            if ($patient->parent_id != null) {
+                $patient = Patient::where('id', $patient->parent_id)->first();
+                $patient = User::where('id', $patient->user_id)->first();
+            } else {
+                $patient = $patient->user;
+            }
+            if ($patient->fcm_token) {
+                foreach ($appointments as $appointment) {
+                    if ($appointment->patient->id == $patient->id) {
+                        $this->firebaseService->sendNotification($patient->user->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date ' . $appointment->reservation_date,);
                         $patient->user->notify(new AppointmentCancelled($appointment));
-
                     }
                 }
             }
@@ -147,11 +152,10 @@ trait CancelAppointmentsTrait
                 $patient->save();
 
                 $clinic = Clinic::where('id', $reservation->doctor->clinic_id)->first();
-                if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
+                if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
                 $clinic->money -= $reservation->price;
                 $clinic->save();
-
             } catch (\Exception $e) {
                 Log::error("Stripe refund failed for reservation ID {$reservation->id}: " . $e->getMessage());
             }
@@ -162,9 +166,15 @@ trait CancelAppointmentsTrait
         ]);
         $reservation->save();
 
-        $patient = $reservation->patient->user;
-        if($patient->fcm_token) {
-            $this->firebaseService->sendNotification($patient->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date '. $reservation->reservation_date,);
+        $patient = $reservation->patient;
+        if ($patient->parent_id != null) {
+            $patient = Patient::where('id', $patient->parent_id)->first();
+            $patient = User::where('id', $patient->user_id)->first();
+        } else {
+            $patient = $patient->user;
+        }
+        if ($patient->fcm_token) {
+            $this->firebaseService->sendNotification($patient->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date ' . $reservation->reservation_date,);
             $patient->user->notify(new AppointmentCancelled($reservation));
         }
 

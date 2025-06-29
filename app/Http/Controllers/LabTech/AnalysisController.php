@@ -7,6 +7,7 @@ use App\Models\Analyse;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Patient;
+use App\Models\User;
 use App\Notifications\DoctorAnalyseResult;
 use App\Notifications\PatientAnalyseResult;
 use Illuminate\Http\Request;
@@ -82,6 +83,7 @@ class AnalysisController extends Controller
 
         $analysis = Analyse::with(['clinic', 'patient'])
             ->where('status', $request->status)
+            ->whereNotNull('clinic_id')
             ->get();
 
         $response = $analysis->map(function ($analyse) {
@@ -168,7 +170,13 @@ class AnalysisController extends Controller
         $analyse->save();
 
         //patient notification
-        $patient = $analyse->patient->user;
+        $patient = Patient::where('id', $analyse->patient_id)->first();
+        if ($patient->parent_id != null) {
+            $patient = Patient::where('id', $patient->parent_id)->first();
+            $patient = User::where('id', $patient->user_id)->first();
+        } else {
+            $patient = $analyse->patient->user;
+        }
         if ($patient->fcm_token) {
             $this->firebaseService->sendNotification(
                 $patient->fcm_token,
@@ -248,9 +256,10 @@ class AnalysisController extends Controller
     /////
     public function searchAnalyse($type, $status)
     {
-        $results = Analyse::search($type)
-            ->where('status', $status)
-            ->get();
+        $results = Analyse::search($type)->get()->filter(function ($analyse) use ($status) {
+            return $analyse->status === $status && $analyse->clinic_id !== null;
+        });
+
         $results->load(['clinic', 'patient']);
 
         if ($results->isEmpty()) {
@@ -273,7 +282,7 @@ class AnalysisController extends Controller
             ];
         });
 
-        return response()->json($response, 200);
+        return response()->json($response->values(), 200);
     }
     /////
     public function addBill(Request $request)

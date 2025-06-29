@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Log;
 use Stripe\Refund;
 use Stripe\Stripe;
 use App\CancelAppointmentsTrait;
+use App\Models\Patient;
+use App\Models\User;
 
 class AppointmentController extends Controller
 {
@@ -27,10 +29,16 @@ class AppointmentController extends Controller
 
         $response = [];
         foreach ($appointments as $appointment) {
+            $patient = Patient::where('id', $appointment->patient_id)->first();
+            if ($patient->parent_id != null) {
+                $patient = Patient::where('id', $patient->parent_id)->first();
+            }
+            $patient = User::where('id', $patient->user_id)->first();
+            $patient_phone = $patient->phone;
             $response[] = [
                 'id' => $appointment->id,
                 'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $appointment->patient->user->phone,
+                'patient_phone' => $patient_phone,
                 'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
                 'doctor_id' => $appointment->schedule->doctor->id,
                 'doctor_phone' => $appointment->schedule->doctor->user->phone,
@@ -66,10 +74,16 @@ class AppointmentController extends Controller
 
         $response = [];
         foreach ($appointments as $appointment) {
+            $patient = Patient::where('id', $appointment->patient_id)->first();
+            if ($patient->parent_id != null) {
+                $patient = Patient::where('id', $patient->parent_id)->first();
+            }
+            $patient = User::where('id', $patient->user_id)->first();
+            $patient_phone = $patient->phone;
             $response[] = [
                 'id' => $appointment->id,
                 'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $appointment->patient->user->phone,
+                'patient_phone' => $patient_phone,
                 'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
                 'doctor_id' => $appointment->schedule->doctor->id,
                 'doctor_phone' => $appointment->schedule->doctor->user->phone,
@@ -102,10 +116,16 @@ class AppointmentController extends Controller
 
         $response = [];
         foreach ($appointments as $appointment) {
+            $patient = Patient::where('id', $appointment->patient_id)->first();
+            if ($patient->parent_id != null) {
+                $patient = Patient::where('id', $patient->parent_id)->first();
+            }
+            $patient = User::where('id', $patient->user_id)->first();
+            $patient_phone = $patient->phone;
             $response[] = [
                 'id' => $appointment->id,
                 'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $appointment->patient->user->phone,
+                'patient_phone' => $patient_phone,
                 'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
                 'doctor_id' => $appointment->schedule->doctor->id,
                 'doctor_phone' => $appointment->schedule->doctor->user->phone,
@@ -137,10 +157,16 @@ class AppointmentController extends Controller
 
         $response = [];
         foreach ($appointments as $appointment) {
+            $patient = Patient::where('id', $appointment->patient_id)->first();
+            if ($patient->parent_id != null) {
+                $patient = Patient::where('id', $patient->parent_id)->first();
+            }
+            $patient = User::where('id', $patient->user_id)->first();
+            $patient_phone = $patient->phone;
             $response[] = [
                 'id' => $appointment->id,
                 'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $appointment->patient->user->phone,
+                'patient_phone' => $patient_phone,
                 'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
                 'doctor_id' => $appointment->schedule->doctor->id,
                 'doctor_phone' => $appointment->schedule->doctor->user->phone,
@@ -176,10 +202,16 @@ class AppointmentController extends Controller
 
         $response = [];
         foreach ($appointments as $appointment) {
+            $patient = Patient::where('id', $appointment->patient_id)->first();
+            if ($patient->parent_id != null) {
+                $patient = Patient::where('id', $patient->parent_id)->first();
+            }
+            $patient = User::where('id', $patient->user_id)->first();
+            $patient_phone = $patient->phone;
             $response[] = [
                 'id' => $appointment->id,
                 'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $appointment->patient->user->phone,
+                'patient_phone' => $patient_phone,
                 'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
                 'doctor_id' => $appointment->schedule->doctor->id,
                 'doctor_phone' => $appointment->schedule->doctor->user->phone,
