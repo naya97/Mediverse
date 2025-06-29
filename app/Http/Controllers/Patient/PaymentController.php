@@ -254,10 +254,22 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Reservation already paid'], 400);
         }
 
-        $patient = Patient::where('id', $reservation->patient_id)->first();
+        $patient = Patient::find($reservation->patient_id);
         if(!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+        
+        $walletOwner = $patient;
 
-        if($patient->wallet < $doctorAmount) {
+        if ($patient->parent_id) {
+            $parent = Patient::find($patient->parent_id);
+            
+            if (!$parent) {
+                return response()->json(['message' => 'Patient Not Found'], 404);
+            }
+
+            $walletOwner = $parent;
+        }
+
+        if($walletOwner->wallet < $doctorAmount) {
             return response()->json(['message' => 'You do not have enough money to pay'], 400);
         }
 
@@ -265,8 +277,9 @@ class PaymentController extends Controller
         $reservation->price = $reservation->schedule->doctor->visit_fee;
         $reservation->save();
 
-        $patient->wallet -= $reservation->schedule->doctor->visit_fee;
-        $patient->save();
+        $walletOwner->wallet -= $reservation->schedule->doctor->visit_fee;
+        $walletOwner->save();
+
 
         $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic->id)->first();
         if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
@@ -300,11 +313,7 @@ class PaymentController extends Controller
 
         $reservation = Appointment::with('schedule.doctor')->where('status', 'pending')->find($request->reservation_id);
         if(!$reservation) return response()->json(['message' => 'Reservaion Not Found'], 404);
-        $patient = Patient::where('user_id', $user->id)->first();
-
-        if ($reservation->patient_id !== $patient->id) {
-            return response()->json(['message' => 'You do not have permission to cancel this reservation'], 403);
-        }
+        $patient = Patient::find($reservation->patient_id);
 
         if ($reservation->payment_status != 'paid') {
             $reservation->status = 'cancelled';
@@ -318,9 +327,21 @@ class PaymentController extends Controller
         $reservation->status = 'cancelled';
         $reservation->save();
 
-        $patient->wallet += $reservation->price;
-        $patient->save();
+        $walletOwner = $patient;
 
+        if ($patient->parent_id) {
+            $parent = Patient::find($patient->parent_id);
+
+            if (!$parent) {
+                return response()->json(['message' => 'Patient Not Found'], 404);
+            }
+
+            $walletOwner = $parent;
+        }
+
+        $walletOwner->wallet += $reservation->price;
+        $walletOwner->save();
+        
         $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic->id)->first();
         if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
