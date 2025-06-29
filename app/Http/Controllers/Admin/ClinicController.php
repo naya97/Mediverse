@@ -141,6 +141,18 @@ class ClinicController extends Controller
         return response()->json(['message' => 'clinic updated successfully'], 200);
     }
 
+    public function showClinicFund(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $clinic = Clinic::find($request->clinic_id);
+        if(!$clinic) return response()->json(['message' => 'clinic not found'], 404);
+
+        return response()->json([
+            'Clinic Fund ' => (float) $clinic->money,
+        ],200);
+    }
+
     public function removeClinic(Request $request)
     {
         $auth = $this->auth();

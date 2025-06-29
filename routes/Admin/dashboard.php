@@ -15,6 +15,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('/showPaymentDetailsByDate', 'showPaymentDetailsByDate');
         Route::get('/showPatients', 'showPatients');
         Route::get('/showPatientDetails', 'showPatientDetails');
+        Route::delete('/deletePatient', 'deletePatient');
     });
     Route::controller(ReportController::class)->group(function () {
         Route::get('/showAllReports', 'showAllReports');

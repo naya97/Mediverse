@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\Clinic;
 use App\Models\Patient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -193,6 +194,20 @@ class DashBoardController extends Controller
         if(!$patient) return response()->json(['message' => 'patient not found'], 404);
 
         return response()->json($patient, 200);
+    }
+
+    public function deletePatient(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $patient = Patient::with('user')->find($request->patient_id);
+        if(!$patient) return response()->json(['message' => 'patient not found'], 404);
+
+        $patient->user->delete();
+        $patient->delete();
+
+        return response()->json(['message' => 'patient removed successfully'], 200);
+        
     }
 
     public function auth() {
