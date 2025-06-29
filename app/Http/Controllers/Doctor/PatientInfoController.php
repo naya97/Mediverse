@@ -282,7 +282,13 @@ class PatientInfoController extends Controller
         $appointment->status = 'visited';
         $appointment->save();
         //patient notification
-        $patient = $appointment->patient->user;
+        $patient = Patient::where('id', $appointment->patient_id)->first();
+        if ($patient->parent_id != null) {
+            $patient = Patient::where('id', $patient->parent_id)->first();
+            $patient = User::where('id', $patient->user_id)->first();
+        } else {
+            $patient = $appointment->patient->user;
+        }
         if (!empty($patient->fcm_token)) {
             $this->firebaseService->sendNotification(
                 $patient->fcm_token,

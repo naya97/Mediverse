@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Appointment;
+use App\Models\Patient;
+use App\Models\User;
 use App\Notifications\AppointmentReminder;
 use App\Services\FirebaseService;
 use Carbon\Carbon;
@@ -40,14 +42,14 @@ class SendAppointmentReminders extends Command
         $now = Carbon::now();
 
         $appointments = Appointment::with('patient.user')
-        ->where('reminder_sent', false)
-        ->where('status', 'pending')
-        ->get();
+            ->where('reminder_sent', false)
+            ->where('status', 'pending')
+            ->get();
 
-        foreach($appointments as $appointment) {
+        foreach ($appointments as $appointment) {
             $appointmentDateTime = Carbon::createFromFormat(
-                'Y-m-d H:i:s', 
-                $appointment->reservation_date. ' ' .$appointment->timeSelected
+                'Y-m-d H:i:s',
+                $appointment->reservation_date . ' ' . $appointment->timeSelected
             );
 
             $reminderTime = $appointmentDateTime->copy()->subHours($appointment->reminder_offset);
@@ -56,15 +58,22 @@ class SendAppointmentReminders extends Command
                 $now->greaterThanOrEqualTo($reminderTime) &&
                 $now->lessThan($reminderTime->copy()->addMinutes(60))
             ) {
-                $token = $appointment->patient->user->fcm_token ?? null;
-                if($token) {
+                $patient = $appointment->patient;
+                if ($patient->parent_id != null) {
+                    $patient = Patient::where('id', $patient->parent_id)->first();
+                    $patient = User::where('id', $patient->user_id)->first();
+                } else {
+                    $patient = $patient->user;
+                }
+                $token = $patient->fcm_token ?? null;
+                if ($token) {
                     $title = 'appointment reminder';
-                    $body = 'You have an appointment ' .$appointmentDateTime->format('Y-m-d H:i');
+                    $body = 'You have an appointment ' . $appointmentDateTime->format('Y-m-d H:i');
                     $data = [
                         'appointment_id' => $appointment->id,
                         'type' => 'appointment_reminder',
                     ];
-                    $this->firebase->sendNotification($token, $title, $body, $data); 
+                    $this->firebase->sendNotification($token, $title, $body, $data);
                     $appointment->patient->user->notify(new AppointmentReminder($appointment));
                 }
 
@@ -72,8 +81,7 @@ class SendAppointmentReminders extends Command
                 $appointment->save();
 
                 $this->info("reminder sent successfully for patient ID: {$appointment->patient->id}");
-            }
-            else {
+            } else {
                 $this->warn("there is no token for this patient ID: {$appointment->patient->id}");
             }
         }
