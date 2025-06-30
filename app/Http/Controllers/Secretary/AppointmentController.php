@@ -14,48 +14,51 @@ use Stripe\Stripe;
 use App\CancelAppointmentsTrait;
 use App\Models\Patient;
 use App\Models\User;
+use App\PaginationTrait;
 
 class AppointmentController extends Controller
 {
     use CancelAppointmentsTrait;
-    public function showAllAppointments()
+    use PaginationTrait;
+
+    public function showAllAppointments(Request $request)
     {
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $all_appointments = Appointment::all()->count();
+        $appointments = Appointment::with('patient.user', 'schedule.doctor.user');
 
-        $appointments = Appointment::with('patient', 'schedule')->get();
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
 
-        $response = [];
-        foreach ($appointments as $appointment) {
-            $patient = Patient::where('id', $appointment->patient_id)->first();
-            if ($patient->parent_id != null) {
-                $patient = Patient::where('id', $patient->parent_id)->first();
+            $patient = $appointment->patient;
+            if ($patient->parent_id !== null) {
+                $patient = Patient::with('user')->find($patient->parent_id);
             }
-            $patient = User::where('id', $patient->user_id)->first();
-            $patient_phone = $patient->phone;
-            $response[] = [
+
+            $patientUser = $patient->user;
+
+            $doctor = $appointment->schedule->doctor;
+            $doctorUser = $doctor->user;
+
+            return [
                 'id' => $appointment->id,
                 'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $patient_phone,
-                'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
-                'doctor_id' => $appointment->schedule->doctor->id,
-                'doctor_phone' => $appointment->schedule->doctor->user->phone,
-                'doctor_photo' => $appointment->schedule->doctor->photo,
-                'visit_fee' => $appointment->schedule->doctor->visit_fee,
+                'patient_phone' => $patientUser ? $patientUser->phone : null,
+                'doctor' => $doctor->first_name . ' ' . $doctor->last_name,
+                'doctor_id' => $doctor->id,
+                'doctor_phone' => $doctorUser ? $doctorUser->phone : null,
+                'doctor_photo' => $doctor->photo,
+                'visit_fee' => $doctor->visit_fee,
                 'price' => $appointment->price,
                 'reservation_date' => $appointment->reservation_date,
                 'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
             ];
-        };
+        });
 
-        return response()->json([
-            'appointments' => $response,
-            'numOfAppointments' => $all_appointments
-        ], 200);
+        return response()->json($response, 200);
+
     }
 
     public function filteringAppointmentByDoctor(Request $request)
@@ -63,44 +66,41 @@ class AppointmentController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $all_appointments = Appointment::whereHas('schedule', function ($query) use ($request) {
-            $query->where('doctor_id', $request->doctor_id);
-        })->count();
-
-        $appointments = Appointment::with('patient', 'schedule.doctor')
+        $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
             ->whereHas('schedule', function ($query) use ($request) {
                 $query->where('doctor_id', $request->doctor_id);
-            })->get();
+        });
 
-        $response = [];
-        foreach ($appointments as $appointment) {
-            $patient = Patient::where('id', $appointment->patient_id)->first();
-            if ($patient->parent_id != null) {
-                $patient = Patient::where('id', $patient->parent_id)->first();
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+
+            $patient = $appointment->patient;
+            if ($patient->parent_id !== null) {
+                $patient = Patient::with('user')->find($patient->parent_id);
             }
-            $patient = User::where('id', $patient->user_id)->first();
-            $patient_phone = $patient->phone;
-            $response[] = [
+
+            $patientUser = $patient->user;
+
+            $doctor = $appointment->schedule->doctor;
+            $doctorUser = $doctor->user;
+
+            return [
                 'id' => $appointment->id,
                 'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $patient_phone,
-                'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
-                'doctor_id' => $appointment->schedule->doctor->id,
-                'doctor_phone' => $appointment->schedule->doctor->user->phone,
-                'doctor_photo' => $appointment->schedule->doctor->photo,
-                'visit_fee' => $appointment->schedule->doctor->visit_fee,
+                'patient_phone' => $patientUser ? $patientUser->phone : null,
+                'doctor' => $doctor->first_name . ' ' . $doctor->last_name,
+                'doctor_id' => $doctor->id,
+                'doctor_phone' => $doctorUser ? $doctorUser->phone : null,
+                'doctor_photo' => $doctor->photo,
+                'visit_fee' => $doctor->visit_fee,
                 'price' => $appointment->price,
                 'reservation_date' => $appointment->reservation_date,
                 'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
             ];
-        };
+        });
 
-        return response()->json([
-            'appointments' => $response,
-            'numOfAppointments' => $all_appointments
-        ], 200);
+        return response()->json($response, 200);
     }
 
     public function filteringAppointmentByStatus(Request $request)
@@ -108,44 +108,43 @@ class AppointmentController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $appointments = Appointment::whereHas('schedule', function ($query) use ($request) {
-            $query->where('doctor_id', $request->doctor_id);
-        })->where('status', $request->status)
-            ->get();
+        $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
+            ->whereHas('schedule', function ($query) use ($request) {
+                $query->where('doctor_id', $request->doctor_id);
+            })
+            ->where('status', $request->status);
 
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+            $patient = $appointment->patient;
 
-        $response = [];
-        foreach ($appointments as $appointment) {
-            $patient = Patient::where('id', $appointment->patient_id)->first();
-            if ($patient->parent_id != null) {
-                $patient = Patient::where('id', $patient->parent_id)->first();
+            if ($patient->parent_id !== null) {
+                $patient = Patient::with('user')->find($patient->parent_id);
             }
-            $patient = User::where('id', $patient->user_id)->first();
-            $patient_phone = $patient->phone;
-            $response[] = [
+
+            $patientUser = $patient->user;
+            $doctor = $appointment->schedule->doctor;
+            $doctorUser = $doctor->user;
+
+            return [
                 'id' => $appointment->id,
-                'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $patient_phone,
-                'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
-                'doctor_id' => $appointment->schedule->doctor->id,
-                'doctor_phone' => $appointment->schedule->doctor->user->phone,
-                'doctor_photo' => $appointment->schedule->doctor->photo,
-                'visit_fee' => $appointment->schedule->doctor->visit_fee,
+                'patient' => $patient->first_name . ' ' . $patient->last_name,
+                'patient_phone' => $patientUser ? $patientUser->phone : null,
+                'doctor' => $doctor->first_name . ' ' . $doctor->last_name,
+                'doctor_id' => $doctor->id,
+                'doctor_phone' => $doctorUser ? $doctorUser->phone : null,
+                'doctor_photo' => $doctor->photo,
+                'visit_fee' => $doctor->visit_fee,
                 'price' => $appointment->price,
                 'reservation_date' => $appointment->reservation_date,
                 'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
             ];
-        };
+        });
 
-        $all_appointments = $appointments->count();
-
-        return response()->json([
-            'appointments' => $response,
-            'numOfAppointments' => $all_appointments
-        ], 200);
+        return response()->json($response, 200);
     }
+
 
     public function filteringAppointmentByDate(Request $request)
     {
@@ -153,40 +152,41 @@ class AppointmentController extends Controller
         if ($auth) return $auth;
 
         $date = Carbon::createFromFormat('d-m-Y', $request->date)->toDateString();
-        $appointments = Appointment::where('reservation_date', $date)->get();
 
-        $response = [];
-        foreach ($appointments as $appointment) {
-            $patient = Patient::where('id', $appointment->patient_id)->first();
-            if ($patient->parent_id != null) {
-                $patient = Patient::where('id', $patient->parent_id)->first();
+        $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
+        ->where('reservation_date', $date);
+
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+            $patient = $appointment->patient;
+
+            if ($patient->parent_id !== null) {
+                $patient = Patient::with('user')->find($patient->parent_id);
             }
-            $patient = User::where('id', $patient->user_id)->first();
-            $patient_phone = $patient->phone;
-            $response[] = [
+
+            $patientUser = $patient->user;
+            $doctor = $appointment->schedule->doctor;
+            $doctorUser = $doctor->user;
+
+            return [
                 'id' => $appointment->id,
-                'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $patient_phone,
-                'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
-                'doctor_id' => $appointment->schedule->doctor->id,
-                'doctor_phone' => $appointment->schedule->doctor->user->phone,
-                'doctor_photo' => $appointment->schedule->doctor->photo,
-                'visit_fee' => $appointment->schedule->doctor->visit_fee,
+                'patient' => $patient->first_name . ' ' . $patient->last_name,
+                'patient_phone' => $patientUser ? $patientUser->phone : null,
+                'doctor' => $doctor->first_name . ' ' . $doctor->last_name,
+                'doctor_id' => $doctor->id,
+                'doctor_phone' => $doctorUser ? $doctorUser->phone : null,
+                'doctor_photo' => $doctor->photo,
+                'visit_fee' => $doctor->visit_fee,
                 'price' => $appointment->price,
                 'reservation_date' => $appointment->reservation_date,
                 'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
             ];
-        };
+        });
 
-        $all_appointments = $appointments->count();
-
-        return response()->json([
-            'appointments' => $response,
-            'numOfAppointments' => $all_appointments
-        ], 200);
+        return response()->json($response, 200);
     }
+
 
     public function filteringAppointmentByMonth(Request $request)
     {
@@ -197,40 +197,38 @@ class AppointmentController extends Controller
         $startOfMonth = $date->startOfMonth()->toDateString();
         $endOfMonth = $date->endOfMonth()->toDateString();
 
-        $appointments = Appointment::whereBetween('reservation_date', [$startOfMonth, $endOfMonth])
-            ->get();
+        $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
+        ->whereBetween('reservation_date', [$startOfMonth, $endOfMonth]);
 
-        $response = [];
-        foreach ($appointments as $appointment) {
-            $patient = Patient::where('id', $appointment->patient_id)->first();
-            if ($patient->parent_id != null) {
-                $patient = Patient::where('id', $patient->parent_id)->first();
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+            $patient = $appointment->patient;
+
+            if ($patient->parent_id !== null) {
+                $patient = Patient::with('user')->find($patient->parent_id);
             }
-            $patient = User::where('id', $patient->user_id)->first();
-            $patient_phone = $patient->phone;
-            $response[] = [
+
+            $patientUser = $patient->user;
+            $doctor = $appointment->schedule->doctor;
+            $doctorUser = $doctor->user;
+
+            return [
                 'id' => $appointment->id,
-                'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $patient_phone,
-                'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
-                'doctor_id' => $appointment->schedule->doctor->id,
-                'doctor_phone' => $appointment->schedule->doctor->user->phone,
-                'doctor_photo' => $appointment->schedule->doctor->photo,
-                'visit_fee' => $appointment->schedule->doctor->visit_fee,
+                'patient' => $patient->first_name . ' ' . $patient->last_name,
+                'patient_phone' => $patientUser ? $patientUser->phone : null,
+                'doctor' => $doctor->first_name . ' ' . $doctor->last_name,
+                'doctor_id' => $doctor->id,
+                'doctor_phone' => $doctorUser ? $doctorUser->phone : null,
+                'doctor_photo' => $doctor->photo,
+                'visit_fee' => $doctor->visit_fee,
                 'price' => $appointment->price,
                 'reservation_date' => $appointment->reservation_date,
                 'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
             ];
-        };
+        });
 
-        $all_appointments = $appointments->count();
-
-        return response()->json([
-            'appointments' => $response,
-            'numOfAppointments' => $all_appointments
-        ], 200);
+        return response()->json($response, 200);
     }
 
     public function editSchedule(Request $request)

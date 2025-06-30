@@ -18,40 +18,43 @@ use DateInterval;
 use DatePeriod;
 use DateTime;
 use App\CancelAppointmentsTrait;
-
+use App\PaginationTrait;
 use Illuminate\Support\Facades\Validator;
 
 class AppointmentController extends Controller
 {
     use CancelAppointmentsTrait;
+    use PaginationTrait;
 
-    public function showAllAppointments()
+    public function showAllAppointments(Request $request)
     {
         $auth = $this->auth();
         if ($auth) return $auth;
+
         $user = Auth::user();
+
         $doctor = Doctor::where('user_id', $user->id)->first();
         if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
-        $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->get();
-        $response = [];
-        foreach ($appointments as $appointment) {
-            if ($appointment->parent_id == null) {
-                $type = 'first time';
-            } else {
-                $type = 'check up';
-            }
-            $response[] = [
+
+        $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds);
+
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+        $type = $appointment->parent_id === null ? 'first time' : 'check up';
+
+            return [
                 'id' => $appointment->id,
-                'patient first name' => $appointment->patient->first_name,
-                'patient last name' => $appointment->patient->last_name,
-                'reservation date' => $appointment->reservation_date,
-                'reservation hour' => $appointment->timeSelected,
+                'patient_first_name' => $appointment->patient->first_name,
+                'patient_last_name' => $appointment->patient->last_name,
+                'reservation_date' => $appointment->reservation_date,
+                'reservation_hour' => $appointment->timeSelected,
                 'status' => $appointment->status,
-                'appointment type' => $type,
+                'appointment_type' => $type,
                 'payment_status' => $appointment->payment_status,
             ];
-        }
+        });
+
         return response()->json($response, 200);
     }
     /////
@@ -59,42 +62,46 @@ class AppointmentController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
+
         $validator = Validator::make($request->all(), [
             'status' => 'required',
         ]);
+
         if ($validator->fails()) {
             return response()->json([
                 'message' =>  $validator->errors()->all()
             ], 400);
         }
+
         $user = Auth::user();
+
         $doctor = Doctor::where('user_id', $user->id)->first();
         if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
+
         if ($request->status != 'today') {
-            $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->get();
+            $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status);
         } else {
             $today = now()->format('Y-m-d');
-            $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->get();
+            $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today);
         }
-        $response = [];
-        foreach ($appointments as $appointment) {
-            if ($appointment->parent_id == null) {
-                $type = 'first time';
-            } else {
-                $type = 'check up';
-            }
-            $response[] = [
+
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+        $type = $appointment->parent_id === null ? 'first time' : 'check up';
+
+            return [
                 'id' => $appointment->id,
-                'patient first name' => $appointment->patient->first_name,
-                'patient last name' => $appointment->patient->last_name,
-                'reservation date' => $appointment->reservation_date,
-                'reservation hour' => $appointment->timeSelected,
+                'patient_first_name' => $appointment->patient->first_name,
+                'patient_last_name' => $appointment->patient->last_name,
+                'reservation_date' => $appointment->reservation_date,
+                'reservation_hour' => $appointment->timeSelected,
                 'status' => $appointment->status,
-                'appointment type' => $type,
+                'appointment_type' => $type,
                 'payment_status' => $appointment->payment_status,
             ];
-        }
+        });
+
         return response()->json($response, 200);
     }
     /////
@@ -102,50 +109,58 @@ class AppointmentController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
+
         $validator = Validator::make($request->all(), [
             'status' => 'required',
             'type' => 'required',
         ]);
+
         if ($validator->fails()) {
             return response()->json([
                 'message' =>  $validator->errors()->all()
             ], 400);
         }
+
         $user = Auth::user();
+
         $doctor = Doctor::where('user_id', $user->id)->first();
         if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
 
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
+
         if ($request->type == 'first time') {
             if ($request->status != 'today') {
-                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->where('parent_id', null)->get();
+                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->where('parent_id', null);
             } else {
                 $today = now()->format('Y-m-d');
-                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->where('parent_id', null)->get();
+                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->where('parent_id', null);
             }
             $type = 'first time';
         } else {
             if ($request->status != 'today') {
-                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->whereNotNull('parent_id')->get();
+                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->whereNotNull('parent_id');
             } else {
                 $today = now()->format('Y-m-d');
-                $appointments = Appointment::with(' ')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->whereNotNull('parent_id')->get();
+                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->whereNotNull('parent_id');
             }
             $type = 'check up';
         }
-        $response = [];
-        foreach ($appointments as $appointment) {
-            $response[] = [
-                'id' => $appointment->id,
-                'patient first name' => $appointment->patient->first_name,
-                'patient last name' => $appointment->patient->last_name,
-                'reservation date' => $appointment->reservation_date,
-                'reservation hour' => $appointment->timeSelected,
-                'status' => $appointment->status,
-                'type' => $type,
-                'payment_status' => $appointment->payment_status,
-            ];
-        }
+
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+            $type = $appointment->parent_id === null ? 'first time' : 'check up';
+
+                return [
+                    'id' => $appointment->id,
+                    'patient_first_name' => $appointment->patient->first_name,
+                    'patient_last_name' => $appointment->patient->last_name,
+                    'reservation_date' => $appointment->reservation_date,
+                    'reservation_hour' => $appointment->timeSelected,
+                    'status' => $appointment->status,
+                    'appointment_type' => $type,
+                    'payment_status' => $appointment->payment_status,
+                ];
+        });
+
         return response()->json($response, 200);
     }
     /////
@@ -164,26 +179,29 @@ class AppointmentController extends Controller
         }
 
         $user = Auth::user();
+
         $doctor = Doctor::where('user_id', $user->id)->first();
         if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
-        $appointments = Appointment::where('patient_id', $request->patient_id)->whereIn('schedule_id', $scheduleIds)->get()->all();
-        $response = [];
-        foreach ($appointments as $appointment) {
-            if ($appointment->parent_id == null) {
-                $type = 'first time';
-            } else {
-                $type = 'check up';
-            }
-            $response[] = [
+
+        $appointments = Appointment::where('patient_id', $request->patient_id)->whereIn('schedule_id', $scheduleIds);
+
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+            $type = $appointment->parent_id === null ? 'first time' : 'check up';
+
+            return [
                 'id' => $appointment->id,
-                'reservation date' => $appointment->reservation_date,
-                'reservation hour' => $appointment->timeSelected,
+                'patient_first_name' => $appointment->patient->first_name,
+                'patient_last_name' => $appointment->patient->last_name,
+                'reservation_date' => $appointment->reservation_date,
+                'reservation_hour' => $appointment->timeSelected,
                 'status' => $appointment->status,
-                'appointment type' => $type,
+                'appointment_type' => $type,
                 'payment_status' => $appointment->payment_status,
             ];
-        }
+        });
+
         return response()->json($response, 200);
     }
     /////

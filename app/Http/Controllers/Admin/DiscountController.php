@@ -83,7 +83,7 @@ class DiscountController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $discounts = Discount::select('company', 'discount_code', 'discount_rate')->get()->all();
+        $discounts = Discount::select('company', 'discount_code', 'discount_rate')->get();
 
         return response()->json($discounts, 200);
     }

@@ -15,94 +15,81 @@ class DashBoardController extends Controller
 {
     use PaginationTrait;
 
-    // public function showAllAppointments(Request $request) {
+    public function showAllAppointments(Request $request) {
         
-    //     $auth = $this->auth();
-    //     if($auth) return $auth;
+        $auth = $this->auth();
+        if($auth) return $auth;
 
-    //     $all_appointments = Appointment::all()->count();
+        $appointments = Appointment::with('schedule.doctor', 'patient');
 
-    //     $appointments = Appointment::with('schedule.doctor', 'patient');
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+            return [
+                'id' => $appointment->id,
+                'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
+                'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
+                'doctor_id' => $appointment->schedule->doctor->id,
+                'doctor_photo' => $appointment->schedule->doctor->photo,
+                'visit_fee' => $appointment->schedule->doctor->visit_fee,
+                'reservation_date' => $appointment->reservation_date,
+                'timeSelected' => $appointment->timeSelected,
+                'status' => $appointment->status,
+            ];
+        });
 
-    //     $paginatedData = $this->paginateResponse($request, $appointments, 'Appointments');
-
-    //     $response = [];
-    //     foreach($appointments as $appointment) {
-
-    //     }
-
-    //     return response()->json([
-    //         'appointments' => $response,
-    //         'numOfAppointments' => $all_appointments
-    //     ],200);
-    // }
+         return response()->json($response, 200);
+    }
 
     public function filteringAppointmentByDoctor(Request $request) {
         $auth = $this->auth();
         if($auth) return $auth;
 
-        $all_appointments = Appointment::whereHas('schedule', function($query) use ($request) {
-            $query->where('doctor_id', $request->doctor_id);
-        })->count();
-
         $appointments = Appointment::with('patient', 'schedule.doctor')
         ->whereHas('schedule', function($query) use ($request) {
             $query->where('doctor_id', $request->doctor_id);
-        })->get();
+        });
 
-        $response = [];
-        foreach($appointments as $appointment) {
-            $response [] = [
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+            return [
                 'id' => $appointment->id,
-                'patient' => $appointment->patient->first_name. ' '. $appointment->patient->last_name,
+                'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
                 'doctor_id' => $appointment->schedule->doctor->id,
-                'doctor' => $appointment->schedule->doctor->first_name. ' '.$appointment->schedule->doctor->last_name,
-                'doctor_photo' => $appointment->schedule->doctor->photo ,
-                'visit_fee' => $appointment->schedule->doctor->visit_fee ,
+                'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
+                'doctor_photo' => $appointment->schedule->doctor->photo,
+                'visit_fee' => $appointment->schedule->doctor->visit_fee,
                 'reservation_date' => $appointment->reservation_date,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
             ];
-        };
+        });
 
-        return response()->json([
-            'appointments' => $response,
-            'numOfAppointments' => $all_appointments
-        ],200);
+         return response()->json($response, 200);
     }
 
     public function filteringAppointmentByStatus(Request $request) {
         $auth = $this->auth();
         if($auth) return $auth;
 
-        $all_appointments = Appointment::whereHas('schedule', function($query) use ($request) {
-            $query->where('status', $request->status);
-        })->count();
-
         $appointments = Appointment::with('patient', 'schedule.doctor')
         ->whereHas('schedule', function($query) use ($request) {
             $query->where('status', $request->status);
-        })->get();
+        });
 
-        $response = [];
-        foreach($appointments as $appointment) {
-            $response [] = [
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+            return [
                 'id' => $appointment->id,
-                'patient' => $appointment->patient->first_name. ' '. $appointment->patient->last_name,
+                'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
                 'doctor_id' => $appointment->schedule->doctor->id,
-                'doctor' => $appointment->schedule->doctor->first_name. ' '.$appointment->schedule->doctor->last_name,
-                'doctor_photo' => $appointment->schedule->doctor->photo ,
-                'visit_fee' => $appointment->schedule->doctor->visit_fee ,
+                'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
+                'doctor_photo' => $appointment->schedule->doctor->photo,
+                'visit_fee' => $appointment->schedule->doctor->visit_fee,
                 'reservation_date' => $appointment->reservation_date,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
             ];
-        };
+        });
+    
 
-        return response()->json([
-            'appointments' => $response,
-            'numOfAppointments' => $all_appointments
-        ],200);
+         return response()->json($response, 200);
     }
 
     public function showPaymentDetails() {
@@ -168,14 +155,15 @@ class DashBoardController extends Controller
 
     }
 
-    public function showPatients() {
+    public function showPatients(Request $request) {
         $auth = $this->auth();
         if($auth) return $auth;
         
-        $patients = Patient::select('id', 'first_name', 'last_name', 'user_id', 'gender', 'age', 'address')
-        ->get();
+        $patients = Patient::select('id', 'first_name', 'last_name', 'user_id', 'gender', 'age', 'address');
 
-        return response()->json($patients, 200);
+        $query = $this->paginateResponse($request, $patients, 'Patients');
+
+        return response()->json($query, 200);
 
     }
 

@@ -10,6 +10,7 @@ use App\Models\Patient;
 use App\Models\PatientReview;
 use App\Models\Review;
 use App\Models\Schedule;
+use App\PaginationTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -23,6 +24,8 @@ use App\Services\FirebaseService;
 
 class DoctorProfileController extends Controller
 {
+    use PaginationTrait;
+
     protected $firebaseService;
     public function __construct(FirebaseService $firebase_service)
     {
@@ -291,31 +294,35 @@ class DoctorProfileController extends Controller
         ], 200);
     }
     /////
-    public function showDoctorReviews()
+    public function showDoctorReviews(Request $request)
     {
 
         if ($auth = $this->auth()) {
             return $auth;
         }
         $user = Auth::user();
+
         $doctor = Doctor::where('user_id', $user->id)->first();
 
         if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
 
-        $reviews = PatientReview::with(['review', 'patient'])->where('doctor_id', $doctor->id)->get();
-        $response = [];
+        $reviews = PatientReview::with(['review', 'patient'])->where('doctor_id', $doctor->id);
 
-        foreach ($reviews as $patientReview) {
-            if ($patientReview->review) {
-                $response[] = [
-                    'patient_id' => $patientReview->patient_id,
-                    'patient first name' => $patientReview->patient->first_name,
-                    'patient last name' => $patientReview->patient->last_name,
-                    'rate' => $patientReview->review->rate,
-                    'comment' => $patientReview->review->comment,
-                ];
+        $response = $this->paginateResponse($request, $reviews, 'Reviews', function ($patientReview) {
+
+            if (!$patientReview->review) {
+                return null; 
             }
-        }
+            return [
+                'patient_id' => $patientReview->patient_id,
+                'patient_first_name' => $patientReview->patient->first_name,
+                'patient_last_name' => $patientReview->patient->last_name,
+                'rate' => $patientReview->review->rate,
+                'comment' => $patientReview->review->comment,
+            ];
+        });
+
+        $response['data'] = array_filter($response['data']);
 
 
         return response()->json($response, 200);
