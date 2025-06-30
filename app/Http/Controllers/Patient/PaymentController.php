@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Patient;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Clinic;
+use App\Models\Discount;
 use App\Models\Doctor;
 use App\Models\Patient;
 use Illuminate\Http\Request;
@@ -273,11 +274,20 @@ class PaymentController extends Controller
             return response()->json(['message' => 'You do not have enough money to pay'], 400);
         }
 
+        //discount
+        if ($request->has('discount_code')) {
+            $discount = Discount::where('discount_code', $request->discount_code)->first();
+            if (!$discount) return response()->json(['message' => 'discount not found'], 404);
+            $discount_rate = $discount->discount_rate;
+            $reservation->price = ($reservation->schedule->doctor->visit_fee * $discount_rate) / 100;
+        } else {
+            $reservation->price = $reservation->schedule->doctor->visit_fee;
+        }
+
         $reservation->payment_status = 'paid';
-        $reservation->price = $reservation->schedule->doctor->visit_fee;
         $reservation->save();
 
-        $walletOwner->wallet -= $reservation->schedule->doctor->visit_fee;
+        $walletOwner->wallet -= $reservation->price;
         $walletOwner->save();
 
 
