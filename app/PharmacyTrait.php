@@ -5,6 +5,7 @@ namespace App;
 use App\Models\Pharmacy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 trait PharmacyTrait
 {
@@ -55,7 +56,7 @@ trait PharmacyTrait
         $query = Pharmacy::search($searchTerm);
 
         if ($isPaginate) {
-            $results = $query->paginate($pageSize, ['*'], 'page', $page);
+            $results = $query->paginate($pageSize, $page);
             $results->withQueryString();
 
             if ($results->isEmpty()) {

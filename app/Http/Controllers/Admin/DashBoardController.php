@@ -6,41 +6,36 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Clinic;
 use App\Models\Patient;
+use App\PaginationTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashBoardController extends Controller
 {
-    public function showAllAppointments() {
+    use PaginationTrait;
+
+    // public function showAllAppointments(Request $request) {
         
-        $auth = $this->auth();
-        if($auth) return $auth;
+    //     $auth = $this->auth();
+    //     if($auth) return $auth;
 
-        $all_appointments = Appointment::all()->count();
+    //     $all_appointments = Appointment::all()->count();
 
-        $appointments = Appointment::with('patient','schedule')->get();
+    //     $appointments = Appointment::with('schedule.doctor', 'patient');
 
-        $response = [];
-        foreach($appointments as $appointment) {
-            $response [] = [
-                'id' => $appointment->id,
-                'patient' => $appointment->patient->first_name. ' '. $appointment->patient->last_name,
-                'doctor' => $appointment->schedule->doctor->first_name. ' '.$appointment->schedule->doctor->last_name,
-                'doctor_id' => $appointment->schedule->doctor->id,
-                'doctor_photo' => $appointment->schedule->doctor->photo ,
-                'visit_fee' => $appointment->schedule->doctor->visit_fee ,
-                'reservation_date' => $appointment->reservation_date,
-                'timeSelected' => $appointment->timeSelected,
-                'status' => $appointment->status,
-            ];
-        };
+    //     $paginatedData = $this->paginateResponse($request, $appointments, 'Appointments');
 
-        return response()->json([
-            'appointments' => $response,
-            'numOfAppointments' => $all_appointments
-        ],200);
-    }
+    //     $response = [];
+    //     foreach($appointments as $appointment) {
+
+    //     }
+
+    //     return response()->json([
+    //         'appointments' => $response,
+    //         'numOfAppointments' => $all_appointments
+    //     ],200);
+    // }
 
     public function filteringAppointmentByDoctor(Request $request) {
         $auth = $this->auth();

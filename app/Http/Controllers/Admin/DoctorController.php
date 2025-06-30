@@ -9,6 +9,7 @@ use App\Models\Patient;
 use App\Models\PatientReview;
 use App\Models\Review;
 use App\Models\User;
+use App\PaginationTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -17,36 +18,41 @@ use Illuminate\Validation\Rule;
 
 class DoctorController extends Controller
 {
-    public function showDoctors() {
+    use PaginationTrait; 
+
+    public function showDoctors(Request $request) {
         $auth = $this->auth();
-        if($auth) return $auth;
+        if ($auth) return $auth;
 
-        $doctors = Doctor::with('user')->get();
+        $query = Doctor::with('user');
 
-        $response = [];
-        foreach($doctors as $doctor){
-            $response [] = [
-                'id' => $doctor->id,
-                'first_name' => $doctor->first_name,
-                'last_name' => $doctor->last_name,
-                'clinic_id' => $doctor->clinic_id,
-                'photo' => $doctor->photo,
-                'speciality' => $doctor->speciality,
-                'finalRate' => $doctor->finalRate,
-                'visit_fee' => $doctor->visit_fee,
-                'treated' => $doctor->treated,
-                'professional_title' => $doctor->professional_title,
-                'average_visit_duration' => $doctor->average_visit_duration,
-                'experience' => $doctor->experience,
-                'treated' => $doctor->treated,
-                'status' => $doctor->status,
-                'phone' => optional($doctor->user)->phone,
-                'email' => optional($doctor->user)->email,
-            ];
+        $paginatedData = $this->paginateResponse($request, $query, 'Doctors');
+
+        if (isset($paginatedData['data'])) {
+            $paginatedData['data'] = collect($paginatedData['data'])->map(function($doctor) {
+                return [
+                    'id' => $doctor->id,
+                    'first_name' => $doctor->first_name,
+                    'last_name' => $doctor->last_name,
+                    'clinic_id' => $doctor->clinic_id,
+                    'photo' => $doctor->photo,
+                    'speciality' => $doctor->speciality,
+                    'finalRate' => $doctor->finalRate,
+                    'visit_fee' => $doctor->visit_fee,
+                    'treated' => $doctor->treated,
+                    'professional_title' => $doctor->professional_title,
+                    'average_visit_duration' => $doctor->average_visit_duration,
+                    'experience' => $doctor->experience,
+                    'status' => $doctor->status,
+                    'phone' => optional($doctor->user)->phone,
+                    'email' => optional($doctor->user)->email,
+                ];
+            })->toArray();
         }
-        
-        return response()->json($response, 200);
-    }
+
+        return response()->json($paginatedData, 200);
+    }   
+
 
     public function showDoctorDetails(Request $request) {
         $auth = $this->auth();
@@ -154,29 +160,32 @@ class DoctorController extends Controller
 
     public function showDoctorReviews(Request $request) {
         $auth = $this->auth();
-        if($auth) return $auth;
+        if ($auth) return $auth;
 
-        $doctor = Doctor::where('id', $request->doctor_id)->first();
-
-        if(!$doctor) return response()->json(['message'=> 'doctor not found'], 404);
-
-        $reviews = PatientReview::where('doctor_id', $request->doctor_id)->get();
-        $review_ids = $reviews->pluck('review_id')->all();
-
-        $response = [] ;
-        foreach($review_ids as $review_id) {
-            $patientReview = PatientReview::where('review_id', $review_id)->first();
-            $review = Review::where('id', $review_id)->first();
-            $response [] = [
-                'patient_id' => $patientReview->patient_id,
-                'review_id' => $review->id,
-                'rate' => $review->rate,
-                'comment' => $review->comment,
-            ];
+        $doctor = Doctor::find($request->doctor_id);
+        if (!$doctor) {
+            return response()->json(['message' => 'doctor not found'], 404);
         }
 
-        return response()->json($response, 200);
+        $query = PatientReview::with('review')
+        ->where('doctor_id', $request->doctor_id);
+
+        $paginatedData = $this->paginateResponse($request, $query, 'Doctor Reviews');
+
+        // if (isset($paginatedData['data'])) {
+        //     $paginatedData['data'] = collect($paginatedData['data'])->map(function($patientReview) {
+        //         return [
+        //             'patient_id' => $patientReview->patient_id,
+        //             'review_id' => $patientReview->review->id ?? null,
+        //             'rate' => $patientReview->review->rate ?? null,
+        //             'comment' => $patientReview->review->comment ?? null,
+        //         ];
+        //     })->toArray();
+        // }
+
+        return response()->json($paginatedData, 200);
     }
+
 
     public function getReviewById(Request $request) {
         $auth = $this->auth();

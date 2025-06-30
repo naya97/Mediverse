@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\File;
 
 class ClinicController extends Controller
 {
-
     protected $firebaseService;
     
     public function __construct(FirebaseService $firebase_service){
