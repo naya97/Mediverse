@@ -48,6 +48,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
 
 Route::prefix('admin')->middleware(JwtMiddleware::class)->group(function () {
     require __DIR__ . '/Admin/clinic.php';
+    require __DIR__ . '/Admin/discount.php';
     require __DIR__ . '/Admin/dashboard.php';
     require __DIR__ . '/Admin/doctor.php';
     require __DIR__ . '/Admin/employee.php';
@@ -56,6 +57,12 @@ Route::prefix('admin')->middleware(JwtMiddleware::class)->group(function () {
 
 Route::prefix('admin')->group(function () {
     require __DIR__ . '/Admin/auth.php';
+});
+Route::prefix('secretary')->group(function () {
+    require __DIR__ . '/Secretary/auth.php';
+});
+Route::prefix('doctor')->group(function () {
+    require __DIR__ . '/Doctor/auth.php';
 });
 
 Route::prefix('secretary')->middleware(JwtMiddleware::class)->group(function () {

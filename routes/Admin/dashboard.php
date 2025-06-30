@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashBoardController;
+use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Middleware\JwtMiddleware;
 use Illuminate\Support\Facades\Route;
