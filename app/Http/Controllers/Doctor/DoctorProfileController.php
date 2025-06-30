@@ -91,6 +91,9 @@ class DoctorProfileController extends Controller
             'sign' => 'image',
             'status' => 'string|nullable',
             'booking_type' => ['nullable', Rule::in(['manual', 'auto'])],
+        ],[
+            'phone.phone' => 'enter a valid syrian phone number' ,
+            'phone.unique' => 'this phone has already been taken'
         ]);
 
         if ($validator->fails()) {

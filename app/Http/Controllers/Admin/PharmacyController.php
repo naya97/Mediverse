@@ -107,6 +107,9 @@ class PharmacyController extends Controller
             'phone' => 'phone:SY',
             'latitude' => 'nullable|numeric|between:-180,180',
             'longitude' => 'nullable|numeric|between:-180,180',
+        ],[
+            'phone.phone' => 'enter a valid syrian phone number' ,
+            'phone.unique' => 'this phone has already been taken'
         ]);
         if ($validator->fails()) {
             return response()->json([

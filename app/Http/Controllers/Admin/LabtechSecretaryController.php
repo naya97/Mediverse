@@ -46,6 +46,9 @@ class LabtechSecretaryController extends Controller
             'email' => 'string|email|max:255|required|unique:users',
             'phone' => 'required|phone:SY|unique:users',
             'password' => ['required', 'string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/',],
+        ],[
+            'phone.phone' => 'enter a valid syrian phone number' ,
+            'phone.unique' => 'this phone has already been taken'
         ]);
 
         if ($validator->fails()) {

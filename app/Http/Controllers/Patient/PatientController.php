@@ -140,6 +140,9 @@ class PatientController extends Controller
             'blood_type' => 'string|nullable',
             'address' => 'string|nullable',
 
+        ],[
+            'phone.phone' => 'enter a valid syrian phone number' ,
+            'phone.unique' => 'this phone has already been taken'
         ]);
 
         if ($validator->fails()) {
