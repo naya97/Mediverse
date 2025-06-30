@@ -90,6 +90,9 @@ class DoctorController extends Controller
             'password' => ['required', 'string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/',],
             'average_visit_duration' =>  ['required', Rule::in(['10 min', '15 min', '20 min', '30 min', '60 min'])],
             'visit_fee' => 'required|numeric',
+        ], [
+            'phone.phone' => 'enter a valid syrian phone number' ,
+            'phone.unique' => 'this phone has already been taken'
         ]);
 
         if ($validator->fails()) {

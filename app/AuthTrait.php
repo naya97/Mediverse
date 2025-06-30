@@ -25,6 +25,9 @@ trait AuthTrait
                 'regex:/[a-z]/',
                 'regex:/[A-Z]/',
             ],
+        ],[
+            'phone.phone' => 'enter a valid syrian phone number' ,
+            'phone.unique' => 'this phone has already been taken'
         ]);
         if ($validator->fails()) {
             return response()->json([

@@ -27,6 +27,9 @@ class AuthController extends Controller
                 'regex:/[a-z]/',
                 'regex:/[A-Z]/',
             ],
+        ],[
+            'phone.phone' => 'enter a valid syrian phone number' ,
+            'phone.unique' => 'this phone has already been taken'
         ]);
 
         if ($validator->fails()) {
@@ -72,6 +75,9 @@ class AuthController extends Controller
             'email' => 'string|email|max:255|unique:users|required_without:phone',
             'phone' => 'phone:SY|required_without:email|unique:users',
             'password' => ['required', 'string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'confirmed',],
+        ],[
+            'phone.phone' => 'enter a valid syrian phone number' ,
+            'phone.unique' => 'this phone has already been taken'
         ]);
 
         if ($validator->fails()) {
@@ -139,7 +145,6 @@ class AuthController extends Controller
                 return response()->json(['error' => 'Email not verified'], 403);
             }
 
-            // أنشئ أو جلب المستخدم
             $user = User::updateOrCreate(
                 ['email' => $googleUser->email],
                 [
