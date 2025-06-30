@@ -12,7 +12,5 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('/addClinic','addClinic');
         Route::post('/editClinic','editClinic');
         Route::delete('/removeClinic','removeClinic');
-        Route::get('/showClinicFund', 'showClinicFund');
-
     });
 });

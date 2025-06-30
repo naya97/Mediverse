@@ -12,11 +12,12 @@ trait PharmacyTrait
     {
         $isPaginate = $request->boolean('isPaginate', true);
         $pageSize = $request->input('size', 5);
+        $page = $request->input('page', 1);
 
         $query = Pharmacy::select('id', 'name', 'start_time', 'finish_time', 'phone', 'latitude', 'longitude', 'location');
 
         if ($isPaginate) {
-            $pharmacies = $query->paginate($pageSize);
+            $pharmacies = $query->paginate($pageSize, ['*'], 'page', $page);
             $pharmacies->withQueryString();
             $response = [
                 'message' => 'Pharmacies retrieved successfully',
@@ -44,6 +45,7 @@ trait PharmacyTrait
     {
         $isPaginate = $request->boolean('isPaginate', true);
         $pageSize = $request->input('size', 5);
+        $page = $request->input('page', 1);
         $searchTerm = $request->input('name');
 
         if (!$searchTerm) {
@@ -53,7 +55,7 @@ trait PharmacyTrait
         $query = Pharmacy::search($searchTerm);
 
         if ($isPaginate) {
-            $results = $query->paginate($pageSize);
+            $results = $query->paginate($pageSize, ['*'], 'page', $page);
             $results->withQueryString();
 
             if ($results->isEmpty()) {
