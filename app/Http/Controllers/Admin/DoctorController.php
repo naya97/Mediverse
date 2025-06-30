@@ -82,7 +82,7 @@ class DoctorController extends Controller
         if($auth) return $auth;
         
         $validator = Validator::make($request->all(), [
-            'clinic_id' => 'required|string',
+            'clinic_id' => 'required|numeric',
             'first_name' => 'string|required',
             'last_name' => 'string|required',
             'email' => 'string|email|max:255|required|unique:users',
