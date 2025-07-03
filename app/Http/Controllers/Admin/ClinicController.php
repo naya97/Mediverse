@@ -72,7 +72,7 @@ class ClinicController extends Controller
             ], 400);
         }
 
-        $existingClinic = Clinic::where('name', $request->name)->first();
+        $existingClinic = Clinic::find($request->name);
 
         if ($existingClinic) {
             return response()->json([
@@ -94,7 +94,7 @@ class ClinicController extends Controller
 
         $patients = User::where('role', 'patient')
             ->whereNotNull('fcm_token')
-        ->all();
+        ->get();
 
         foreach ($patients as $patient) {
             $this->firebaseService->sendNotification($patient->fcm_token, 'new clinic added ',  'clinic: '. $clinic->name, $clinic->toArray());
