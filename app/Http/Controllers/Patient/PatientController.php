@@ -307,8 +307,8 @@ class PatientController extends Controller
         foreach ($children as $child) {
             $response[] = [
                 'id' => $child->id,
-                'first name' => $child->first_name,
-                'last name' => $child->last_name,
+                'first_name' => $child->first_name,
+                'last_name' => $child->last_name,
             ];
         }
         return response()->json($response, 200);
