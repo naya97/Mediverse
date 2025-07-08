@@ -70,10 +70,9 @@ class DashBoardController extends Controller
         if($auth) return $auth;
 
          $appointments = Appointment::with('patient', 'schedule.doctor')
-         ->where('status', $request->status)
-        ->whereHas('schedule', function($query) use ($request) {
-            $query->where('doctor_id', $request->doctor_id);
-        });
+        ->where('status', $request->status);
+
+        
 
         $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
             return [
