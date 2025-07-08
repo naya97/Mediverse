@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -52,6 +53,25 @@ class AuthController extends Controller
 
         if (!Hash::check($request->get('password'), $user->password)) {
             return response()->json(['error' => 'Wrong password'], 401);
+        }
+
+        if($user->role == 'doctor') {
+            try {
+            $token = JWTAuth::claims(['role' => $user->role])->fromUser($user);
+
+            $doctor = Doctor::find($user->id);
+            $redirect = true;
+            if($doctor) $redirect = false;
+
+            return response()->json([
+                'message' => 'User successfully logged in',
+                'user' => $user,
+                'complete_profile' => $redirect,
+                'token' => $token
+            ], 200);
+            } catch (JWTException $e) {
+                return response()->json(['error' => 'Could not create token'], 500);
+            }
         }
 
         try {

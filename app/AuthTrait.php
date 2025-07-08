@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\Models\Doctor;
+use App\Models\Schedule;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -52,6 +54,25 @@ trait AuthTrait
         }
         if ($user->role != $role) {
             return response()->json('You do not have permission in this page', 400);
+        }
+
+        if($user->role == 'doctor') {
+            try {
+            $token = JWTAuth::claims(['role' => $user->role])->fromUser($user);
+
+            $doctor = Doctor::find($user->id);
+            $redirect = true;
+            if($doctor) $redirect = false;
+
+            return response()->json([
+                'message' => 'User successfully logged in',
+                'user' => $user,
+                'complete_profile' => $redirect,
+                'token' => $token
+            ], 200);
+            } catch (JWTException $e) {
+                return response()->json(['error' => 'Could not create token'], 500);
+            }
         }
 
         try {
