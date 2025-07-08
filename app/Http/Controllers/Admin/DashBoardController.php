@@ -69,9 +69,10 @@ class DashBoardController extends Controller
         $auth = $this->auth();
         if($auth) return $auth;
 
-        $appointments = Appointment::with('patient', 'schedule.doctor')
+         $appointments = Appointment::with('patient', 'schedule.doctor')
+         ->where('status', $request->status)
         ->whereHas('schedule', function($query) use ($request) {
-            $query->where('status', $request->status);
+            $query->where('doctor_id', $request->doctor_id);
         });
 
         $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
@@ -96,7 +97,7 @@ class DashBoardController extends Controller
         $auth = $this->auth();
         if($auth) return $auth;
 
-        $appointments = Appointment::where('status', 'visited')->get();
+        $appointments = Appointment::where('payment_status', 'paid')->get();
 
         $totalRevenue = $appointments->sum('price');
         $totalAppointments = $appointments->count();
@@ -139,7 +140,7 @@ class DashBoardController extends Controller
         $startOfMonth = $date->startOfMonth()->toDateString();
         $endOfMonth = $date->endOfMonth()->toDateString();
 
-        $appointments = Appointment::where('status', 'visited')
+        $appointments = Appointment::where('payment_status', 'paid')
             ->whereBetween('reservation_date',[$startOfMonth, $endOfMonth])
         ->get();
 
