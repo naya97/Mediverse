@@ -153,8 +153,8 @@ class DoctorProfileController extends Controller
         $user = Auth::user();
         $validator = Validator::make($request->all(), [
             'RosterDays' => 'required|array|min:1',
-            'RosterDays.*.day' => 'required|string',
-            'RosterDays.*.Shift' => 'required|string',
+            'RosterDays.*.day' => ['required', 'string', Rule::in(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'])],
+            'RosterDays.*.Shift' => ['required', 'string', Rule::in('morning shift:from 9 AM to 3 PM', 'evening shift:from 3 PM to 9 PM')],
         ]);
 
         if ($validator->fails()) {
