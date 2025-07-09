@@ -91,9 +91,20 @@ class LabtechSecretaryController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'string',
             'last_name' => 'string',
-            'email' => 'string|email|max:255|unique:users',
-            'phone' => 'phone:SY|unique:users',
+            'email' => [
+            'string',
+            'email',
+            'max:255',
+            'unique:users,email,' . $request->user_id,
+            ],
+            'phone' => [
+            'phone:SY',
+            'unique:users,phone,' . $request->user_id,
+            ],
             'password' => [ 'string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/',],
+        ],[
+            'phone.phone' => 'enter a valid syrian phone number' ,
+            'phone.unique' => 'this phone has already been taken'
         ]);
 
         if ($validator->fails()) {
