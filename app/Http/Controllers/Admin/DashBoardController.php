@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Clinic;
 use App\Models\Patient;
+use App\Models\Schedule;
 use App\PaginationTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -165,6 +166,33 @@ class DashBoardController extends Controller
 
         return response()->json($query, 200);
 
+    }
+
+    public function showDoctorPatients(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $scheduleIds = Schedule::where('doctor_id', $request->doctor_id)->pluck('id');
+        $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->get();
+        $patientIds = $appointments->pluck('patient_id');
+        $patients = Patient::with('user')->whereIn('id', $patientIds);
+
+        $response = $this->paginateResponse($request, $patients, 'Patients', function ($patient) {
+            return [
+                'id' => $patient->id,
+                'patient' => $patient->first_name . ' ' . $patient->last_name,
+                'user_id' => $patient->user_id,
+                'email' => $patient->user ?->email ? : null,
+                'phone' => $patient->user ?->phone ? : null,
+                'age' => $patient->age,
+                'gender' => $patient->gender,
+                'blood_type' => $patient->blood_type,
+                'address' => $patient->address,
+            ];
+        });
+
+        return response()->json($response, 200);
+        
     }
 
     public function showPatientDetails(Request $request) {
