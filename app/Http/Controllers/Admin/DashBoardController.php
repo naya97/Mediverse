@@ -11,6 +11,7 @@ use App\PaginationTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashBoardController extends Controller
 {
@@ -154,6 +155,28 @@ class DashBoardController extends Controller
             'averagePayment' => $averagePayment,
         ], 200);
 
+    }
+
+    public function showAllPayments() {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $monthlyPaymentInfo = Appointment::select(
+            DB::raw('YEAR(reservation_date) as year'),
+            DB::raw('MONTH(reservation_date) as month'),
+            DB::raw('SUM(price) as totalRevenue'),
+            DB::raw('COUNT(*) as totalAppointments'),
+            DB::raw('AVG(price) as averagePayment'),
+        )
+        ->where('payment_status', 'paid')
+        ->groupBy(DB::raw('YEAR(reservation_date)'), DB::raw('MONTH(reservation_date)'))
+        ->orderBy('year')
+        ->orderBy('month')
+        ->get();
+
+        return response()->json([
+        'monthlyPaymentInfo' => $monthlyPaymentInfo
+        ], 200);
     }
 
     public function showPatients(Request $request) {
