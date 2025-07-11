@@ -226,13 +226,13 @@ class AppointmentController extends Controller
             $type = 'check up';
         }
         $response = [
-            'patient id ' => $appointment->patient->id, //it is for showing patient analysis and appointments and add checkup
-            'patient first name' => $appointment->patient->first_name,
-            'patient last name' => $appointment->patient->last_name,
-            'reservation date' => $appointment->reservation_date,
-            'reservation hour' => $appointment->timeSelected,
+            'patient_id ' => $appointment->patient->id, //it is for showing patient analysis and appointments and add checkup
+            'patient_first_name' => $appointment->patient->first_name,
+            'patient_last_name' => $appointment->patient->last_name,
+            'reservation_date' => $appointment->reservation_date,
+            'reservation_hour' => $appointment->timeSelected,
             'status' => $appointment->status,
-            'appointment type' => $type,
+            'appointment_type' => $type,
             'payment_status' => $appointment->payment_status,
         ];
 

@@ -15,6 +15,7 @@ use App\CancelAppointmentsTrait;
 use App\Models\Patient;
 use App\Models\User;
 use App\PaginationTrait;
+use Illuminate\Support\Facades\Validator;
 
 class AppointmentController extends Controller
 {
@@ -227,6 +228,40 @@ class AppointmentController extends Controller
                 'status' => $appointment->status,
             ];
         });
+
+        return response()->json($response, 200);
+    }
+
+    public function showAppointmentDetails(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $validator = Validator::make($request->all(), [
+            'appointment_id' => 'required|exists:appointments,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->all()
+            ], 400);
+        }
+
+        $appointment = Appointment::with('patient')->find($request->appointment_id);
+        if ($appointment->parent_id == null) {
+            $type = 'first time';
+        } else {
+            $type = 'check up';
+        }
+        $response = [
+            'patient_id ' => $appointment->patient->id, //it is for showing patient analysis and appointments and add checkup
+            'patient_first_name' => $appointment->patient->first_name,
+            'patient_last_name' => $appointment->patient->last_name,
+            'reservation_date' => $appointment->reservation_date,
+            'reservation_hour' => $appointment->timeSelected,
+            'status' => $appointment->status,
+            'appointment_type' => $type,
+            'payment_status' => $appointment->payment_status,
+        ];
 
         return response()->json($response, 200);
     }
