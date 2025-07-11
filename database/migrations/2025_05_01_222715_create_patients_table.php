@@ -26,7 +26,8 @@ return new class extends Migration
             $table->foreignId('parent_id')->nullable()
                 ->constrained('patients')
                 ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+            ->cascadeOnUpdate();
+            $table->integer('discount_points')->default(0);
             $table->timestamps();
         });
     }

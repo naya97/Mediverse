@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Clinic;
 use App\Models\Discount;
+use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,23 +19,48 @@ class PaymentController extends Controller
 
         $appointment = Appointment::with('schedule.doctor')
             ->where('id', $request->appointment_id)
-            ->first();
+        ->first();
 
         if (!$appointment) return response()->json(['message' => 'appointment not found'], 404);
         if ($appointment->payment_status == 'paid') return response()->json(['message' => 'you already paid for this appointment'], 409);
 
         $visit_fee = $appointment->schedule->doctor->visit_fee;
 
-        if ($request->has('discount_code')) {
-            $discount = Discount::where('discount_code', $request->discount_code)->first();
-            if (!$discount) return response()->json(['message' => 'discount not found'], 404);
-            $discount_rate = $discount->discount_rate;
-            $appointment->price = ($visit_fee * $discount_rate) / 100;
-        } else {
-            $appointment->price = $visit_fee;
+        $patient = Patient::find($appointment->patient_id);
+        $discount = 0;
+        $pointsToDeduct = 0;
+
+        if($request->has('discount_points') && $request->discount_points == true) {
+            $points = $patient->discount_points;
+            if($points < 6) {
+                return response()->json([
+                    'message' => "you don't have enough points, Points must be equal or more than 6",
+                ], 400);
+            }
+            if($points >= 6 && $points < 10) {
+                $discount = 0.05;
+                $pointsToDeduct = 6;
+            }
+            elseif($points >= 10 && $points < 20) {
+                $discount = 0.10;
+                $pointsToDeduct = 10;
+            }
+            elseif($points >= 20 && $points < 30) {
+                $discount = 0.20;
+                $pointsToDeduct = 20;
+            }
+            elseif ($points >= 30) {
+                $discount = 0.30;
+                $pointsToDeduct = 30;
+            }
         }
+
+        $appointment->price = $visit_fee * (1 - $discount);
         $appointment->payment_status = 'paid';
         $appointment->save();
+
+        $patient->discount_points -= $pointsToDeduct;
+        $patient->save();
 
         $clinic = Clinic::where('id', $appointment->schedule->doctor->clinic_id)->first();
         if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);

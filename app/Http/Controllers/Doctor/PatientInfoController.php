@@ -279,10 +279,16 @@ class PatientInfoController extends Controller
             $doctor->treated = $doctor->treated + 1;
             $doctor->save();
         }
+
+        $patient = Patient::where('id', $appointment->patient_id)->first();
+
         $appointment->status = 'visited';
         $appointment->save();
+
+        $patient->discount_points += 2;
+        $patient->save();
+        
         //patient notification
-        $patient = Patient::where('id', $appointment->patient_id)->first();
         if ($patient->parent_id != null) {
             $patient = Patient::where('id', $patient->parent_id)->first();
             $patient = User::where('id', $patient->user_id)->first();

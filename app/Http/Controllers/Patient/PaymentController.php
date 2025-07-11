@@ -274,15 +274,45 @@ class PaymentController extends Controller
             return response()->json(['message' => 'You do not have enough money to pay'], 400);
         }
 
-        //discount
-        if ($request->has('discount_code')) {
-            $discount = Discount::where('discount_code', $request->discount_code)->first();
-            if (!$discount) return response()->json(['message' => 'discount not found'], 404);
-            $discount_rate = $discount->discount_rate;
-            $reservation->price = ($reservation->schedule->doctor->visit_fee * $discount_rate) / 100;
-        } else {
-            $reservation->price = $reservation->schedule->doctor->visit_fee;
+        // //discount
+        // if ($request->has('discount_code')) {
+        //     $discount = Discount::where('discount_code', $request->discount_code)->first();
+        //     if (!$discount) return response()->json(['message' => 'discount not found'], 404);
+        //     $discount_rate = $discount->discount_rate;
+        //     $reservation->price = ($reservation->schedule->doctor->visit_fee * $discount_rate) / 100;
+        // } else {
+        //     $reservation->price = $reservation->schedule->doctor->visit_fee;
+        // }
+
+        $discount = 0;
+        $pointsToDeduct = 0;
+
+        if($request->has('discount_points') && $request->discount_points == true) {
+            $points = $patient->discount_points;
+            if($points < 6) {
+                return response()->json([
+                    'message' => "you don't have enough points, Points must be equal or more than 6",
+                ], 400);
+            }
+        
+            if($points >= 6 && $points < 10) {
+                $discount = 0.05;
+                $pointsToDeduct = 6;
+            }
+            elseif($points >= 10 && $points < 20) {
+                $discount = 0.10;
+                $pointsToDeduct = 10;
+            }
+            elseif($points >= 20 && $points < 30) {
+                $discount = 0.20;
+                $pointsToDeduct = 20;
+            }
+            elseif ($points >= 30) {
+                $discount = 0.30;
+                $pointsToDeduct = 30;
+            }
         }
+        $reservation->price = ($reservation->schedule->doctor->visit_fee) * (1 - $discount);
 
         $reservation->payment_status = 'paid';
         $reservation->save();
@@ -290,6 +320,8 @@ class PaymentController extends Controller
         $walletOwner->wallet -= $reservation->price;
         $walletOwner->save();
 
+        $patient->discount_points -= $pointsToDeduct;
+        $patient->save();
 
         $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic->id)->first();
         if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);

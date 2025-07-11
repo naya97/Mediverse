@@ -261,6 +261,7 @@ class AppointmentController extends Controller
             'status' => $appointment->status,
             'appointment_type' => $type,
             'payment_status' => $appointment->payment_status,
+            'discount_points' => $appointment->patient->discount_points,
         ];
 
         return response()->json($response, 200);
