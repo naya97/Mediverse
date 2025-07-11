@@ -12,7 +12,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('appointments:send-reminders')->hourly();
+        $schedule->command('appointments:send-reminders')->everyMinute();
         $schedule->command('doctors:notify-shift')->dailyAt('15:00');
         $schedule->command('doctors:notify-shift')->dailyAt('21:00');
     }
