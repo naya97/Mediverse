@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Scout\Searchable;
 
 class Patient extends Model
 {
+    use Searchable;
+
     protected $fillable = [
         'first_name',
         'last_name',
@@ -53,5 +56,12 @@ class Patient extends Model
     public function reports(): HasMany
     {
         return $this->hasMany(Report::class);
+    }
+    public function toSearchableArray(): array
+    {
+        return [
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+        ];
     }
 }

@@ -11,6 +11,7 @@ use App\Models\MedicalInfo;
 use App\Models\Medicine;
 use App\Models\Patient;
 use App\Models\Prescription;
+use App\Models\Schedule;
 use App\Models\User;
 use App\Notifications\AnalyseRequest;
 use App\Notifications\AppointmentVisited;
@@ -18,10 +19,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Services\FirebaseService;
+use App\PaginationTrait;
 
 class PatientInfoController extends Controller
 {
     protected $firebaseService;
+    use PaginationTrait;
 
     public function __construct(FirebaseService $firebase_service)
     {
@@ -335,6 +338,77 @@ class PatientInfoController extends Controller
 
         return response()->json($patient, 200);
     }
+    /////
+    public function patientsRecord(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $user = Auth::user();
+
+        $doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
+        $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
+
+        $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->pluck('patient_id')->toArray();
+        $patients = Patient::whereIn('id', $appointments);
+
+        $response = $this->paginateResponse($request, $patients, 'Patients', function ($patient) {
+
+            return [
+                'id' => $patient->id,
+                'first_name' => $patient->first_name,
+                'last_name' => $patient->last_name,
+                'age' => $patient->age,
+                'address' => $patient->address,
+            ];
+        });
+
+        return response()->json($response, 200);
+    }
+    /////
+    public function searchPatient(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $user = Auth::user();
+        $doctor = Doctor::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return response()->json(['message' => 'Doctor Not Found'], 404);
+        }
+
+        $name = $request->input('name');
+        if (!$name) {
+            return response()->json(['message' => 'Name is required'], 400);
+        }
+
+        $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
+        $patientIds = Appointment::whereIn('schedule_id', $scheduleIds)->pluck('patient_id')->toArray();
+
+        $results = Patient::search($name)->get()->filter(function ($patient) use ($patientIds) {
+            return in_array($patient->id, $patientIds);
+        });
+
+        if ($results->isEmpty()) {
+            return response()->json(['message' => 'No patients found'], 404);
+        }
+
+        $response = $results->map(function ($patient) {
+            return [
+                'id' => $patient->id,
+                'first_name' => $patient->first_name,
+                'last_name' => $patient->last_name,
+                'age' => $patient->age,
+                'address' => $patient->address,
+            ];
+        });
+
+        return response()->json(['Patients' => $response], 200);
+    }
+
     /////
     public function auth()
     {
