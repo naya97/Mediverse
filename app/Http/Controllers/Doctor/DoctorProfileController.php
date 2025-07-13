@@ -41,7 +41,7 @@ class DoctorProfileController extends Controller
         if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
         $clinic = Clinic::where('id', $doctor->clinic_id)->first();
         if (!$clinic) return response()->json(['message' => 'Clinic Not Found'], 404);
-        $workDays = Schedule::where('doctor_id', $doctor->id)->where('clinic_id', $clinic->id)->get();
+        $workDays = Schedule::where('doctor_id', $doctor->id)->where('clinic_id', $clinic->id)->where('status', 'notAvailable')->get();
         if ($workDays->isEmpty()) {
             return response()->json(['message' => 'No schedule available yet'], 404);
         }
@@ -94,8 +94,8 @@ class DoctorProfileController extends Controller
             'sign' => 'image',
             'status' => 'string|nullable',
             'booking_type' => ['nullable', Rule::in(['manual', 'auto'])],
-        ],[
-            'phone.phone' => 'enter a valid syrian phone number' ,
+        ], [
+            'phone.phone' => 'enter a valid syrian phone number',
             'phone.unique' => 'this phone has already been taken'
         ]);
 
@@ -239,7 +239,7 @@ class DoctorProfileController extends Controller
         if ($validator->fails()) {
             return response()->json(['message' => $validator->errors()->all()], 422);
         }
-        $schedule = Schedule::find($request->schedule_id);
+        $schedule = Schedule::where('id', $request->schedule_id)->where('status', 'notAvailable')->first();
         if (!$schedule) {
             return response()->json(['message' => 'Schedule Not Found'], 404);
         }
@@ -311,7 +311,7 @@ class DoctorProfileController extends Controller
         $response = $this->paginateResponse($request, $reviews, 'Reviews', function ($patientReview) {
 
             if (!$patientReview->review) {
-                return null; 
+                return null;
             }
             return [
                 'patient_id' => $patientReview->patient_id,
