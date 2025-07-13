@@ -60,9 +60,9 @@ trait AuthTrait
             try {
             $token = JWTAuth::claims(['role' => $user->role])->fromUser($user);
 
-            $doctor = Doctor::find($user->id);
+            $doctor = Doctor::where('user_id', $user->id)->first();
             $redirect = true;
-            if($doctor) $redirect = false;
+            if($doctor->status == 'available') $redirect = false;
 
             return response()->json([
                 'message' => 'User successfully logged in',
