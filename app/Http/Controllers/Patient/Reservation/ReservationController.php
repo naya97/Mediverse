@@ -678,4 +678,27 @@ class ReservationController extends Controller
 
         return response()->json(['message' => 'this time is full'], 400);
     }
+
+    // public function  cancelReservation(Request $request) {
+    //     $user = Auth::user(); // 
+
+    //     //check the auth
+    //     if (!$user) {
+    //         return response()->json([
+    //             'message' => 'unauthorized'
+    //         ], 401);
+    //     }
+
+    //     if ($user->role != 'patient') {
+    //         return response()->json([
+    //             'message' => 'you dont have permission'
+    //         ], 401);
+    //     }
+
+    //     $appointment = Appointment::where('id', $request->appointment_id)->first();
+
+    //     if($appointment->payment_status == 'paid') {
+            
+    //     }
+    // }
 }

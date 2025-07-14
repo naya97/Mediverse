@@ -65,7 +65,7 @@ class SendAppointmentReminders extends Command
                 } else {
                     $patient = $patient->user;
                 }
-                $token = $patient->fcm_token ?? null;
+                $token = $patient->user->fcm_token ?? null;
                 if ($token) {
                     $title = 'appointment reminder';
                     $body = 'You have an appointment ' . $appointmentDateTime->format('Y-m-d H:i');
