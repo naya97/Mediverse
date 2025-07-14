@@ -9,6 +9,7 @@ use App\Notifications\AppointmentReminder;
 use App\Services\FirebaseService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class SendAppointmentReminders extends Command
 {
@@ -58,14 +59,17 @@ class SendAppointmentReminders extends Command
                 $now->greaterThanOrEqualTo($reminderTime) &&
                 $now->lessThan($reminderTime->copy()->addMinutes(60))
             ) {
-                $patient = $appointment->patient;
-                if ($patient->parent_id != null) {
-                    $patient = Patient::where('id', $patient->parent_id)->first();
-                    $patient = User::where('id', $patient->user_id)->first();
+                $user = null;
+
+                if ($appointment->patient->parent_id != null) {
+                    $parentPatient = Patient::find($appointment->patient->parent_id);
+                    $user = $parentPatient ? $parentPatient->user : null;
                 } else {
-                    $patient = $patient->user;
+                    $user = $appointment->patient->user;
                 }
-                $token = $patient->user->fcm_token ?? null;
+
+                $token = $user?->fcm_token ?? null;
+
                 if ($token) {
                     $title = 'appointment reminder';
                     $body = 'You have an appointment ' . $appointmentDateTime->format('Y-m-d H:i');
@@ -73,17 +77,32 @@ class SendAppointmentReminders extends Command
                         'appointment_id' => $appointment->id,
                         'type' => 'appointment_reminder',
                     ];
+
                     $this->firebase->sendNotification($token, $title, $body, $data);
-                    $appointment->patient->user->notify(new AppointmentReminder($appointment));
+                    $user->notify(new AppointmentReminder($appointment));
+
+                    Log::info("Appointment reminder sent successfully", [
+                        'user_id' => $user->id,
+                        'appointment_id' => $appointment->id,
+                        'token' => $token,
+                        'send_time' => now()->toDateTimeString(),
+                    ]);
+
+                    $appointment->reminder_sent = true;
+                    $appointment->save();
+
+                    $this->info("reminder sent successfully for patient ID: {$appointment->patient->id}");
+                } else {
+                    Log::warning("FCM token not found", [
+                        'user_id' => $user?->id,
+                        'appointment_id' => $appointment->id,
+                    ]);
+
+                    $this->warn("there is no token for this patient ID: {$appointment->patient->id}");
                 }
-
-                $appointment->reminder_sent = true;
-                $appointment->save();
-
-                $this->info("reminder sent successfully for patient ID: {$appointment->patient->id}");
-            } else {
-                $this->warn("there is no token for this patient ID: {$appointment->patient->id}");
             }
         }
     }
+
+
 }

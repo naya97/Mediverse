@@ -123,64 +123,64 @@ trait CancelAppointmentsTrait
     }
 
     /////
-    // public function cancelAnAppointment(Request $request)
-    // {
-    //     $validator = Validator::make($request->all(), [
-    //         'reservation_id' => 'required|integer|exists:appointments,id',
-    //     ]);
+    public function cancelAnAppointment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'reservation_id' => 'required|integer|exists:appointments,id',
+        ]);
 
-    //     if ($validator->fails()) {
-    //         return response()->json([
-    //             'message' => $validator->errors()->all()
-    //         ], 400);
-    //     }
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->all()
+            ], 400);
+        }
 
-    //     $reservation = Appointment::with(['patient.user', 'schedule.doctor'])->where('id', $request->reservation_id)->first();
-    //     if (!$reservation) return response()->json(['message' => 'Reservaion Not Found'], 404);
+        $reservation = Appointment::with(['patient.user', 'schedule.doctor'])->where('id', $request->reservation_id)->first();
+        if (!$reservation) return response()->json(['message' => 'Reservaion Not Found'], 404);
 
-    //     $patient = $reservation->patient;
+        $patient = $reservation->patient;
 
-    //     // Stripe::setApiKey(env('STRIPE_SECRET'));
+        // Stripe::setApiKey(env('STRIPE_SECRET'));
 
-    //     if ($reservation->payment_status == 'paid') {
-    //         try {
-    //             // Refund::create([
-    //             //     'payment_intent' => $reservation->payment_intent_id,
-    //             // ]);
+        if ($reservation->payment_status == 'paid') {
+            try {
+                // Refund::create([
+                //     'payment_intent' => $reservation->payment_intent_id,
+                // ]);
 
-    //             $patient->wallet += $reservation->price;
-    //             $patient->save();
+                $patient->wallet += $reservation->price;
+                $patient->save();
 
-    //             $reservation->price = 0;
-    //             $reservation->save();
+                $reservation->price = 0;
+                $reservation->save();
 
-    //             $clinic = Clinic::where('id', $reservation->doctor->clinic_id)->first();
-    //             if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
+                $clinic = Clinic::where('id', $reservation->doctor->clinic_id)->first();
+                if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
-    //             $clinic->money -= $reservation->price;
-    //             $clinic->save();
-    //         } catch (\Exception $e) {
-    //             Log::error("Stripe refund failed for reservation ID {$reservation->id}: " . $e->getMessage());
-    //         }
-    //     }
+                $clinic->money -= $reservation->price;
+                $clinic->save();
+            } catch (\Exception $e) {
+                Log::error("Stripe refund failed for reservation ID {$reservation->id}: " . $e->getMessage());
+            }
+        }
 
-    //     $reservation->update([
-    //         'status' => 'cancelled',
-    //     ]);
-    //     $reservation->save();
+        $reservation->update([
+            'status' => 'cancelled',
+        ]);
+        $reservation->save();
 
-    //     $patient = $reservation->patient;
-    //     if ($patient->parent_id != null) {
-    //         $patient = Patient::where('id', $patient->parent_id)->first();
-    //         $patient = User::where('id', $patient->user_id)->first();
-    //     } else {
-    //         $patient = $patient->user;
-    //     }
-    //     if ($patient->fcm_token) {
-    //         $this->firebaseService->sendNotification($patient->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date ' . $reservation->reservation_date,);
-    //         $patient->user->notify(new AppointmentCancelled($reservation));
-    //     }
+        $patient = $reservation->patient;
+        if ($patient->parent_id != null) {
+            $patient = Patient::where('id', $patient->parent_id)->first();
+            $patient = User::where('id', $patient->user_id)->first();
+        } else {
+            $patient = $patient->user;
+        }
+        if ($patient->fcm_token) {
+            $this->firebaseService->sendNotification($patient->fcm_token, 'sorry, your appointment canceled, the doctor will not be available ',  'date ' . $reservation->reservation_date,);
+            $patient->user->notify(new AppointmentCancelled($reservation));
+        }
 
-    //     return response()->json(['message' => 'reservation canceled successfully'], 200);
-    // }
+        return response()->json(['message' => 'reservation canceled successfully'], 200);
+    }
 }

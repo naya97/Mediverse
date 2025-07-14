@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Patient\Reservation;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\Schedule;
@@ -679,26 +680,51 @@ class ReservationController extends Controller
         return response()->json(['message' => 'this time is full'], 400);
     }
 
-    // public function  cancelReservation(Request $request) {
-    //     $user = Auth::user(); // 
+    public function  cancelReservation(Request $request) {
+        $user = Auth::user(); // 
 
-    //     //check the auth
-    //     if (!$user) {
-    //         return response()->json([
-    //             'message' => 'unauthorized'
-    //         ], 401);
-    //     }
+        //check the auth
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
 
-    //     if ($user->role != 'patient') {
-    //         return response()->json([
-    //             'message' => 'you dont have permission'
-    //         ], 401);
-    //     }
+        if ($user->role != 'patient') {
+            return response()->json([
+                'message' => 'you dont have permission'
+            ], 401);
+        }
 
-    //     $appointment = Appointment::where('id', $request->appointment_id)->first();
+        $reservation = Appointment::with('patient')->where('id', $request->reservation_id)->first();
+        if(!$reservation) return response()->json(['message' => 'reservation not found'], 404);
 
-    //     if($appointment->payment_status == 'paid') {
+        $patient = $reservation->patient;
+
+        if ($reservation->payment_status == 'paid') {
+            try {
             
-    //     }
-    // }
+                $patient->wallet += $reservation->price;
+                $patient->save();
+
+                $reservation->price = 0;
+                $reservation->save();
+
+                $clinic = Clinic::where('id', $reservation->doctor->clinic_id)->first();
+                if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
+
+                $clinic->money -= $reservation->price;
+                $clinic->save();
+            } catch (\Exception $e) {
+                Log::error("Stripe refund failed for reservation ID {$reservation->id}: " . $e->getMessage());
+            }
+        }
+
+        $reservation->update([
+            'status' => 'cancelled',
+        ]);
+        $reservation->save();
+
+        return response()->json(['message' => 'reservation cancelled successfully'], 200);
+    }
 }
