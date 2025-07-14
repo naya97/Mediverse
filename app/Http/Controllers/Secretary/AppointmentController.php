@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Stripe\Refund;
 use Stripe\Stripe;
 use App\CancelAppointmentsTrait;
+use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\User;
 use App\PaginationTrait;
@@ -60,6 +61,44 @@ class AppointmentController extends Controller
 
         return response()->json($response, 200);
 
+    }
+
+    public function showTodayAppointmentByDoctor(Request $request) {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        // doctor_id , date->now (day), filtering by the الاسبقية 
+
+        $doctor = Doctor::where('id', $request->doctor_id)->first();
+        if(!$doctor) return response()->json(['message'=> 'doctor not found'], 404);
+
+        $now = Carbon::now()->format('Y-m-d');
+        $appointments = Appointment::with('patient.user', 'schedule.doctor.user')->where('reservation_date', $now)
+        ->orderBy('created_at', 'asc');
+
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+            $patientUser = $appointment->patient;
+            $doctor = $appointment->schedule->doctor;
+            $doctorUser = $appointment->schedule->doctor->user;
+            
+            return [
+                'id' => $appointment->id,
+                'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
+                'patient_phone' => $patientUser ? $patientUser->phone : null,
+                'doctor' => $doctor->first_name . ' ' . $doctor->last_name,
+                'doctor_id' => $doctor->id,
+                'doctor_phone' => $doctorUser ? $doctorUser->phone : null,
+                'doctor_photo' => $doctor->photo,
+                'visit_fee' => $doctor->visit_fee,
+                'price' => $appointment->price,
+                'reservation_date' => $appointment->reservation_date,
+                'payment_status' => $appointment->payment_status,
+                'timeSelected' => $appointment->timeSelected,
+                'status' => $appointment->status,
+            ];
+        });
+
+        return response()->json($response, 200);
+       
     }
 
     public function filteringAppointmentByDoctor(Request $request)

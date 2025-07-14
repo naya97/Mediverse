@@ -14,5 +14,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('/editSchedule', 'editSchedule');
         Route::get('/cancelAppointment', 'cancelAppointment');
         Route::get('/showAppointmentDetails', 'showAppointmentDetails');
+        Route::get('/showTodayAppointmentByDoctor', 'showTodayAppointmentByDoctor');
     });
 });
