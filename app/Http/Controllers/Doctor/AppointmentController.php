@@ -41,7 +41,7 @@ class AppointmentController extends Controller
         $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds);
 
         $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
-        $type = $appointment->parent_id === null ? 'first time' : 'check up';
+            $type = $appointment->parent_id === null ? 'first time' : 'check up';
 
             return [
                 'id' => $appointment->id,
@@ -88,7 +88,7 @@ class AppointmentController extends Controller
         }
 
         $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
-        $type = $appointment->parent_id === null ? 'first time' : 'check up';
+            $type = $appointment->parent_id === null ? 'first time' : 'check up';
 
             return [
                 'id' => $appointment->id,
@@ -149,16 +149,16 @@ class AppointmentController extends Controller
         $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
             $type = $appointment->parent_id === null ? 'first time' : 'check up';
 
-                return [
-                    'id' => $appointment->id,
-                    'patient_first_name' => $appointment->patient->first_name,
-                    'patient_last_name' => $appointment->patient->last_name,
-                    'reservation_date' => $appointment->reservation_date,
-                    'reservation_hour' => $appointment->timeSelected,
-                    'status' => $appointment->status,
-                    'appointment_type' => $type,
-                    'payment_status' => $appointment->payment_status,
-                ];
+            return [
+                'id' => $appointment->id,
+                'patient_first_name' => $appointment->patient->first_name,
+                'patient_last_name' => $appointment->patient->last_name,
+                'reservation_date' => $appointment->reservation_date,
+                'reservation_hour' => $appointment->timeSelected,
+                'status' => $appointment->status,
+                'appointment_type' => $type,
+                'payment_status' => $appointment->payment_status,
+            ];
         });
 
         return response()->json($response, 200);
@@ -258,7 +258,8 @@ class AppointmentController extends Controller
 
         $prescription = Prescription::find($medicalInfo->prescription_id);
         if ($prescription) {
-            $medicines = Medicine::where('prescription_id', $prescription->id)->get()->all();
+            $medicines = Medicine::where('prescription_id', $prescription->id)->select(['id', 'name', 'dose', 'frequency', 'strength', 'until', 'whenToTake', 'note']);
+            $medicines = $this->paginateResponse($request, $medicines, 'medicines');
             $prescription = [
                 'medicines' => $medicines,
                 'note' => $prescription->note,
