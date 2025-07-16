@@ -141,7 +141,7 @@ class ReservationController extends Controller
 
         $appointments = Appointment::where('schedule_id', $schedule->id)
             ->where('reservation_date', $mysqlDate)
-            ->get();
+        ->get();
 
         $visitTime = Doctor::where('id', $request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
         if (!$visitTime) return response()->json(['message' => 'Visit Time Not Availabe'], 404);
@@ -454,8 +454,8 @@ class ReservationController extends Controller
 
         $lastReservationTime = Appointment::where('schedule_id', $schedule->id)
             ->whereDate('reservation_date', $dateFormatted)
-            ->orderByDesc('timeSelected')
-            ->first();
+            ->orderBy('created_at', 'desc')
+        ->first();
 
         if (!$lastReservationTime) {
             $shift = $schedule->Shift;
@@ -473,7 +473,7 @@ class ReservationController extends Controller
             ->where('reservation_date', $dateFormatted)
             ->where('status', 'pending')
             ->where('timeSelected', $reservationTime)
-            ->count();
+        ->count();
 
         $visitTime = Doctor::where('id', $request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
         if (!$visitTime) return response()->json(['message' => 'Visit Time Not Availabe'], 404);
@@ -485,7 +485,6 @@ class ReservationController extends Controller
         $numOfPeopleInHour = floor(60 / $visitTime);
 
         $reservationCarbonTime = Carbon::createFromFormat('H:i', $reservationTime->format('H:i'));
-
         if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
             if ($reservationCarbonTime->format('H:i') >= $schedule->start_leave_time && $reservationCarbonTime->format('H:i') <= $schedule->end_leave_time) {
                 return response()->json([
@@ -498,12 +497,11 @@ class ReservationController extends Controller
         if ($appointmentsNum == $numOfPeopleInHour) $timeSelected = $newTimeFormatted->addHours(1)->toTimeString();
         else $timeSelected = $newTimeFormatted->toTimeString();
 
-
         $numOfPatientReservation = Appointment::where('patient_id', $patient->id)
             ->where('schedule_id', $schedule->id)
             ->where('reservation_date', $dateFormatted)
             ->where('status', 'pending')
-            ->count();
+        ->count();
 
         if ($numOfPatientReservation > 0) {
             return response()->json([
@@ -511,7 +509,13 @@ class ReservationController extends Controller
             ], 400);
         }
 
-        if ($appointmentsNum < $numOfPeopleInHour) {
+        $appointmentsTimeNum = Appointment::where('schedule_id', $schedule->id)
+            ->where('reservation_date', $dateFormatted)
+            ->where('status', 'pending')
+            ->where('timeSelected', $timeSelected)
+        ->count();
+
+        if ($appointmentsTimeNum < $numOfPeopleInHour) {
             $appointment = Appointment::create([
                 'patient_id' => $patient->id,
                 'schedule_id' => $schedule->id,
@@ -696,7 +700,7 @@ class ReservationController extends Controller
             ], 401);
         }
 
-        $reservation = Appointment::with('patient')->where('id', $request->reservation_id)->first();
+        $reservation = Appointment::with('patient', 'schedule.doctor')->where('id', $request->reservation_id)->first();
         if(!$reservation) return response()->json(['message' => 'reservation not found'], 404);
 
         $patient = $reservation->patient;
@@ -724,6 +728,71 @@ class ReservationController extends Controller
             'status' => 'cancelled',
         ]);
         $reservation->save();
+
+        $doctor = $reservation->schedule->doctor;
+
+        if($doctor->booking_type == 'auto') {
+            $reservationTime = Carbon::createFromFormat('H:i:s', $reservation->timeSelected);
+            $reservationDate = $reservation->reservation_date;
+
+            $visitTime = $reservation->schedule->doctor->average_visit_duration;
+            $visitTime = (float) $visitTime;
+            $numOfPeopleInHour = floor(60 / $visitTime);
+
+            $startHour = $reservationTime->copy()->startOfHour();
+            $cancelledTime = $reservationTime->format('H:i:s');
+
+            $currentCountInHour = Appointment::where('schedule_id', $reservation->schedule_id)
+            ->where('reservation_date', $reservationDate)
+            ->where('status', 'pending')
+            ->whereBetween('timeSelected', [
+                $startHour->format('H:i:s'),
+                $startHour->copy()->addHour()->subSecond()->format('H:i:s'),
+            ])
+            ->count();
+
+            $availableSlots = $numOfPeopleInHour - $currentCountInHour;
+
+            $upcomingAppointments = Appointment::where('schedule_id', $reservation->schedule_id)
+            ->where('reservation_date', $reservationDate)
+            ->where('status', 'pending')
+            ->where('timeSelected', '>', $cancelledTime)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+            $currentHour = $startHour->copy();
+
+            foreach ($upcomingAppointments as $appointment) {
+
+                $currentCountInHour = Appointment::where('schedule_id', $reservation->schedule_id)
+                ->where('reservation_date', $reservationDate)
+                ->where('status', 'pending')
+                ->where('timeSelected', $currentHour->format('H:i:s'))
+                ->count();
+
+                $availableSlots = $numOfPeopleInHour - $currentCountInHour;
+
+
+                while ($availableSlots <= 0) {
+
+                    $currentHour->addHour();
+
+                    $currentCountInNextHour = Appointment::where('schedule_id', $reservation->schedule_id)
+                        ->where('reservation_date', $reservationDate)
+                        ->where('status', 'pending')
+                        ->where('timeSelected', $currentHour->format('H:i:s'))
+                        ->count();
+
+                    $availableSlots = $numOfPeopleInHour - $currentCountInNextHour;
+                }   
+
+                $appointment->timeSelected = $currentHour->format('H:i:s');
+                $appointment->save();
+
+                $availableSlots--;
+            }
+
+        }
 
         return response()->json(['message' => 'reservation cancelled successfully'], 200);
     }
