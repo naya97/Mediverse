@@ -42,7 +42,13 @@ class AppointmentController extends Controller
 
         $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
             $type = $appointment->parent_id === null ? 'first time' : 'check up';
-
+            $referring_doctor_name = null;
+            if ($appointment->referring_doctor != null) {
+                $referring_doctor = Doctor::find($appointment->referring_doctor);
+                if ($referring_doctor) {
+                    $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
+                }
+            }
             return [
                 'id' => $appointment->id,
                 'patient_first_name' => $appointment->patient->first_name,
@@ -52,6 +58,7 @@ class AppointmentController extends Controller
                 'status' => $appointment->status,
                 'appointment_type' => $type,
                 'payment_status' => $appointment->payment_status,
+                'referred by' => $referring_doctor_name,
             ];
         });
 
@@ -89,7 +96,13 @@ class AppointmentController extends Controller
 
         $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
             $type = $appointment->parent_id === null ? 'first time' : 'check up';
-
+            $referring_doctor_name = null;
+            if ($appointment->referring_doctor != null) {
+                $referring_doctor = Doctor::find($appointment->referring_doctor);
+                if ($referring_doctor) {
+                    $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
+                }
+            }
             return [
                 'id' => $appointment->id,
                 'patient_first_name' => $appointment->patient->first_name,
@@ -99,6 +112,7 @@ class AppointmentController extends Controller
                 'status' => $appointment->status,
                 'appointment_type' => $type,
                 'payment_status' => $appointment->payment_status,
+                'referred by' => $referring_doctor_name,
             ];
         });
 
@@ -148,7 +162,13 @@ class AppointmentController extends Controller
 
         $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
             $type = $appointment->parent_id === null ? 'first time' : 'check up';
-
+            $referring_doctor_name = null;
+            if ($appointment->referring_doctor != null) {
+                $referring_doctor = Doctor::find($appointment->referring_doctor);
+                if ($referring_doctor) {
+                    $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
+                }
+            }
             return [
                 'id' => $appointment->id,
                 'patient_first_name' => $appointment->patient->first_name,
@@ -158,6 +178,7 @@ class AppointmentController extends Controller
                 'status' => $appointment->status,
                 'appointment_type' => $type,
                 'payment_status' => $appointment->payment_status,
+                'referred by' => $referring_doctor_name,
             ];
         });
 
@@ -189,7 +210,13 @@ class AppointmentController extends Controller
 
         $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
             $type = $appointment->parent_id === null ? 'first time' : 'check up';
-
+            $referring_doctor_name = null;
+            if ($appointment->referring_doctor != null) {
+                $referring_doctor = Doctor::find($appointment->referring_doctor);
+                if ($referring_doctor) {
+                    $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
+                }
+            }
             return [
                 'id' => $appointment->id,
                 'patient_first_name' => $appointment->patient->first_name,
@@ -199,6 +226,7 @@ class AppointmentController extends Controller
                 'status' => $appointment->status,
                 'appointment_type' => $type,
                 'payment_status' => $appointment->payment_status,
+                'referred by' => $referring_doctor_name,
             ];
         });
 
