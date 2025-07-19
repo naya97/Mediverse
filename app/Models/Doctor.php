@@ -32,6 +32,7 @@ class Doctor extends Model
         'status',
         'treated',
         'experience',
+        'booking_type',
     ];
 
     // use Notifiable;

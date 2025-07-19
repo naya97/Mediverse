@@ -20,18 +20,27 @@ class Appointment extends Model
         'reminder_offset',
         'reminder_sent',
         'price',
+        'is_referral',
+        'referring_doctor',
     ];
 
-    public function patient() : BelongsTo {
+    public function patient(): BelongsTo
+    {
         return $this->belongsTo(Patient::class);
     }
 
-    public function schedule() : BelongsTo {
+    public function schedule(): BelongsTo
+    {
         return $this->belongsTo(Schedule::class);
     }
 
-    public function MedicalInfo() : HasOne {
+    public function referring_doctor(): BelongsTo
+    {
+        return $this->belongsTo(Doctor::class);
+    }
+
+    public function MedicalInfo(): HasOne
+    {
         return $this->hasOne(MedicalInfo::class);
     }
-    
 }

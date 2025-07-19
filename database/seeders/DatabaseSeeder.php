@@ -15,16 +15,16 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            //ClinicSeeder::class,
-            //DoctorSeeder::class,
+            ClinicSeeder::class,
+            DoctorSeeder::class,
             AppointmentSeeder::class,
-            //LabTechSeeder::class,
+            LabTechSeeder::class,
         ]);
-        // User::factory()->create([
-        //     'first_name' => 'Test User',
-        //     'password' => Hash::make('Nour1234'),
-        //     'phone' => '0936820776',
-        //     'role' => 'admin',
-        // ]);
+        User::factory()->create([
+            'first_name' => 'Test User',
+            'password' => Hash::make('Nour1234'),
+            'phone' => '0936820776',
+            'role' => 'admin',
+        ]);
     }
 }
