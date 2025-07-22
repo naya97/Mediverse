@@ -32,6 +32,7 @@ return new class extends Migration
             $table->enum('payment_status', ['pending', 'paid', 'cancelled'])->default('pending');
             $table->integer('reminder_offset')->default(12);
             $table->boolean('reminder_sent')->default(false);
+            $table->enum('appointment_type',['visit','vaccination'])->default('visit');
             $table->timestamps();
         });
     }

@@ -74,6 +74,7 @@ Route::prefix('doctor')->middleware(JwtMiddleware::class)->group(function () {
     require __DIR__ . '/Doctor/appointments.php';
     require __DIR__ . '/Doctor/patientInfo.php';
     require __DIR__ . '/Doctor/profile.php';
+    require __DIR__ . '/Doctor/child.php';
 });
 
 Route::prefix('home')->middleware(JwtMiddleware::class)->group(function () {

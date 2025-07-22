@@ -20,6 +20,7 @@ class Appointment extends Model
         'reminder_offset',
         'reminder_sent',
         'price',
+        'appointment_type',
     ];
 
     public function patient() : BelongsTo {
@@ -33,5 +34,11 @@ class Appointment extends Model
     public function MedicalInfo() : HasOne {
         return $this->hasOne(MedicalInfo::class);
     }
+
+    public function vaccinations(): HasOne
+    {
+        return $this->hasOne(VaccinationRecord::class);
+    }
+
     
 }

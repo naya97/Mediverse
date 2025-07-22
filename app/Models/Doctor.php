@@ -88,4 +88,12 @@ class Doctor extends Model
             'last_name' => $this->last_name,
         ];
     }
+
+    public function childRecords() : HasMany {
+        return $this->hasMany(ChildRecord::class, 'doctor_id');
+    }
+
+    // public function vaccinationRecords() : HasMany {
+    //     return $this->hasMany(VaccinationRecord::class, 'doctor_id');
+    // }
 }

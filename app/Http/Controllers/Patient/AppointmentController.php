@@ -42,9 +42,17 @@ class AppointmentController extends Controller
         $appointments = Appointment::with('schedule.doctor')
             ->where('patient_id', $patient->id)
             ->where('status', $request->status)
-            ->get();
-
+        ->get();
         if (!$appointments) return response()->json(['message' => 'No Appointments yet'], 404);
+
+        if($request->has('child_id') && $request->has('appointment_type')) {
+            $appointments = Appointment::with('schedule.doctor')
+            ->where('patient_id', $patient->id)
+            ->where('status', $request->status)
+            ->where('appointment_type', $request->appointment_type)
+            ->get();
+            if (!$appointments) return response()->json(['message' => 'No Appointments yet'], 404);
+        }
 
         $response = [];
         foreach ($appointments as $appointment) {
@@ -61,6 +69,8 @@ class AppointmentController extends Controller
                     'reservation_hour' => $appointment->timeSelected,
                     'payment_status' => $appointment->payment_status,
                     'reminder_offset' => $appointment->reminder_offset,
+                    'appointment_price' => $appointment->price,
+                    'appointment_type' => $appointment->appointment_type,
                 ];
             }
         }
@@ -120,6 +130,8 @@ class AppointmentController extends Controller
             'reservation_hour' => $appointment->timeSelected,
             'payment_status' => $appointment->paymet_status,
             'reminder_offset' => $appointment->reminder_offset,
+            'price' => $appointment->price,
+            'appointment_type' => $appointment->appointment_type,
         ];
 
         return response()->json($information, 200);

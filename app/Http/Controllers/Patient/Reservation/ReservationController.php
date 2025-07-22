@@ -8,6 +8,7 @@ use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\Schedule;
+use App\Models\VaccinationRecord;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use DateInterval;
@@ -17,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Stripe\Refund;
 use Stripe\Stripe;
 use League\CommonMark\Parser\Block\BlockContinueParserInterface;
@@ -406,7 +408,17 @@ class ReservationController extends Controller
                 'schedule_id' => $schedule->id,
                 'timeSelected' => $timeSelected,
                 'reservation_date' => $dateFormatted,
+                'appointment_type' => $request->appointment_type ?? 'visit',
             ]);
+
+            if($appointment->appointment_type == 'vaccination') {
+                // لازم يعطيني كمان السجل يلي بدي اعمله ال appointment
+                $vaccinationRecord = VaccinationRecord::where('id', $request->record_id)->first();
+                if(!$vaccinationRecord) return response()->json(['message' => 'record not found'], 404);
+
+                $vaccinationRecord->appointment_id = $appointment->id;
+                $vaccinationRecord->save();
+            }
 
             return response()->json($appointment, 200);
         }
@@ -521,7 +533,17 @@ class ReservationController extends Controller
                 'schedule_id' => $schedule->id,
                 'timeSelected' => $timeSelected,
                 'reservation_date' => $dateFormatted,
+                'appointment_type' => $request->appointment_type ?? 'visit',
             ]);
+
+            if($appointment->appointment_type == 'vaccination') {
+                // لازم يعطيني كمان السجل يلي بدي اعمله ال appointment
+                $vaccinationRecord = VaccinationRecord::where('id', $request->record_id)->first();
+                if(!$vaccinationRecord) return response()->json(['message' => 'record not found'], 404);
+
+                $vaccinationRecord->appointment_id = $appointment->id;
+                $vaccinationRecord->save();
+            }
 
             return response()->json($appointment, 200);
         }
@@ -552,6 +574,9 @@ class ReservationController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'time' => 'required|date_format:H:i',
+                'child_id' => 'sometimes|exists:patients,id',
+                'appointment_type' => ['required_with:child_id', Rule::in(['visit', 'vaccination'])],
+                'record_id' => 'sometimes|exists:vaccination_records,id',
             ]);
 
             if ($validator->fails()) {
@@ -562,6 +587,18 @@ class ReservationController extends Controller
 
             return $this->addManualReservation($request);
         } else {
+
+            $validator = Validator::make($request->all(), [
+                'child_id' => 'sometimes|exists:patients,id',
+                'appointment_type' => ['required_with:child_id', Rule::in(['visit', 'vaccination'])],
+                'record_id' => 'sometimes|exists:vaccination_records,id',
+            ]);
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' =>  $validator->errors()->all()
+                ], 400);
+            }
+
             return $this->addAutoReservation($request);
         }
     }
@@ -684,7 +721,7 @@ class ReservationController extends Controller
         return response()->json(['message' => 'this time is full'], 400);
     }
 
-    public function  cancelReservation(Request $request) {
+    public function cancelReservation(Request $request) {
         $user = Auth::user(); // 
 
         //check the auth

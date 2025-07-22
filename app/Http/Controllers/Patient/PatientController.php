@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Patient;
 use App\Http\Controllers\Controller;
 use App\Models\Patient;
 use App\Models\User;
+use App\Models\VaccinationRecord;
+use App\Models\Vaccine;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -31,7 +34,7 @@ class PatientController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'string|required',
             'last_name' => 'string|required',
-            'age' => 'integer|required',
+            'birth_date' => 'date|required',
             'gender' => 'in:male,female|required',
             'blood_type' => 'string|nullable',
             'address' => 'string|nullable',
@@ -53,7 +56,7 @@ class PatientController extends Controller
         $patient->update([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
-            'age' => $request->age,
+            'birth_date' => $request->birth_date,
             'gender' => $request->gender,
             'blood_type' => $request->blood_type,
             'address' => $request->address,
@@ -98,7 +101,7 @@ class PatientController extends Controller
             'last_name' => $patient->last_name,
             'email' => $email,
             'phone' => $phone,
-            'age' => $patient->age,
+            'birth_date' => $patient->birth_date,
             'gender' => $patient->gender,
             'blood_type' => $patient->blood_type,
             'address' => $patient->address,
@@ -136,7 +139,7 @@ class PatientController extends Controller
             'phone' => 'phone:SY|nullable',
             'old_password' => ['string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'nullable'],
             'password' => ['string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'confirmed', 'nullable'],
-            'age' => 'integer|nullable',
+            'birth_date' => 'date|nullable',
             'gender' => 'in:male,female|nullable',
             'blood_type' => 'string|nullable',
             'address' => 'string|nullable',
@@ -191,7 +194,7 @@ class PatientController extends Controller
             'last_name' => $patient->last_name,
             'email' => $email,
             'phone' => $phone,
-            'age' => $patient->age,
+            'birth_date' => $patient->birth_date,
             'gender' => $patient->gender,
             'blood_type' => $patient->blood_type,
             'address' => $patient->address,
@@ -203,6 +206,86 @@ class PatientController extends Controller
         ], 200);
     }
     /////
+
+    function ageStringToMonths($ageStr) {
+        $ageStr = strtolower(trim($ageStr));
+        if ($ageStr == 'at birth' || $ageStr == 'birth' || $ageStr == 'newborn') return 0; 
+        $number = (int) filter_var($ageStr, FILTER_SANITIZE_NUMBER_INT);
+        return strpos($ageStr, 'year') !== false ? $number * 12 :
+        (strpos($ageStr, 'month') !== false ? $number : null);
+    }
+
+    private function generateVaccinationRecordsForChild($child) {
+
+        $birthDate = Carbon::parse($child->birth_date); // get the age months or years 
+        $now = Carbon::now();
+        $ageInMonths = (int) $birthDate->diffInMonths($now);
+
+        $recommendedNow = [];
+        $upcomingVaccines = [];
+        
+        $vaccines = Vaccine::all();
+
+        foreach($vaccines as $vaccine) {
+            $ageGroups = explode(',', $vaccine->age_group);
+
+            foreach($ageGroups as $groupAge) {
+                $groupAge = trim($groupAge);
+                $groupAgeMonths = $this->ageStringToMonths($groupAge);
+                if ($groupAgeMonths !== null) {
+                    $vaccineDose = [
+                        'vaccine_id' => $vaccine->id,
+                        'name' => $vaccine->name,
+                        'description' => $vaccine->description,
+                        'dose_age' => $groupAge,
+                        'dose_age_months' => $groupAgeMonths,
+                        'price' => $vaccine->price,
+                    ];
+                    if ($groupAgeMonths == $ageInMonths) {
+                        $recommendedNow[] = $vaccineDose;
+                    } elseif ($groupAgeMonths > $ageInMonths){
+                        $upcomingVaccines[] = $vaccineDose;
+                    }
+                }
+            }
+
+        }
+
+        foreach ($recommendedNow as $vaccine) {
+            VaccinationRecord::create([
+                'child_id' => $child->id,
+                'vaccine_id' => $vaccine['vaccine_id'],
+                'appointment_id' => null,
+                'dose_number' => 1,
+                'notes' => null,
+                'isTaken' => false,
+                'recommended' => 'now',
+                'when_to_take' => $vaccine['dose_age'],
+                'next_vaccine_date' => null,
+            ]);
+        }
+
+        foreach ($upcomingVaccines as $vaccine) {
+            VaccinationRecord::create([
+                'child_id' => $child->id,
+                'vaccine_id' => $vaccine['vaccine_id'],
+                'appointment_id' => null,
+                'dose_number' => 1,
+                'notes' => null,
+                'isTaken' => false,
+                'recommended' => 'upcoming',
+                'when_to_take' => $vaccine['dose_age'],
+                'next_vaccine_date' => null,
+            ]);
+        }
+
+         return [
+            'age_in_months' => $ageInMonths,
+            'recommended_now' => $recommendedNow,
+            'upcoming_vaccines' => $upcomingVaccines,
+        ];
+    }
+
     public function addChild(Request $request)
     {
         $user = Auth::user();
@@ -223,11 +306,11 @@ class PatientController extends Controller
             return response()->json(['message' => 'Patient not found'], 404);
         }
         $validator = Validator::make($request->all(), [
-            'first_name' => 'string|nullable',
-            'last_name' => 'string|nullable',
-            'age' => 'integer|nullable',
-            'gender' => 'in:male,female|nullable',
-            'blood_type' => 'string|nullable',
+            'first_name' => 'string|required',
+            'last_name' => 'string|required',
+            'birth_date' => 'date|required',
+            'gender' => 'in:male,female|required',
+            'blood_type' => 'string|required',
             'address' => 'string|nullable',
 
         ]);
@@ -240,16 +323,21 @@ class PatientController extends Controller
         $child = Patient::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
-            'age' => $request->age,
+            'birth_date' => $request->birth_date,
             'gender' => $request->gender,
             'blood_type' => $request->blood_type,
             'address' => $request->address,
             'parent_id' => $patient->id,
         ]);
 
+        $result = $this->generateVaccinationRecordsForChild($child);
+
         return response()->json([
             'message' => 'child added successfully',
-            'child' => $child
+            'child' => $child,
+            'age_in_months' => $result['age_in_months'],
+            'recommended_now' => $result['recommended_now'],
+            'upcoming_vaccines' => $result['upcoming_vaccines'],
         ], 200);
     }
     /////

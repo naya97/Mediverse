@@ -8,6 +8,7 @@ use App\Models\Clinic;
 use App\Models\Discount;
 use App\Models\Doctor;
 use App\Models\Patient;
+use App\Models\VaccinationRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -270,19 +271,24 @@ class PaymentController extends Controller
             $walletOwner = $parent;
         }
 
+        $totalPrice = $doctorAmount;
+
+        if($reservation->appointment_type == 'vaccination') {
+            $vaccinationRecord = VaccinationRecord::with('vaccination')
+            ->where('appointment_id', $reservation->id)
+            ->first();
+
+            if($vaccinationRecord && $vaccinationRecord->vaccine) {
+                $vaccinationPrice = $vaccinationRecord->vaccine->price;
+                $totalPrice += $vaccinationPrice;
+            }else {
+                return response()->json(['message' => 'vaccination record or vaccination not found'], 404);
+            }
+        }
+
         if($walletOwner->wallet < $doctorAmount) {
             return response()->json(['message' => 'You do not have enough money to pay'], 400);
         }
-
-        // //discount
-        // if ($request->has('discount_code')) {
-        //     $discount = Discount::where('discount_code', $request->discount_code)->first();
-        //     if (!$discount) return response()->json(['message' => 'discount not found'], 404);
-        //     $discount_rate = $discount->discount_rate;
-        //     $reservation->price = ($reservation->schedule->doctor->visit_fee * $discount_rate) / 100;
-        // } else {
-        //     $reservation->price = $reservation->schedule->doctor->visit_fee;
-        // }
 
         $discount = 0;
         $pointsToDeduct = 0;
@@ -312,12 +318,14 @@ class PaymentController extends Controller
                 $pointsToDeduct = 30;
             }
         }
-        $reservation->price = ($reservation->schedule->doctor->visit_fee) * (1 - $discount);
+
+        $finalPrice = $totalPrice * (1 - $discount);
+        $reservation->price = $finalPrice;
 
         $reservation->payment_status = 'paid';
         $reservation->save();
 
-        $walletOwner->wallet -= $reservation->price;
+        $walletOwner->wallet -= $finalPrice;
         $walletOwner->save();
 
         $patient->discount_points -= $pointsToDeduct;
@@ -326,7 +334,7 @@ class PaymentController extends Controller
         $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic->id)->first();
         if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
-        $clinic->money += $reservation->price;
+        $clinic->money += $finalPrice;
         $clinic->save();
 
         return response()->json([

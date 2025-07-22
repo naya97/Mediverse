@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Scout\Searchable;
 
@@ -16,7 +17,7 @@ class Patient extends Model
         'first_name',
         'last_name',
         'user_id',
-        'age',
+        'birth_date',
         'gender',
         'blood_type',
         'address',
@@ -63,5 +64,21 @@ class Patient extends Model
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
         ];
+    }
+
+    public function children() : HasMany {
+        return $this->hasMany(Patient::class, 'parent_id');
+    }
+
+    public function parent() : BelongsTo {
+        return $this->belongsTo(Patient::class, 'parent_id');
+    }
+
+    public function vaccinationRecords() : HasMany {
+        return $this->hasMany(VaccinationRecord::class, 'child_id');
+    }
+
+    public function childRecord() : HasOne {
+        return $this->hasOne(ChildRecord::class, 'child_id');
     }
 }

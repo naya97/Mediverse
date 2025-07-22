@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Patient\AppointmentController;
+use App\Http\Controllers\Patient\ChildController;
 use App\Http\Controllers\Patient\PatientController;
 use App\Http\Controllers\Patient\Rate\RateController;
 use App\Http\Controllers\Patient\ReportController;
@@ -20,6 +21,13 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     });
     Route::controller(RateController::class)->group(function () {
         Route::post('/rate', 'patientRate');
+    });
+    Route::controller(ChildController::class)->group(function () {
+        Route::get('/showVaccinationRecords', 'showVaccinationRecords');
+        Route::get('/showVaccinationRecordDetails', 'showVaccinationRecordDetails');
+        Route::post('/editVaccinationRecord', 'editVaccinationRecord');
+        Route::delete('/deleteVaccinationRecord', 'deleteVaccinationRecord');
+        Route::get('/showChildRecord', 'showChildRecord');
     });
     Route::controller(AppointmentController::class)->group(function () {
         Route::post('showAppointment', 'showAppointment');

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-            $table->integer('age')->nullable();
+            $table->date('birth_date')->nullable();
             $table->enum('gender', ['male', 'female'])->nullable();
             $table->enum('blood_type', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])->nullable();
             $table->string('address')->nullable();
