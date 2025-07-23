@@ -13,6 +13,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('showVaccines', 'showVaccines');
         Route::get('showVaccineRecords', 'showVaccineRecords');
         Route::get('showVaccineRecordsDetails', 'showVaccineRecordsDetails');
-        Route::post('addVaccineRecords', 'addVaccineRecords');
+        Route::post('editVaccineRecordInfo', 'editVaccineRecordInfo');
     });
 });

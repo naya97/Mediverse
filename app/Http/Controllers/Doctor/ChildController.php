@@ -200,36 +200,21 @@ class ChildController extends Controller
         return response()->json($vaccineRecord, 200);
     }
 
-    public function addVaccineRecords(Request $request) {
+    public function editVaccineRecordInfo(Request $request) {
         $auth = $this->auth();
         if($auth) return $auth;
 
-        $validator = Validator::make($request->all(), [
-            'child_id' => 'required|exists:patients,id',
-            'vaccine_id' => 'required|exists:vaccines,id',
-            'appointment_id' => 'required|exists:appointments,id',
-            'dose_number' => 'required|numeric',
-            'notes' => 'nullable|string',
-            'isTaken' => 'required|boolean',
-            'next_vaccine_date' => 'nullable|date',
-        ]);
+        $vaccinationRecord = VaccinationRecord::where('id', $request->record_id)->first();
+        if(!$vaccinationRecord) return response()->json(['message' => 'vaccination record not found'], 404);
 
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' =>  $validator->errors()->all()
-            ], 400);
-        }
-
-        $vaccinationRecord = VaccinationRecord::create([
-            'child_id' => $request->child_id,
-            'vaccine_id' => $request->vaccine_id,
-            'appointment_id' => $request->appointment_id,
+        $vaccinationRecord->update([
             'dose_number' => $request->dose_number,
             'notes' => $request->notes ? : null,
             'isTaken' => $request->isTaken,
             'next_vaccine_date' => $request->next_vaccine_date ? : null,
         ]);
+        
+        $vaccinationRecord->save();
 
         return response()->json($vaccinationRecord, 200);
     }

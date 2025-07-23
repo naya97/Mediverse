@@ -18,7 +18,9 @@ use DateInterval;
 use DatePeriod;
 use DateTime;
 use App\CancelAppointmentsTrait;
+use App\Models\VaccinationRecord;
 use App\PaginationTrait;
+use FontLib\Table\Type\fpgm;
 use Illuminate\Support\Facades\Validator;
 
 class AppointmentController extends Controller
@@ -51,6 +53,7 @@ class AppointmentController extends Controller
                 'reservation_hour' => $appointment->timeSelected,
                 'status' => $appointment->status,
                 'appointment_type' => $type,
+                'appointment_info' => $appointment->appointment_type,
                 'payment_status' => $appointment->payment_status,
             ];
         });
@@ -276,6 +279,46 @@ class AppointmentController extends Controller
             'medicalInfo' => $medicalInfo,
             'prescription' => $prescription
         ], 200);
+    }
+    /////
+    public function showVaccinationAppointments(Request $request) {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $user = Auth::user();
+        $doctor = Doctor::with('schedule')->where('user_id', $user->id)->first();
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
+        $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
+
+        $appointments = Appointment::with('patient')
+        ->where('appointment_type', 'vaccination')
+        ->whereIn('schedule_id', $scheduleIds);
+
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+            return [
+                'id' => $appointment->id,
+                'patient_first_name' => $appointment->patient->first_name,
+                'patient_last_name' => $appointment->patient->last_name,
+                'reservation_date' => $appointment->reservation_date,
+                'reservation_hour' => $appointment->timeSelected,
+                'status' => $appointment->status,
+                'appointment_type' => $appointment->appointment_type,
+                'payment_status' => $appointment->payment_status,
+            ];
+
+        });
+        return response()->json($response, 200);
+
+    }
+    /////
+    public function showVaccinationAppointmentDetails(Request $request) {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $vaccinationRecord = VaccinationRecord::where('appointment_id', $request->appointment_id)->first();
+        if(!$vaccinationRecord) return response()->json(['message' => 'vaccination record not found'], 404);
+
+        return response()->json($vaccinationRecord, 200);
     }
     /////
     public function showDoctorWorkDays()
