@@ -53,6 +53,7 @@ Route::prefix('admin')->middleware(JwtMiddleware::class)->group(function () {
     require __DIR__ . '/Admin/doctor.php';
     require __DIR__ . '/Admin/employee.php';
     require __DIR__ . '/Admin/pharmacies.php';
+    require __DIR__ . '/Admin/vaccine.php';
 });
 
 Route::prefix('admin')->group(function () {
