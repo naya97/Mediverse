@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Models\Clinic;
 use App\Models\Discount;
 use App\Models\Patient;
+use App\Models\VaccinationRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -55,7 +56,23 @@ class PaymentController extends Controller
             }
         }
 
-        $appointment->price = $visit_fee * (1 - $discount);
+        $totalPrice = $visit_fee;
+
+        if ($appointment->appointment_type == 'vaccination') {
+            $vaccinationRecord = VaccinationRecord::with('vaccine')
+                ->where('appointment_id', $appointment->id)
+                ->first();
+
+            if (!$vaccinationRecord || !$vaccinationRecord->vaccine) {
+                return response()->json(['message' => 'vaccination record or vaccine not found'], 404);
+            }
+
+            $vaccinePrice = $vaccinationRecord->vaccine->price;
+            $totalPrice += $vaccinePrice;
+        }
+
+        $finalPrice = $totalPrice * (1 - $discount);
+        $appointment->price = $finalPrice;
         $appointment->payment_status = 'paid';
         $appointment->save();
 
@@ -65,12 +82,12 @@ class PaymentController extends Controller
         $clinic = Clinic::where('id', $appointment->schedule->doctor->clinic_id)->first();
         if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
-        $clinic->money += $appointment->price;
+        $clinic->money += $finalPrice;
         $clinic->save();
 
         return response()->json([
             'message' => 'successfully payed',
-            'Bill' => $appointment->price,
+            'Bill' => $finalPrice,
         ], 200);
     }
 
