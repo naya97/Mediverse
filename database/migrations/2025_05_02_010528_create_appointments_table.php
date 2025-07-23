@@ -26,13 +26,19 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->date('reservation_date')->nullable();
-            $table->enum('status',['visited','cancelled','pending'])->default('pending');
+            $table->enum('status', ['visited', 'cancelled', 'pending'])->default('pending');
             $table->float('price')->default(0);
             $table->string('payment_intent_id')->nullable();
             $table->enum('payment_status', ['pending', 'paid', 'cancelled'])->default('pending');
             $table->integer('reminder_offset')->default(12);
             $table->boolean('reminder_sent')->default(false);
             $table->enum('appointment_type',['visit','vaccination'])->default('visit');
+            $table->boolean('is_referral')->default(false);
+            $table->foreignId('referring_doctor')
+                ->nullable()
+                ->constrained('doctors', 'id')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
             $table->timestamps();
         });
     }

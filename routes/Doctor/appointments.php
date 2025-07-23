@@ -21,5 +21,10 @@ Route::middleware([JwtMiddleware::class])->group(function () {
                 Route::post('addCheckup', 'addCheckup');
                 Route::post('editSchedule', 'editSchedule');
                 Route::get('cancelAppointment', 'cancelAppointment');
+                //Referral
+                Route::get('showClinicDoctors', 'showClinicDoctors');
+                Route::get('showReferralDoctorWorkDays', 'showReferralDoctorWorkDays');
+                Route::post('showReferralTimes', 'showReferralTimes');
+                Route::post('addReferralReservation', 'addReferralReservation');
         });
 });

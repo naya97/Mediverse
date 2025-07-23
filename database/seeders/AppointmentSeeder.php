@@ -27,7 +27,7 @@ class AppointmentSeeder extends Seeder
         foreach (range(1, 12) as $month) {
             $year = now()->year;
 
-            foreach (range(1, 10) as $i) { 
+            foreach (range(1, 10) as $i) {
                 $appointment = new Appointment();
                 $appointment->patient_id = $patients->random()->id;
                 $appointment->schedule_id = $schedules->random()->id;
@@ -40,6 +40,5 @@ class AppointmentSeeder extends Seeder
                 $appointment->save();
             }
         }
-    
     }
 }

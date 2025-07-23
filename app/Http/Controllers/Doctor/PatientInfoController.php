@@ -200,8 +200,8 @@ class PatientInfoController extends Controller
                 'result_file',
                 'result_photo',
                 'status',
-            )
-            ->get();
+            );
+        $analysis = $this->paginateResponse($request, $analysis, 'analysis');
 
         return response()->json($analysis, 200);
     }
@@ -219,7 +219,6 @@ class PatientInfoController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
         $validator = Validator::make($request->all(), [
-            'status' => 'string|required',
             'patient_id' => 'required',
             'clinic_id' => 'required',
         ]);
@@ -229,7 +228,6 @@ class PatientInfoController extends Controller
             ], 400);
         }
         $analysis = Analyse::where('patient_id', $request->patient_id)
-            ->where('status', $request->status)
             ->where('clinic_id', $request->clinic_id)
             ->select(
                 'name',
@@ -237,8 +235,8 @@ class PatientInfoController extends Controller
                 'result_file',
                 'result_photo',
                 'status',
-            )
-            ->get();
+            );
+        $analysis = $this->paginateResponse($request, $analysis, 'analysis');
 
         return response()->json($analysis, 200);
     }
@@ -290,7 +288,7 @@ class PatientInfoController extends Controller
 
         $patient->discount_points += 2;
         $patient->save();
-        
+
         //patient notification
         if ($patient->parent_id != null) {
             $patient = Patient::where('id', $patient->parent_id)->first();

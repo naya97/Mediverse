@@ -28,8 +28,8 @@ class AuthController extends Controller
                 'regex:/[a-z]/',
                 'regex:/[A-Z]/',
             ],
-        ],[
-            'phone.phone' => 'enter a valid syrian phone number' ,
+        ], [
+            'phone.phone' => 'enter a valid syrian phone number',
             'phone.unique' => 'this phone has already been taken'
         ]);
 
@@ -55,20 +55,20 @@ class AuthController extends Controller
             return response()->json(['error' => 'Wrong password'], 401);
         }
 
-        if($user->role == 'doctor') {
+        if ($user->role == 'doctor') {
             try {
-            $token = JWTAuth::claims(['role' => $user->role])->fromUser($user);
+                $token = JWTAuth::claims(['role' => $user->role])->fromUser($user);
 
-            $doctor = Doctor::where('user_id', $user->id)->first();
-            $redirect = true;
-            if($doctor->status == 'available') $redirect = false;
+                $doctor = Doctor::where('user_id', $user->id)->first();
+                $redirect = true;
+                if ($doctor->status == 'available') $redirect = false;
 
-            return response()->json([
-                'message' => 'User successfully logged in',
-                'user' => $user,
-                'complete_profile' => $redirect,
-                'token' => $token
-            ], 200);
+                return response()->json([
+                    'message' => 'User successfully logged in',
+                    'user' => $user,
+                    'complete_profile' => $redirect,
+                    'token' => $token
+                ], 200);
             } catch (JWTException $e) {
                 return response()->json(['error' => 'Could not create token'], 500);
             }
@@ -95,8 +95,8 @@ class AuthController extends Controller
             'email' => 'string|email|max:255|unique:users|required_without:phone',
             'phone' => 'phone:SY|required_without:email|unique:users',
             'password' => ['required', 'string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'confirmed',],
-        ],[
-            'phone.phone' => 'enter a valid syrian phone number' ,
+        ], [
+            'phone.phone' => 'enter a valid syrian phone number',
             'phone.unique' => 'this phone has already been taken'
         ]);
 
@@ -170,7 +170,7 @@ class AuthController extends Controller
                 [
                     'name' => $googleUser->name ?? 'Google User',
                     'avatar' => $googleUser->picture ?? null,
-                    'password' => Hash::make(uniqid()) // كلمة مرور وهمية
+                    'password' => Hash::make(uniqid())
                 ]
             );
 
@@ -188,7 +188,7 @@ class AuthController extends Controller
 
     public function saveFcmToken(Request $request)
     {
-        $user = Auth::user(); 
+        $user = Auth::user();
 
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
@@ -199,13 +199,13 @@ class AuthController extends Controller
         ]);
 
         $active_user = User::where('id', $user->id)->first();
-        if(!$active_user) return response()->json(['message' => 'user not found'], 404);
+        if (!$active_user) return response()->json(['message' => 'user not found'], 404);
         $active_user->fcm_token = $request->fcm_token;
         $active_user->save();
 
         return response()->json([
-            'message' => 'Token saved successfully', 
-            'user'=>$user,
+            'message' => 'Token saved successfully',
+            'user' => $user,
         ], 200);
     }
 }
