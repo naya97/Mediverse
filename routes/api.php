@@ -7,10 +7,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\AdminAuthContcoller;
+use App\Http\Controllers\Chat\ChatController;
+use App\Http\Controllers\Chat\ChatMessageController;
 use App\Http\Controllers\Notifications\NotificationController;
 use App\Services\FirebaseService;
 use App\Http\Controllers\EmailOtpController;
 use App\Http\Controllers\SmsOtpController;
+use App\Http\Controllers\UserController;
 
 Route::get('/user', [AuthController::class, 'getUser']);
 
@@ -43,6 +46,14 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('getUnreadNotificationsCount', 'getUnreadNotificationsCount');
         Route::post('markNotificationAsRead', 'markNotificationAsRead');
     });
+});
+
+//Chat
+Route::middleware([JwtMiddleware::class])->group(function () {
+    Route::apiResource('chat', ChatController::class)->only(['index', 'store', 'show']);
+    Route::apiResource('chat_message', ChatMessageController::class)->only(['index', 'store']);
+    Route::apiResource('user', UserController::class)->only(['index']);
+    
 });
 
 
