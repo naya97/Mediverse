@@ -14,6 +14,9 @@ use App\Services\FirebaseService;
 use App\Http\Controllers\EmailOtpController;
 use App\Http\Controllers\SmsOtpController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Broadcast;
+
+Broadcast::routes(['middleware' => [JwtMiddleware::class]]);
 
 Route::get('/user', [AuthController::class, 'getUser']);
 
