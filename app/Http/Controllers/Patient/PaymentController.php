@@ -274,7 +274,7 @@ class PaymentController extends Controller
         $totalPrice = $doctorAmount;
 
         if($reservation->appointment_type == 'vaccination') {
-            $vaccinationRecord = VaccinationRecord::with('vaccination')
+            $vaccinationRecord = VaccinationRecord::with('vaccine')
             ->where('appointment_id', $reservation->id)
             ->first();
 
