@@ -18,8 +18,6 @@ use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::routes(['middleware' => [JwtMiddleware::class]]);
 
-Route::get('/user', [AuthController::class, 'getUser']);
-
 Route::post('send_notification', [NotificationController::class, 'sendPushNotification']);
 
 Route::post('register', [AuthController::class, 'register']);
@@ -28,6 +26,7 @@ Route::post('login', [AuthController::class, 'login']);
 Route::middleware([JwtMiddleware::class])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::post('/saveFcmToken', [AuthController::class, 'saveFcmToken']);
+    Route::get('/getUser', [AuthController::class, 'getUser']);
 });
 
 Route::post('/auth/google', [GoogleAuthController::class, 'googleLogin']);
