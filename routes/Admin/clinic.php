@@ -6,8 +6,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware([JwtMiddleware::class])->group(function () {
     Route::controller(ClinicController::class)->group(function () {
-        Route::get('/show','show');
-        Route::get('/showDetails','showDetails');
+        Route::get('/showClinic','show');
+        Route::get('/showClinicDetails','showDetails');
         Route::get('/showDoctorsClinic','showDoctorsClinic');
         Route::post('/addClinic','addClinic');
         Route::post('/editClinic','editClinic');
