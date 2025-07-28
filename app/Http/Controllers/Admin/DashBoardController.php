@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class DashBoardController extends Controller
 {
@@ -35,6 +36,7 @@ class DashBoardController extends Controller
                 'reservation_date' => $appointment->reservation_date,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
+                'appointment_type' => $appointment->appointment_type,
             ];
         });
 
@@ -61,6 +63,7 @@ class DashBoardController extends Controller
                 'reservation_date' => $appointment->reservation_date,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
+                'appointment_type' => $appointment->appointment_type,
             ];
         });
 
@@ -87,11 +90,53 @@ class DashBoardController extends Controller
                 'reservation_date' => $appointment->reservation_date,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
+                'appointment_type' => $appointment->appointment_type,
             ];
         });
     
 
          return response()->json($response, 200);
+    }
+
+    public function filteringAppointmentsByDate(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $validator = Validator::make($request->all(), [
+            'date' => ['required', 'date_format:m-Y'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
+
+        $date = Carbon::createFromFormat('m-Y', $request->date); 
+        $startOfMonth = $date->startOfMonth()->toDateString();
+        $endOfMonth = $date->endOfMonth()->toDateString();
+
+        $appointments = Appointment::where('payment_status', 'paid')
+            ->whereBetween('reservation_date',[$startOfMonth, $endOfMonth])
+        ->get();
+        $response = [];
+
+        foreach($appointments as $appointment) {
+            $response [] = [
+                'id' => $appointment->id,
+                'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
+                'doctor_id' => $appointment->schedule->doctor->id,
+                'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
+                'doctor_photo' => $appointment->schedule->doctor->photo,
+                'visit_fee' => $appointment->schedule->doctor->visit_fee,
+                'reservation_date' => $appointment->reservation_date,
+                'timeSelected' => $appointment->timeSelected,
+                'status' => $appointment->status,
+                'appointment_type' => $appointment->appointment_type,
+            ];
+        }
+
+        return response()->json($response, 200);
     }
 
     public function showPaymentDetails() {
@@ -136,6 +181,15 @@ class DashBoardController extends Controller
         $auth = $this->auth();
         if($auth) return $auth;
 
+        $validator = Validator::make($request->all(), [
+            'date' => ['required', 'date_format:m-Y'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
 
         $date = Carbon::createFromFormat('m-Y', $request->date); 
         $startOfMonth = $date->startOfMonth()->toDateString();
