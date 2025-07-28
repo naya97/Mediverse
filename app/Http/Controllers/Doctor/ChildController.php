@@ -38,7 +38,7 @@ class ChildController extends Controller
                 'record_id' => $data->id,
                 'child_first_name' => $child->first_name,
                 'child_last_name' => $child->last_name,
-                'child_age' => $child->age ? : null
+                'child_date_birth' => $child->date_birth ? : null
             ];
         });
 

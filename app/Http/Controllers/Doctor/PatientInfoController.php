@@ -326,7 +326,7 @@ class PatientInfoController extends Controller
                 'message' =>  $validator->errors()->all()
             ], 400);
         }
-        $patient = Patient::select('id', 'first_name', 'last_name', 'age', 'gender', 'blood_type', 'address')
+        $patient = Patient::select('id', 'first_name', 'last_name', 'birth_date', 'gender', 'blood_type', 'address')
             ->where('id', $request->patient_id)
             ->first();
 
@@ -358,7 +358,7 @@ class PatientInfoController extends Controller
                 'id' => $patient->id,
                 'first_name' => $patient->first_name,
                 'last_name' => $patient->last_name,
-                'age' => $patient->age,
+                'birth_date' => $patient->birth_date,
                 'address' => $patient->address,
             ];
         });
@@ -399,7 +399,7 @@ class PatientInfoController extends Controller
                 'id' => $patient->id,
                 'first_name' => $patient->first_name,
                 'last_name' => $patient->last_name,
-                'age' => $patient->age,
+                'birth_date' => $patient->birth_date,
                 'address' => $patient->address,
             ];
         });

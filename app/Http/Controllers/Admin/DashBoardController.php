@@ -183,7 +183,7 @@ class DashBoardController extends Controller
         $auth = $this->auth();
         if($auth) return $auth;
         
-        $patients = Patient::select('id', 'first_name', 'last_name', 'user_id', 'gender', 'age', 'address');
+        $patients = Patient::select('id', 'first_name', 'last_name', 'user_id', 'gender', 'birth_date', 'address');
 
         $query = $this->paginateResponse($request, $patients, 'Patients');
 
@@ -207,7 +207,7 @@ class DashBoardController extends Controller
                 'user_id' => $patient->user_id,
                 'email' => $patient->user ?->email ? : null,
                 'phone' => $patient->user ?->phone ? : null,
-                'age' => $patient->age,
+                'birth_date' => $patient->birth_date,
                 'gender' => $patient->gender,
                 'blood_type' => $patient->blood_type,
                 'address' => $patient->address,
@@ -223,7 +223,7 @@ class DashBoardController extends Controller
         if($auth) return $auth;
 
         $patient = Patient::where('id', $request->patient_id)
-            ->select('id', 'first_name', 'last_name', 'user_id', 'gender', 'age', 'address')
+            ->select('id', 'first_name', 'last_name', 'user_id', 'gender', 'birth_date', 'address')
         ->first();
         if(!$patient) return response()->json(['message' => 'patient not found'], 404);
 
