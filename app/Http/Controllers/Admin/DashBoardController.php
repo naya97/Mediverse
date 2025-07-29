@@ -116,8 +116,8 @@ class DashBoardController extends Controller
         $startOfMonth = $date->startOfMonth()->toDateString();
         $endOfMonth = $date->endOfMonth()->toDateString();
 
-        $appointments = Appointment::where('payment_status', 'paid')
-            ->whereBetween('reservation_date',[$startOfMonth, $endOfMonth])
+        $appointments = Appointment::whereBetween('reservation_date',[$startOfMonth, $endOfMonth])
+        ->orderBy('reservation_date', 'asc')
         ->get();
         $response = [];
 
