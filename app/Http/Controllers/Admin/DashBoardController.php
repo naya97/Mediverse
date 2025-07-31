@@ -47,7 +47,22 @@ class DashBoardController extends Controller
         $auth = $this->auth();
         if($auth) return $auth;
 
+        $validator = Validator::make($request->all(), [
+            'date' => ['required', 'date_format:m-Y'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
+
+        $date = Carbon::createFromFormat('m-Y', $request->date); 
+        $startOfMonth = $date->startOfMonth()->toDateString();
+        $endOfMonth = $date->endOfMonth()->toDateString();
+
         $appointments = Appointment::with('patient', 'schedule.doctor')
+        ->whereBetween('reservation_date', [$startOfMonth, $endOfMonth])
         ->whereHas('schedule', function($query) use ($request) {
             $query->where('doctor_id', $request->doctor_id);
         });
@@ -74,10 +89,23 @@ class DashBoardController extends Controller
         $auth = $this->auth();
         if($auth) return $auth;
 
-         $appointments = Appointment::with('patient', 'schedule.doctor')
-        ->where('status', $request->status);
+        $validator = Validator::make($request->all(), [
+            'date' => ['required', 'date_format:m-Y'],
+        ]);
 
-        
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
+
+        $date = Carbon::createFromFormat('m-Y', $request->date); 
+        $startOfMonth = $date->startOfMonth()->toDateString();
+        $endOfMonth = $date->endOfMonth()->toDateString();
+
+        $appointments = Appointment::with('patient', 'schedule.doctor')
+        ->where('status', $request->status)
+        ->whereBetween('reservation_date', [$startOfMonth, $endOfMonth]);
 
         $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
             return [
@@ -95,7 +123,7 @@ class DashBoardController extends Controller
         });
     
 
-         return response()->json($response, 200);
+        return response()->json($response, 200);
     }
 
     public function filteringAppointmentsByDate(Request $request) {
