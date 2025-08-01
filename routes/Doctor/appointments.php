@@ -11,6 +11,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
                 Route::get('showAllAppointments', 'showAllAppointments');
                 Route::post('showAppointmentsByStatus', 'showAppointmentsByStatus');
                 Route::post('showAppointmentsByType', 'showAppointmentsByType');
+                Route::post('filteringAppointmentsByDate', 'filteringAppointmentsByDate');
                 Route::get('showpatientAppointments', 'showpatientAppointments');
                 Route::get('showVaccinationAppointments', 'showVaccinationAppointments');
                 Route::get('showVaccinationAppointmentDetails', 'showVaccinationAppointmentDetails');

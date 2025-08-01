@@ -91,7 +91,15 @@ class AppointmentController extends Controller
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
 
         if ($request->status != 'today') {
-            $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status);
+
+            if ($request->has('date')) {
+                $date = Carbon::createFromFormat('m-Y', $request->date);
+                $startOfMonth = $date->startOfMonth()->toDateString();
+                $endOfMonth = $date->endOfMonth()->toDateString();
+                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->whereBetween('reservation_date', [$startOfMonth, $endOfMonth]);
+            } else {
+                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status);
+            }
         } else {
             $today = now()->format('Y-m-d');
             $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today);
@@ -147,7 +155,14 @@ class AppointmentController extends Controller
 
         if ($request->type == 'first time') {
             if ($request->status != 'today') {
-                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->where('parent_id', null);
+                if ($request->has('date')) {
+                    $date = Carbon::createFromFormat('m-Y', $request->date);
+                    $startOfMonth = $date->startOfMonth()->toDateString();
+                    $endOfMonth = $date->endOfMonth()->toDateString();
+                    $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->where('parent_id', null)->whereBetween('reservation_date', [$startOfMonth, $endOfMonth]);
+                } else {
+                    $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->where('parent_id', null);
+                }
             } else {
                 $today = now()->format('Y-m-d');
                 $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->where('parent_id', null);
@@ -155,7 +170,14 @@ class AppointmentController extends Controller
             $type = 'first time';
         } else {
             if ($request->status != 'today') {
-                $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->whereNotNull('parent_id');
+                if ($request->has('date')) {
+                    $date = Carbon::createFromFormat('m-Y', $request->date);
+                    $startOfMonth = $date->startOfMonth()->toDateString();
+                    $endOfMonth = $date->endOfMonth()->toDateString();
+                    $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->whereNotNull('parent_id')->whereBetween('reservation_date', [$startOfMonth, $endOfMonth]);
+                } else {
+                    $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('status', $request->status)->whereNotNull('parent_id');
+                }
             } else {
                 $today = now()->format('Y-m-d');
                 $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->where('reservation_date', $today)->whereNotNull('parent_id');
@@ -188,6 +210,57 @@ class AppointmentController extends Controller
         return response()->json($response, 200);
     }
     /////
+    public function filteringAppointmentsByDate(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $user = Auth::user();
+        $validator = Validator::make($request->all(), [
+            'date' => ['required', 'date_format:m-Y'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
+
+        $doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
+        $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
+        $date = Carbon::createFromFormat('m-Y', $request->date);
+        $startOfMonth = $date->startOfMonth()->toDateString();
+        $endOfMonth = $date->endOfMonth()->toDateString();
+        $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds)->whereBetween('reservation_date', [$startOfMonth, $endOfMonth]);
+
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+            $type = $appointment->parent_id === null ? 'first time' : 'check up';
+            $referring_doctor_name = null;
+            if ($appointment->referring_doctor != null) {
+                $referring_doctor = Doctor::find($appointment->referring_doctor);
+                if ($referring_doctor) {
+                    $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
+                }
+            }
+            return [
+                'id' => $appointment->id,
+                'patient_first_name' => $appointment->patient->first_name,
+                'patient_last_name' => $appointment->patient->last_name,
+                'reservation_date' => $appointment->reservation_date,
+                'reservation_hour' => $appointment->timeSelected,
+                'status' => $appointment->status,
+                'appointment_type' => $type,
+                'appointment_info' => $appointment->appointment_type,
+                'payment_status' => $appointment->payment_status,
+                'referred by' => $referring_doctor_name,
+            ];
+        });
+
+        return response()->json($response, 200);
+    }
+    /////
     public function showpatientAppointments(Request $request)
     {
         $auth = $this->auth();
@@ -208,8 +281,14 @@ class AppointmentController extends Controller
         if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
 
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
-
-        $appointments = Appointment::where('patient_id', $request->patient_id)->whereIn('schedule_id', $scheduleIds);
+        if ($request->has('date')) {
+            $date = Carbon::createFromFormat('m-Y', $request->date);
+            $startOfMonth = $date->startOfMonth()->toDateString();
+            $endOfMonth = $date->endOfMonth()->toDateString();
+            $appointments = Appointment::where('patient_id', $request->patient_id)->whereIn('schedule_id', $scheduleIds)->whereBetween('reservation_date', [$startOfMonth, $endOfMonth]);
+        } else {
+            $appointments = Appointment::where('patient_id', $request->patient_id)->whereIn('schedule_id', $scheduleIds);
+        }
 
         $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
             $type = $appointment->parent_id === null ? 'first time' : 'check up';
@@ -310,7 +389,8 @@ class AppointmentController extends Controller
         ], 200);
     }
     /////
-    public function showVaccinationAppointments(Request $request) {
+    public function showVaccinationAppointments(Request $request)
+    {
         $auth = $this->auth();
         if ($auth) return $auth;
         $user = Auth::user();
@@ -320,8 +400,8 @@ class AppointmentController extends Controller
         $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
 
         $appointments = Appointment::with('patient')
-        ->where('appointment_type', 'vaccination')
-        ->whereIn('schedule_id', $scheduleIds);
+            ->where('appointment_type', 'vaccination')
+            ->whereIn('schedule_id', $scheduleIds);
 
         $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
             return [
@@ -334,18 +414,17 @@ class AppointmentController extends Controller
                 'appointment_type' => $appointment->appointment_type,
                 'payment_status' => $appointment->payment_status,
             ];
-
         });
         return response()->json($response, 200);
-
     }
     /////
-    public function showVaccinationAppointmentDetails(Request $request) {
+    public function showVaccinationAppointmentDetails(Request $request)
+    {
         $auth = $this->auth();
         if ($auth) return $auth;
 
         $vaccinationRecord = VaccinationRecord::where('appointment_id', $request->appointment_id)->first();
-        if(!$vaccinationRecord) return response()->json(['message' => 'vaccination record not found'], 404);
+        if (!$vaccinationRecord) return response()->json(['message' => 'vaccination record not found'], 404);
 
         return response()->json($vaccinationRecord, 200);
     }
