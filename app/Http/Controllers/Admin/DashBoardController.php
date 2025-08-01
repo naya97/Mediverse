@@ -133,6 +133,8 @@ class DashBoardController extends Controller
 
         $validator = Validator::make($request->all(), [
             'date' => ['required', 'date_format:m-Y'],
+            'doctor_id' => 'required|exists:doctors',
+            'status' => ['required', Rule::in('pending', 'visited', 'cancelled')]
         ]);
 
         if ($validator->fails()) {
@@ -177,8 +179,6 @@ class DashBoardController extends Controller
 
         $validator = Validator::make($request->all(), [
             'date' => ['required', 'date_format:m-Y'],
-            'doctor_id' => 'required|exists:doctors',
-            'status' => ['required', Rule::in('pending', 'visited', 'cancelled')]
         ]);
 
         if ($validator->fails()) {
