@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class DashBoardController extends Controller
 {
@@ -126,12 +127,58 @@ class DashBoardController extends Controller
         return response()->json($response, 200);
     }
 
+    public function filteringAppointmentByDoctorStatus(Request $request) {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $validator = Validator::make($request->all(), [
+            'date' => ['required', 'date_format:m-Y'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
+
+        $date = Carbon::createFromFormat('m-Y', $request->date); 
+        $startOfMonth = $date->startOfMonth()->toDateString();
+        $endOfMonth = $date->endOfMonth()->toDateString();
+
+        $appointments = Appointment::with('patient', 'schedule.doctor')
+        ->where('status', $request->status)
+        ->whereBetween('reservation_date', [$startOfMonth, $endOfMonth])
+        ->whereHas('schedule', function($query) use ($request) {
+            $query->where('doctor_id', $request->doctor_id);
+        });
+
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+            return [
+                'id' => $appointment->id,
+                'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
+                'doctor_id' => $appointment->schedule->doctor->id,
+                'doctor' => $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name,
+                'doctor_photo' => $appointment->schedule->doctor->photo,
+                'visit_fee' => $appointment->schedule->doctor->visit_fee,
+                'reservation_date' => $appointment->reservation_date,
+                'timeSelected' => $appointment->timeSelected,
+                'status' => $appointment->status,
+                'appointment_type' => $appointment->appointment_type,
+            ];
+        });
+    
+
+        return response()->json($response, 200);
+    }
+
     public function filteringAppointmentsByDate(Request $request) {
         $auth = $this->auth();
         if($auth) return $auth;
 
         $validator = Validator::make($request->all(), [
             'date' => ['required', 'date_format:m-Y'],
+            'doctor_id' => 'required|exists:doctors',
+            'status' => ['required', Rule::in('pending', 'visited', 'cancelled')]
         ]);
 
         if ($validator->fails()) {
