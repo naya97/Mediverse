@@ -117,29 +117,25 @@ class LabtechSecretaryController extends Controller
 
         if(!$user) return response(['message'=>'user not found'],404);
 
-        if($request->is_secretary == 1) {
+        if($user->role == 'secretary') {
             $user->update([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->get('password')),
+                'first_name' => $request->first_name ?? $user->first_name,
+                'last_name' => $request->last_name ?? $user->last_name,
+                'email' => $request->email ?? $user->email,
+                'phone' => $request->phone ?? $user->phone,
+                'password' => Hash::make($request->get('password')) ?? $user->password,
             ]);
 
-            $user->save();
-
-         return response()->json('edited successfully', 200);
+            return response()->json('edited successfully', 200);
         }
 
         $user->update([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->get('password')),
+            'first_name' => $request->first_name ?? $user->first_name,
+            'last_name' => $request->last_name ?? $user->last_name,
+            'email' => $request->email ?? $user->email,
+            'phone' => $request->phone ?? $user->phone,
+            'password' => Hash::make($request->get('password')) ?? $user->password,
         ]);
-
-        $user->save();
 
         return response()->json('edited successfully', 200);
 
