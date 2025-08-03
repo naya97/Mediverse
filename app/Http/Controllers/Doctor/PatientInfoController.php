@@ -82,6 +82,11 @@ class PatientInfoController extends Controller
                 'message' =>  $validator->errors()->all()
             ], 400);
         }
+        $prescription = Prescription::find($request->prescription_id);
+        if (!$prescription) {
+            return response()->json(['message' => 'Prescription not found'], 404);
+        }
+
         $medicine = Medicine::create([
             'name' => $request->name,
             'dose' => $request->dose,
@@ -147,6 +152,11 @@ class PatientInfoController extends Controller
         if (!$clinic) {
             return response()->json(['message' => 'Clinic not found'], 404);
         }
+        $patient = Patient::find($request->patient_id);
+        if (!$patient) {
+            return response()->json(['message' => 'Patient not found'], 404);
+        }
+
         $analyse = Analyse::create([
             'name' => $request->name,
             'description' => $request->description,
