@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('vaccination_records', function (Blueprint $table) {
             $table->id();
             $table->foreignId('child_id')->constrained('patients')->cascadeOnUpdate()->cascadeOnDelete();
-            $table->foreignId('vaccine_id')->constrained('vaccines');
-            $table->foreignId('appointment_id')->nullable()->constrained('appointments');
+            $table->foreignId('vaccine_id')->nullable()->constrained('vaccines')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('appointment_id')->nullable()->constrained('appointments')->nullOnDelete();
             $table->integer('dose_number')->nullable(); // رقم الجرعة (يعني مثلا تاني جرعة تم اخذها)
             $table->text('notes')->nullable();
             $table->boolean('isTaken')->default(false);

@@ -19,39 +19,48 @@ class ChildController extends Controller
 {
     use PaginationTrait;
 
-    public function showChildren(Request $request) {
-        $user = Auth::user();
+    // public function showChildrenRecords(Request $request) {
+    //     $user = Auth::user();
 
-        $auth = $this->auth();
-        if($auth) return $auth; // show only the childs that belongs to this dr
+    //     $auth = $this->auth();
+    //     if($auth) return $auth; // show only the childs that belongs to this dr
 
-        $doctor = Doctor::where('user_id', $user->id)->first();
-        if(!$doctor) return response()->json(['message' => 'doctor not found'], 404);
+    //     $doctor = Doctor::where('user_id', $user->id)->first();
+    //     if(!$doctor) return response()->json(['message' => 'doctor not found'], 404);
 
-        $childs = ChildRecord::with('patient.parent')->where('doctor_id', $doctor->id);
+    //     $childs = ChildRecord::with('patient.parent')->where('doctor_id', $doctor->id);
 
-        $response = $this->paginateResponse($request, $childs, 'Children', function($data) {
-            $child = $data->patient;
+    //     $response = $this->paginateResponse($request, $childs, 'Children', function($data) {
+    //         $child = $data->patient;
 
-            return [
-                'id' => $child->id,
-                'record_id' => $data->id,
-                'child_first_name' => $child->first_name,
-                'child_last_name' => $child->last_name,
-                'child_date_birth' => $child->date_birth ? : null
-            ];
-        });
+    //         return [
+    //             'child_id' => $child->id,
+    //             'record_id' => $data->id,
+    //             'child_first_name' => $child->first_name,
+    //             'child_last_name' => $child->last_name,
+    //             'child_date_birth' => $child->date_birth ? : null,
+    //             'last_visit_date' =>$data->last_visit_date ? : null,
+    //             'height_cm' =>$data->height_cm ? : null,
+    //             'weight_kg' =>$data->weight_kg ? : null,
+    //             'head_circumference_cm' =>$data->head_circumference_cm ? : null,
+    //             'growth_notes' =>$data->growth_notes ? : null,
+    //             'developmental_observations' =>$data->developmental_observations ? : null,
+    //             'allergies' =>$data->allergies ? : null,
+    //             'doctor_notes' =>$data->doctor_notes ? : null,
+    //             'feeding_type' =>$data->feeding_type ? : null,
+    //         ];
+    //     });
 
-        return response()->json($response, 200);
+    //     return response()->json($response, 200);
 
-    }
+    // }
 
-    public function showChildDetails(Request $request) {
+    public function showChildRecord(Request $request) {
         $auth = $this->auth();
         if($auth) return $auth;
 
-        $child = Patient::with('parent')->where('id', $request->child_id)->first();
-        if(!$child) return response()->json(['message' => 'child not found'], 404);
+        $child = ChildRecord::where('child_id', $request->child_id)->first();
+        if(!$child) return response()->json(['message' => 'record not found'], 404);
 
         return response()->json($child, 200);
     }

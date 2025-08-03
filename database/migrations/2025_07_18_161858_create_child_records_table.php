@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('child_records', function (Blueprint $table) {
             $table->id();
             $table->foreignId('child_id')->constrained('patients')->cascadeOnUpdate()->cascadeOnUpdate();
-            $table->foreignId('doctor_id')->constrained('doctors'); // رقم الطبيب المسؤول عن هذا الطفل
+            $table->foreignId('doctor_id')->nullable()->constrained('doctors')->nullOnDelete(); // رقم الطبيب المسؤول عن هذا الطفل
             $table->date('last_visit_date')->nullable();
             $table->date('next_visit_date')->nullable();
             $table->float('height_cm')->nullable();

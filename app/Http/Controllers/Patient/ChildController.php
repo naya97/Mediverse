@@ -45,8 +45,8 @@ class ChildController extends Controller
         foreach($vaccinationRecords as $vaccineRecord) {
             $response [] = [
                 'id' => $vaccineRecord->id,
-                'vaccine_id' => $vaccineRecord->vaccine_id, 
-                'vaccine_name' => $vaccineRecord->vaccine->name,
+                'vaccine_id' => $vaccineRecord->vaccine_id ?? null , 
+                'vaccine_name' => $vaccineRecord->vaccine->name ?? 'vaccination removed',
                 'appointment_id' => $vaccineRecord->appointment_id ? : null,
                 'dose' => $vaccineRecord->dose,
                 'isTaken' => $vaccineRecord->isTaken,
@@ -84,13 +84,13 @@ class ChildController extends Controller
 
         $response = [
             'id' => $record->id,
-            'vaccine_id' => $record->vaccine_id,
-            'vaccine_name' =>$record->vaccine->name,
-            'vaccine_description' =>$record->vaccine->description,
-            'vaccine_age_group' =>$record->vaccine->age_group,
-            'vaccine_recommended_doses' =>$record->vaccine->recommended_doses,
-            'vaccine_price' =>$record->vaccine->price,
-            'appointment_id' => $record->appointment_id,
+            'vaccine_id' => $record->vaccine_id ?? null ,
+            'vaccine_name' =>$record->vaccine->name ?? null,
+            'vaccine_description' =>$record->vaccine->description ?? null,
+            'vaccine_age_group' =>$record->vaccine->age_group ?? null,
+            'vaccine_recommended_doses' =>$record->vaccine->recommended_doses ?? null,
+            'vaccine_price' =>$record->vaccine->price ?? 0,
+            'appointment_id' => $record->appointment_id ?? null,
             'appointment_price' => $record->appointment?->price ? : 0,
             'appointment_payment_status' => $record->appointment?->payment_status ? : null,
             'appointment_reservation_date' => $record->appointment?->reservation_date ? : null ,
