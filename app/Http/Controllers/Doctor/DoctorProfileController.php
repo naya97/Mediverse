@@ -56,6 +56,8 @@ class DoctorProfileController extends Controller
         $response = [
             'first_name' => $doctor->first_name,
             'last_name' => $doctor->last_name,
+            'phone' => $user->phone,
+            'email' => $user->email,
             'photo' => $doctor->photo,
             'clinic' => $clinic->name,
             'speciality' => $doctor->speciality,
