@@ -83,8 +83,8 @@ class DoctorProfileController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'string|nullable',
             'last_name' => 'string|nullable',
-            'email' => 'string|email|max:255|nullable',
-            'phone' => 'phone:SY|nullable',
+            'email' => 'string|email|max:255|nullable|unique:users,email',
+            'phone' => 'phone:SY|nullable|unique:users,phone',
             'old_password' => ['string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'nullable'],
             'password' => ['string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'confirmed', 'nullable'],
             'photo' => 'image',
@@ -138,6 +138,9 @@ class DoctorProfileController extends Controller
             }
             if (! Hash::check($request->old_password, $user->password)) {
                 return response()->json(['message' => 'old password is wrong']);
+            }
+            if ($request->old_password == $request->password) {
+                return response()->json(['message' => 'The new password you entered is the same as the old one']);
             }
         }
         $user = $doctor->user()->first();
