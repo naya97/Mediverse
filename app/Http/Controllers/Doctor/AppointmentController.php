@@ -51,6 +51,10 @@ class AppointmentController extends Controller
                     $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
                 }
             }
+            $is_child = false;
+            if ($appointment->patient->parent_id != null) {
+                $is_child = true;
+            }
             return [
                 'id' => $appointment->id,
                 'patient_first_name' => $appointment->patient->first_name,
@@ -62,6 +66,7 @@ class AppointmentController extends Controller
                 'appointment_info' => $appointment->appointment_type,
                 'payment_status' => $appointment->payment_status,
                 'referred by' => $referring_doctor_name,
+                'is_child' => $is_child,
             ];
         });
 
@@ -114,6 +119,10 @@ class AppointmentController extends Controller
                     $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
                 }
             }
+            $is_child = false;
+            if ($appointment->patient->parent_id != null) {
+                $is_child = true;
+            }
             return [
                 'id' => $appointment->id,
                 'patient_first_name' => $appointment->patient->first_name,
@@ -124,6 +133,7 @@ class AppointmentController extends Controller
                 'appointment_type' => $type,
                 'payment_status' => $appointment->payment_status,
                 'referred by' => $referring_doctor_name,
+                'is_child' => $is_child,
             ];
         });
 
@@ -194,6 +204,10 @@ class AppointmentController extends Controller
                     $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
                 }
             }
+            $is_child = false;
+            if ($appointment->patient->parent_id != null) {
+                $is_child = true;
+            }
             return [
                 'id' => $appointment->id,
                 'patient_first_name' => $appointment->patient->first_name,
@@ -204,6 +218,7 @@ class AppointmentController extends Controller
                 'appointment_type' => $type,
                 'payment_status' => $appointment->payment_status,
                 'referred by' => $referring_doctor_name,
+                'is_child' => $is_child,
             ];
         });
 
@@ -244,6 +259,10 @@ class AppointmentController extends Controller
                     $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
                 }
             }
+            $is_child = false;
+            if ($appointment->patient->parent_id != null) {
+                $is_child = true;
+            }
             return [
                 'id' => $appointment->id,
                 'patient_first_name' => $appointment->patient->first_name,
@@ -255,6 +274,7 @@ class AppointmentController extends Controller
                 'appointment_info' => $appointment->appointment_type,
                 'payment_status' => $appointment->payment_status,
                 'referred by' => $referring_doctor_name,
+                'is_child' => $is_child,
             ];
         });
 
@@ -299,6 +319,10 @@ class AppointmentController extends Controller
                     $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
                 }
             }
+            $is_child = false;
+            if ($appointment->patient->parent_id != null) {
+                $is_child = true;
+            }
             return [
                 'id' => $appointment->id,
                 'patient_first_name' => $appointment->patient->first_name,
@@ -309,6 +333,7 @@ class AppointmentController extends Controller
                 'appointment_type' => $type,
                 'payment_status' => $appointment->payment_status,
                 'referred by' => $referring_doctor_name,
+                'is_child' => $is_child,
             ];
         });
 

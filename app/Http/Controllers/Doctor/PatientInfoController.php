@@ -336,15 +336,26 @@ class PatientInfoController extends Controller
                 'message' =>  $validator->errors()->all()
             ], 400);
         }
-        $patient = Patient::select('id', 'first_name', 'last_name', 'birth_date', 'gender', 'blood_type', 'address')
-            ->where('id', $request->patient_id)
-            ->first();
+        $patient = Patient::where('id', $request->patient_id)->first();
 
         if (!$patient) {
             return response()->json(['message' => 'patient not found'], 404);
         }
-
-        return response()->json($patient, 200);
+        $is_child = false;
+        if ($patient->parent_id != null) {
+            $is_child = true;
+        }
+        $response = [
+            'id' => $patient->id,
+            'first_name' => $patient->first_name,
+            'last_name' => $patient->last_name,
+            'birth_date' => $patient->birth_date,
+            'gender' => $patient->gender,
+            'blood_type' => $patient->blood_type,
+            'address' => $patient->address,
+            'is_child' => $is_child,
+        ];
+        return response()->json($response, 200);
     }
     /////
     public function patientsRecord(Request $request)
@@ -363,13 +374,17 @@ class PatientInfoController extends Controller
         $patients = Patient::whereIn('id', $appointments);
 
         $response = $this->paginateResponse($request, $patients, 'Patients', function ($patient) {
-
+            $is_child = false;
+            if ($patient->parent_id != null) {
+                $is_child = true;
+            }
             return [
                 'id' => $patient->id,
                 'first_name' => $patient->first_name,
                 'last_name' => $patient->last_name,
                 'birth_date' => $patient->birth_date,
                 'address' => $patient->address,
+                'is_child' => $is_child,
             ];
         });
 
@@ -405,12 +420,17 @@ class PatientInfoController extends Controller
         }
 
         $response = $results->map(function ($patient) {
+            $is_child = false;
+            if ($patient->parent_id != null) {
+                $is_child = true;
+            }
             return [
                 'id' => $patient->id,
                 'first_name' => $patient->first_name,
                 'last_name' => $patient->last_name,
                 'birth_date' => $patient->birth_date,
                 'address' => $patient->address,
+                'is_child' => $is_child,
             ];
         });
 
