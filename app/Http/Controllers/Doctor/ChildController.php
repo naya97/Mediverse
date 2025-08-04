@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use App\Models\ChildRecord;
 use App\Models\Doctor;
 use App\Models\Patient;
@@ -76,7 +77,7 @@ class ChildController extends Controller
 
         $validator = Validator::make($request->all(), [
             'child_id' => 'required|exists:patients,id',
-            'last_visit_date' => 'nullable|date',
+            // 'last_visit_date' => 'nullable|date',
             'next_visit_date' => 'nullable|date',
             'height_cm' => 'required|numeric',
             'weight_kg' => 'required|numeric',
@@ -98,10 +99,15 @@ class ChildController extends Controller
         $childRecord = ChildRecord::where('child_id', $request->child_id)->first(); 
         if($childRecord) return response()->json(['message' => 'this child have a record'], 400);
 
+        $lastAppointment = Appointment::where('patient_id', $request->child_id)
+        ->orderBy('reservation_date', 'desc')
+        ->first();
+        if(!$lastAppointment) return response()->json(['message' => 'There is no appointment for this patient'], 404);
+
         $record = ChildRecord::create([
             'child_id' => $request->child_id,
             'doctor_id' => $doctor->id,
-            'last_visit_date' => $request->last_visit_date,
+            'last_visit_date' => $lastAppointment->reservation_date, //
             'next_visit_date' => $request->next_visit_date,
             'height_cm' => $request->height_cm,
             'weight_kg' => $request->weight_kg,
@@ -130,7 +136,7 @@ class ChildController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'last_visit_date' => 'nullable|date',
+            // 'last_visit_date' => 'nullable|date',
             'next_visit_date' => 'nullable|date',
             'height_cm' => 'nullable|numeric',
             'weight_kg' => 'nullable|numeric',
@@ -149,7 +155,7 @@ class ChildController extends Controller
         }
 
         $fields = [
-            'last_visit_date',
+            // 'last_visit_date',
             'next_visit_date',
             'height_cm',
             'weight_kg',
@@ -166,6 +172,13 @@ class ChildController extends Controller
                 $record->$field = $request->input($field);
             }
         }
+
+        $lastAppointment = Appointment::where('patient_id', $record->child_id)
+        ->orderBy('reservation_date', 'desc')
+        ->first();
+        if(!$lastAppointment) return response()->json(['message' => 'There is no appointment for this patient'], 404);
+
+        $record->last_visit_date = $lastAppointment->reservation_date;
 
         $record->save();
 
@@ -192,7 +205,7 @@ class ChildController extends Controller
         $auth = $this->auth();
         if($auth) return $auth;
 
-        $vaccinesRecords = VaccinationRecord::query();
+        $vaccinesRecords = VaccinationRecord::where('child_id', $request->child_id);
 
         $response = $this->paginateResponse($request, $vaccinesRecords, 'Vaccination Records');
 
