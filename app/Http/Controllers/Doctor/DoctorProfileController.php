@@ -83,8 +83,8 @@ class DoctorProfileController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'string|nullable',
             'last_name' => 'string|nullable',
-            'email' => 'string|email|max:255|nullable|unique:users,email',
-            'phone' => 'phone:SY|nullable|unique:users,phone',
+            'email' => ['string', 'email', 'max:255', 'nullable', Rule::unique('users', 'email')->ignore($user->id)],
+            'phone' => ['phone:SY', 'nullable', Rule::unique('users', 'phone')->ignore($user->id)],
             'old_password' => ['string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'nullable'],
             'password' => ['string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'confirmed', 'nullable'],
             'photo' => 'image',
