@@ -137,6 +137,7 @@ class AppointmentController extends Controller
 
             $response[] = [
                 'id' => $appointment->id,
+                'patient_id' => $appointment->patient->id,
                 'patient_first_name' => $appointment->patient->first_name,
                 'patient_last_name' => $appointment->patient->last_name,
                 'reservation_date' => $appointment->reservation_date,
