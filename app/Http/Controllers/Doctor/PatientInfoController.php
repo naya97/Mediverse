@@ -346,7 +346,7 @@ class PatientInfoController extends Controller
         if ($patient->parent_id != null) {
             $is_child = true;
 
-            $child_record = ChildRecord::where('child_id', $request->child_id)->first();
+            $child_record = ChildRecord::where('child_id', $request->patient_id)->first();
             if(!$child_record) $record = null;
             else $record = $child_record->id;
         }
