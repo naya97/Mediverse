@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Doctor;
 use App\Http\Controllers\Controller;
 use App\Models\Analyse;
 use App\Models\Appointment;
+use App\Models\ChildRecord;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\MedicalInfo;
@@ -344,6 +345,10 @@ class PatientInfoController extends Controller
         $is_child = false;
         if ($patient->parent_id != null) {
             $is_child = true;
+
+            $child_record = ChildRecord::where('child_id', $request->child_id)->first();
+            if(!$child_record) $record = null;
+            else $record = $child_record->id;
         }
         $response = [
             'id' => $patient->id,
@@ -354,6 +359,7 @@ class PatientInfoController extends Controller
             'blood_type' => $patient->blood_type,
             'address' => $patient->address,
             'is_child' => $is_child,
+            'child_record' => $record,
         ];
         return response()->json($response, 200);
     }
