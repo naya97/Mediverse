@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
+use App\Models\ChildRecord;
 use App\Models\Patient;
 use App\Models\User;
 use App\Models\VaccinationRecord;
@@ -88,6 +89,12 @@ class PatientController extends Controller
             $patient = Patient::where('id', $request->child_id)->first();
             $phone = null;
             $email = null;
+
+            
+            $child_record = ChildRecord::where('child_id', $request->child_id)->first();
+            if(!$child_record) $record = null;
+            else $record = $child_record->id;
+            
         } else {
             $patient = Patient::where('user_id', $user->id)->first();
             $phone = $user->phone;
@@ -106,6 +113,7 @@ class PatientController extends Controller
             'blood_type' => $patient->blood_type,
             'address' => $patient->address,
             'discount_points' => $patient->discount_points,
+            'child_record' => $record,
         ];
 
         return response()->json([

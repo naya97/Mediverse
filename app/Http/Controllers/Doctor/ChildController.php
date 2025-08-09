@@ -205,9 +205,24 @@ class ChildController extends Controller
         $auth = $this->auth();
         if($auth) return $auth;
 
-        $vaccinesRecords = VaccinationRecord::where('child_id', $request->child_id);
+        $vaccinesRecords = VaccinationRecord::with('vaccine')->where('child_id', $request->child_id);
 
-        $response = $this->paginateResponse($request, $vaccinesRecords, 'Vaccination Records');
+
+        $response = $this->paginateResponse($request, $vaccinesRecords, 'Vaccination Records', function($vaccineRecord) {
+            return [
+                'id' => $vaccineRecord->id,
+                'vaccine_id' => $vaccineRecord->vaccine_id,
+                'vaccine_name' => $vaccineRecord->vaccine->name,
+                'child_id' => $vaccineRecord->child_id,
+                'appointment_id' =>$vaccineRecord->appointment_id ?? null,
+                'dose_number' =>$vaccineRecord->dose_number ?? null,
+                'notes' =>$vaccineRecord->notes ?? null,
+                'isTaken' =>$vaccineRecord->isTaken,
+                'when_to_take' =>$vaccineRecord->when_to_take,
+                'recommended' =>$vaccineRecord->recommended,
+                'next_vaccine_date' =>$vaccineRecord->next_vaccine_date ?? null,
+            ];
+        });
 
         return response()->json($response, 200);
     }
