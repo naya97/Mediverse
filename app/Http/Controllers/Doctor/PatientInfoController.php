@@ -359,7 +359,7 @@ class PatientInfoController extends Controller
             'blood_type' => $patient->blood_type,
             'address' => $patient->address,
             'is_child' => $is_child,
-            'child_record' => $record,
+            'child_record' => $record ?? null,
         ];
         return response()->json($response, 200);
     }
