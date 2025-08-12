@@ -888,7 +888,6 @@ class AppointmentController extends Controller
         if ($auth) return $auth;
 
         $validator = Validator::make($request->all(), [
-            'clinic_id' => 'required|exists:clinics,id',
             'doctor_id' => 'required|exists:doctors,id',
         ]);
 
@@ -951,8 +950,6 @@ class AppointmentController extends Controller
         if ($auth) return $auth;
 
         $validator = Validator::make($request->all(), [
-
-            'clinic_id' => 'required|exists:clinics,id',
             'doctor_id' => 'required|exists:doctors,id',
             'date' => 'required|date_format:d/m/y',
         ]);
