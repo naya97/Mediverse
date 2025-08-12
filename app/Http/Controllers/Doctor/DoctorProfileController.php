@@ -216,7 +216,12 @@ class DoctorProfileController extends Controller
                     //->where('doctor_id', '!=', $doctor->id)
                     ->exists();
 
-                if (!$isTaken) {
+                $sameDay = Schedule::where('clinic_id', $doctor->clinic_id)
+                    ->where('day', $day)
+                    ->where('doctor_id', $doctor->id)
+                    ->exists();
+
+                if (!$isTaken && !$sameDay) {
                     $availableShifts[] = $shift;
                 }
             }
