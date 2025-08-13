@@ -17,7 +17,7 @@ class AppointmentSeeder extends Seeder
     public function run(): void
     {
         $patients = Patient::all();
-        $schedules = Schedule::where('status', 'available')->get();
+        $schedules = Schedule::where('status', 'notAvailable')->get();
 
         if ($patients->isEmpty() || $schedules->isEmpty()) {
             $this->command->warn('Make sure patients and available schedules exist before seeding appointments.');

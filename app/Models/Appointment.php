@@ -23,6 +23,7 @@ class Appointment extends Model
         'appointment_type',
         'is_referral',
         'referring_doctor',
+        'queue_number',
     ];
 
     public function patient(): BelongsTo
