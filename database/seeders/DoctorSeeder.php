@@ -19,11 +19,12 @@ class DoctorSeeder extends Seeder
 
 
         foreach ($doctorUsers as $user) {
+            $clinicId = $clinics[$index % $clinicCount]->id;
             Doctor::create([
                 'first_name'             => $user->first_name ?? 'Doctor',
                 'last_name'              => $user->last_name ?? 'Unknown',
                 'user_id'                => $user->id,
-                'clinic_id'              => $clinics[$index % $clinicCount]->id,
+                'clinic_id'              => $clinicId,
                 'speciality'             => 'General',
                 'professional_title'     => 'MD',
                 'finalRate'              => rand(3, 5), 
@@ -35,9 +36,8 @@ class DoctorSeeder extends Seeder
                 'status'                 => 'available',
                 'booking_type' => ['manual', 'auto'][rand(0, 1)],
             ]);
+            $index++;
         }
-
-        $index++;
 
     }
 }
