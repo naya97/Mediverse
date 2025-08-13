@@ -22,9 +22,9 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->string('symptoms')->nullable();
-            $table->string('diagnosis')->default('null')->nullable();
-            $table->string('doctorNote')->default('null')->nullable();
-            $table->string('patientNote')->default('null')->nullable();
+            $table->string('diagnosis')->nullable();
+            $table->string('doctorNote')->nullable();
+            $table->string('patientNote')->nullable();
             $table->timestamps();
         });
     }

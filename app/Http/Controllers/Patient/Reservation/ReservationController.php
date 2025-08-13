@@ -403,12 +403,19 @@ class ReservationController extends Controller
         }
 
         if ($appointmentsNum < $numOfPeopleInHour) {
+
+            $lastQueueNumber = Appointment::where('doctor_id',  $request->doctor_id)
+            ->whereDate('reservation_date', $dateFormatted)
+            ->max('queue_number');
+            $newQueueNumber = $lastQueueNumber ? $lastQueueNumber + 1 : 1;
+
             $appointment = Appointment::create([
                 'patient_id' => $patient->id,
                 'schedule_id' => $schedule->id,
                 'timeSelected' => $timeSelected,
                 'reservation_date' => $dateFormatted,
                 'appointment_type' => $request->appointment_type ?? 'visit',
+                'queue_number'    => $newQueueNumber,
             ]);
 
             if($appointment->appointment_type == 'vaccination') {
@@ -528,12 +535,19 @@ class ReservationController extends Controller
         ->count();
 
         if ($appointmentsTimeNum < $numOfPeopleInHour) {
+
+            $lastQueueNumber = Appointment::where('doctor_id', $request->doctor_id)
+            ->whereDate('reservation_date', $dateFormatted)
+            ->max('queue_number');
+            $newQueueNumber = $lastQueueNumber ? $lastQueueNumber + 1 : 1;
+
             $appointment = Appointment::create([
                 'patient_id' => $patient->id,
                 'schedule_id' => $schedule->id,
                 'timeSelected' => $timeSelected,
                 'reservation_date' => $dateFormatted,
                 'appointment_type' => $request->appointment_type ?? 'visit',
+                'queue_number'    => $newQueueNumber,
             ]);
 
             if($appointment->appointment_type == 'vaccination') {

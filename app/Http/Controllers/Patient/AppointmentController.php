@@ -71,6 +71,7 @@ class AppointmentController extends Controller
                     'reminder_offset' => $appointment->reminder_offset,
                     'appointment_price' => $appointment->price,
                     'appointment_type' => $appointment->appointment_type,
+                    'queue_number' => $appointment->queue_number,
                 ];
             }
         }
@@ -132,6 +133,8 @@ class AppointmentController extends Controller
             'reminder_offset' => $appointment->reminder_offset,
             'price' => $appointment->price,
             'appointment_type' => $appointment->appointment_type,
+            'queue_number' => $appointment->queue_number,
+
         ];
 
         return response()->json($information, 200);

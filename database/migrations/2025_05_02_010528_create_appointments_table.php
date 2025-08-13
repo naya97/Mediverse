@@ -33,6 +33,7 @@ return new class extends Migration
             $table->integer('reminder_offset')->default(12);
             $table->boolean('reminder_sent')->default(false);
             $table->enum('appointment_type',['visit','vaccination'])->default('visit');
+            $table->integer('queue_number')->nullable();
             $table->boolean('is_referral')->default(false);
             $table->foreignId('referring_doctor')
                 ->nullable()

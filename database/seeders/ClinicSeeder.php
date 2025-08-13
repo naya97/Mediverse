@@ -2,28 +2,34 @@
 
 namespace Database\Seeders;
 
-use App\Models\Clinic;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Clinic;
+use App\Models\Doctor;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class ClinicSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        Clinic::create([
-            'name' => 'Heart',
-            'numOfDoctors' => 0,
-        ]);
-        Clinic::create([
-            'name' => 'Mental',
-            'numOfDoctors' => 0,
-        ]);
-        Clinic::create([
-            'name' => 'Dental',
-            'numOfDoctors' => 0,
-        ]);
+        $clinics = [
+            'Cardiologist',
+            'Dentist',
+            'Hepatologists',
+            'Gastroenterologists',
+            'Pulmonologist',
+            'Psychiatrists',
+            'Neurologist',
+            'Nephrologist',
+        ];
+
+        foreach ($clinics as $clinicName) {
+            $clinic = Clinic::create([
+                'name'  => $clinicName,
+                'photo' => 'images/clinics/' . $clinicName . 's.png', 
+                'numOfDoctors' => 1,
+            ]);
+
+        }
     }
 }

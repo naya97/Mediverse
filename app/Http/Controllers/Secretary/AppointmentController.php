@@ -56,6 +56,8 @@ class AppointmentController extends Controller
                 'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
+                'queue_number' => $appointment->queue_number,
+
             ];
         });
 
@@ -94,6 +96,8 @@ class AppointmentController extends Controller
                 'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
+                'queue_number' => $appointment->queue_number,
+
             ];
         });
 
@@ -137,6 +141,8 @@ class AppointmentController extends Controller
                 'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
+                'queue_number' => $appointment->queue_number,
+
             ];
         });
 
@@ -179,6 +185,8 @@ class AppointmentController extends Controller
                 'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
+                'queue_number' => $appointment->queue_number,
+
             ];
         });
 
@@ -221,6 +229,8 @@ class AppointmentController extends Controller
                 'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
+                'queue_number' => $appointment->queue_number,
+
             ];
         });
 
@@ -265,6 +275,8 @@ class AppointmentController extends Controller
                 'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
+                'queue_number' => $appointment->queue_number,
+
             ];
         });
 
@@ -301,6 +313,8 @@ class AppointmentController extends Controller
             'appointment_type' => $type,
             'payment_status' => $appointment->payment_status,
             'discount_points' => $appointment->patient->discount_points,
+            'queue_number' => $appointment->queue_number,
+
         ];
 
         return response()->json($response, 200);
