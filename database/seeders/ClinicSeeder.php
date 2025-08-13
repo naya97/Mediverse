@@ -26,7 +26,7 @@ class ClinicSeeder extends Seeder
         foreach ($clinics as $clinicName) {
             $clinic = Clinic::create([
                 'name'  => $clinicName,
-                'photo' => 'images/clinics/' . $clinicName . 's.png', 
+                'photo' => '/storage/images/clinics/' . $clinicName . 's.png', 
                 'numOfDoctors' => 1,
             ]);
 

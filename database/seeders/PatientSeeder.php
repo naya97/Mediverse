@@ -2,6 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Patient;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -12,6 +15,40 @@ class PatientSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        $patientUsers = User::where('role', 'patient')->get();
+        $allPatients = [];
+
+        foreach ($patientUsers as $user) {
+            $allPatients [] = Patient::create([
+                'first_name'     => $user->first_name ,
+                'last_name'      => $user->last_name ,
+                'user_id'        => $user->id,
+                'birth_date'     => Carbon::now()->subYears(rand(1, 80))->subDays(rand(0, 365)), 
+                'gender'         => ['male', 'female'][rand(0, 1)],
+                'blood_type'     => collect(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])->random(),
+                'address'        => 'Unknown Address',
+                'wallet'         => rand(0, 1000), 
+                'parent_id'      => null,
+                'discount_points'=> rand(0, 100),
+            ]);
+        }
+
+        if (count($allPatients) >= 4) {
+            $parent = collect($allPatients)->random();
+            $childrenCandidates = collect($allPatients)->filter(fn($p) => $p->id !== $parent->id && $p->parent_id === null);
+
+            if ($childrenCandidates->count() >= 3) {
+                $children = $childrenCandidates->random(3)->values(); // 3 أطفال
+
+                $agesInMonths = [8, 36, 72]; // 8 شهور، 3 سنين، 6 سنين
+
+                foreach ($children as $i => $child) {
+                    $child->update([
+                        'parent_id'  => $parent->id,
+                        'birth_date' => Carbon::now()->subMonths($agesInMonths[$i]),
+                    ]);
+                }
+            }
+        }
     }
 }
