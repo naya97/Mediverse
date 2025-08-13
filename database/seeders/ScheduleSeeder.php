@@ -65,7 +65,7 @@ class ScheduleSeeder extends Seeder
                     'end_leave_date'   => null,
                     'start_leave_time' => null,
                     'end_leave_time'   => null,
-                    'status'          => 'available',
+                    'status'          => 'notAvailable',
                 ]);
             }
         }
