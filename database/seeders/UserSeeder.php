@@ -110,7 +110,7 @@ class UserSeeder extends Seeder
                 'first_name' => 'Naya',
                 'last_name' => 'Patient',
                 'email' => 'naya.patient@example.com',
-                'phone' => '0937582883',
+                'phone' => '0930536570',
                 'password' => Hash::make('Naya1234'),
                 'role' => 'patient',
             ],
