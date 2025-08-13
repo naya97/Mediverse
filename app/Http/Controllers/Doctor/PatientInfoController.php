@@ -190,7 +190,32 @@ class PatientInfoController extends Controller
         ], 201);
     }
     /////
-    public function showPatientAnalysis(Request $request) //by status
+    public function showPatientAnalysis(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $validator = Validator::make($request->all(), [
+            'patient_id' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
+        $analysis = Analyse::where('patient_id', $request->patient_id)
+            ->select(
+                'name',
+                'description',
+                'result_file',
+                'result_photo',
+                'status',
+            );
+        $analysis = $this->paginateResponse($request, $analysis, 'analysis');
+
+        return response()->json($analysis, 200);
+    }
+    /////
+    public function showPatientAnalysisByStatus(Request $request) //by status
     {
         $auth = $this->auth();
         if ($auth) return $auth;
