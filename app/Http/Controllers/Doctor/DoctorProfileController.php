@@ -171,6 +171,22 @@ class DoctorProfileController extends Controller
         foreach ($request->RosterDays as $RosterDay) {
             $day = $RosterDay['day'];
             $Shift = $RosterDay['Shift'];
+            $isTaken = Schedule::where('clinic_id', $doctor->clinic_id)
+                ->where('day', $day)
+                ->where('Shift', $Shift)
+                ->where('status', 'notAvailable')
+                //->where('doctor_id', '!=', $doctor->id)
+                ->exists();
+            if ($isTaken) {
+                return response()->json(['message' => 'The shift you select is not available'], 404);
+            }
+            $sameDay = Schedule::where('clinic_id', $doctor->clinic_id)
+                ->where('day', $day)
+                ->where('doctor_id', $doctor->id)
+                ->exists();
+            if ($sameDay) {
+                return response()->json(['message' => 'You already have a shift at this day'], 404);
+            }
             Schedule::create([
                 'clinic_id' => $doctor->clinic_id,
                 'doctor_id' => $doctor->id,
