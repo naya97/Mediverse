@@ -244,6 +244,9 @@ class ChildController extends Controller
         $vaccinationRecord = VaccinationRecord::where('id', $request->record_id)->first();
         if(!$vaccinationRecord) return response()->json(['message' => 'vaccination record not found'], 404);
 
+        $appointment = Appointment::where('id', $vaccinationRecord->appointment_id)->first();
+        if(!$appointment) return response()->json(['message' => 'there is no appointment for this record'], 404);
+
         $vaccinationRecord->update([
             'dose_number' => $request->dose_number,
             'notes' => $request->notes ? : null,
@@ -252,6 +255,9 @@ class ChildController extends Controller
         ]);
         
         $vaccinationRecord->save();
+
+        $appointment->status = 'visited';
+        $appointment->save();
 
         return response()->json($vaccinationRecord, 200);
     }

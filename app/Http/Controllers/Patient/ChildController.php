@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\ChildRecord;
 use App\Models\Patient;
 use App\Models\VaccinationRecord;
+use App\PaginationTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ChildController extends Controller
 {
+    use PaginationTrait;
+
     public function showVaccinationRecords(Request $request) {
         $user = Auth::user();
 
@@ -32,18 +35,16 @@ class ChildController extends Controller
         $child = Patient::where('id', $request->child_id)->first();
         if(!$child) return response()->json(['message' => 'child not found'], 404);
 
-        $vaccinationRecords = VaccinationRecord::with(['vaccine', 'appointment'])->where('child_id', $child->id)->get();
+        $vaccinationRecords = VaccinationRecord::with(['vaccine', 'appointment'])->where('child_id', $child->id);
 
         if($request->has('recommended')) {
             $vaccinationRecords = VaccinationRecord::with(['vaccine', 'appointment'])
             ->where('child_id', $child->id)
-            ->where('recommended', $request->recommended)
-            ->get();
+            ->where('recommended', $request->recommended);
         }
 
-        $response = [];
-        foreach($vaccinationRecords as $vaccineRecord) {
-            $response [] = [
+        $response = $this->paginateResponse($request, $vaccinationRecords, 'VaccinationRecords', function($vaccineRecord){
+            return [
                 'id' => $vaccineRecord->id,
                 'vaccine_id' => $vaccineRecord->vaccine_id ?? null , 
                 'vaccine_name' => $vaccineRecord->vaccine->name ?? 'vaccination removed',
@@ -54,7 +55,7 @@ class ChildController extends Controller
                 'recommended' => $vaccineRecord->recommended,
                 'price' => $vaccineRecord->vaccine->price,
             ];
-        }
+        });
 
         return response()->json($response, 200);
     }

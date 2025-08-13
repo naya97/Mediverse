@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\User;
+use App\PaginationTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\PharmacyTrait;
@@ -14,13 +15,14 @@ use Symfony\Component\VarDumper\Caster\DoctrineCaster;
 class HomeController extends Controller
 {
     use PharmacyTrait;
+    use PaginationTrait;
 
-    public function showDoctors()
+    public function showDoctors(Request $request)
     {
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $doctors = $this->showAllDoctors();
+        $doctors = $this->showAllDoctors($request);
 
         // don't show the clinic id (tell the front)
         return response()->json($doctors, 200);
@@ -88,7 +90,7 @@ class HomeController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $doctors = $this->showAllDoctors();
+        $doctors = $this->showAllDoctors($request);
 
         $clinic_doctors = [];
         foreach ($doctors as $doctor) {
@@ -100,7 +102,7 @@ class HomeController extends Controller
         return response()->json($clinic_doctors, 200);
     }
 
-    public function showClinics()
+    public function showClinics(Request $request)
     {
         $auth = $this->auth();
         if ($auth) return $auth;
@@ -156,11 +158,12 @@ class HomeController extends Controller
         }
     }
 
-    public function showAllDoctors()
+    public function showAllDoctors(Request $request)
     {
-        $doctors = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id')
-            ->get();
+        $doctors = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id');
 
-        return $doctors;
+        $data = $this->paginateResponse($request, $doctors, 'Doctors');
+
+        return $data;
     }
 }

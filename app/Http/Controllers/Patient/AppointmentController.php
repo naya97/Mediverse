@@ -9,6 +9,7 @@ use App\Models\Doctor;
 use App\Models\MedicalInfo;
 use App\Models\Patient;
 use App\Models\Prescription;
+use App\PaginationTrait;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -18,8 +19,10 @@ use Illuminate\Support\Facades\Validator;
 
 class AppointmentController extends Controller
 {
+    use PaginationTrait;
+
     public function showAppointment(Request $request)
-    {
+    {        
         $user = Auth::user();
         if (!$user) {
             return response()->json([
@@ -40,26 +43,25 @@ class AppointmentController extends Controller
         if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
 
         $appointments = Appointment::with('schedule.doctor')
-            ->where('patient_id', $patient->id)
-            ->where('status', $request->status)
-        ->get();
+        ->where('patient_id', $patient->id)
+        ->where('status', $request->status);
+
         if (!$appointments) return response()->json(['message' => 'No Appointments yet'], 404);
 
         if($request->has('child_id') && $request->has('appointment_type')) {
             $appointments = Appointment::with('schedule.doctor')
             ->where('patient_id', $patient->id)
             ->where('status', $request->status)
-            ->where('appointment_type', $request->appointment_type)
-            ->get();
+            ->where('appointment_type', $request->appointment_type);
+
             if (!$appointments) return response()->json(['message' => 'No Appointments yet'], 404);
         }
 
-        $response = [];
-        foreach ($appointments as $appointment) {
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function($appointment){
             $doctor = $appointment->schedule->doctor ?? null;
 
             if ($doctor) {
-                $response[] = [
+                return [
                     'appointment_id' => $appointment->id,
                     'doctor_photo' => $doctor->photo,
                     'doctor_name' => $doctor->first_name . ' ' . $doctor->last_name,
@@ -74,7 +76,9 @@ class AppointmentController extends Controller
                     'queue_number' => $appointment->queue_number,
                 ];
             }
-        }
+
+        });
+
         return response()->json($response, 200);
     }
 
