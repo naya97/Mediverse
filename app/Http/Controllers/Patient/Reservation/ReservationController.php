@@ -404,7 +404,7 @@ class ReservationController extends Controller
 
         if ($appointmentsNum < $numOfPeopleInHour) {
 
-            $lastQueueNumber = Appointment::where('doctor_id',  $request->doctor_id)
+            $lastQueueNumber = Appointment::where('schedule_id',  $schedule->id)
             ->whereDate('reservation_date', $dateFormatted)
             ->max('queue_number');
             $newQueueNumber = $lastQueueNumber ? $lastQueueNumber + 1 : 1;
@@ -536,7 +536,7 @@ class ReservationController extends Controller
 
         if ($appointmentsTimeNum < $numOfPeopleInHour) {
 
-            $lastQueueNumber = Appointment::where('doctor_id', $request->doctor_id)
+            $lastQueueNumber = Appointment::where('schedule_id', $schedule->id)
             ->whereDate('reservation_date', $dateFormatted)
             ->max('queue_number');
             $newQueueNumber = $lastQueueNumber ? $lastQueueNumber + 1 : 1;
