@@ -13,14 +13,14 @@ class ClinicSeeder extends Seeder
     public function run(): void
     {
         $clinics = [
-            'Cardiologist',
-            'Dentist',
-            'Hepatologists',
-            'Gastroenterologists',
-            'Pulmonologist',
-            'Psychiatrists',
-            'Neurologist',
-            'Nephrologist',
+            'Cardio',        // Cardiologist
+            'Dental',        // Dentist
+            'Liver',         // Hepatologists
+            'Gastro',        // Gastroenterologists
+            'Lungs',         // Pulmonologist
+            'Psych',         // Psychiatrists
+            'Neuro',         // Neurologist
+            'Kidney',        // Nephrologist
         ];
 
         foreach ($clinics as $clinicName) {

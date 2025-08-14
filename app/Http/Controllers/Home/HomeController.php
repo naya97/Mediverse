@@ -90,16 +90,9 @@ class HomeController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $doctors = $this->showAllDoctors($request);
+        $doctors = Doctor::where('clinic_id', $request->clinic_id)->get();
 
-        $clinic_doctors = [];
-        foreach ($doctors as $doctor) {
-            if ($doctor->clinic_id == $request->clinic_id) {
-                $clinic_doctors[] = $doctor;
-            }
-        }
-
-        return response()->json($clinic_doctors, 200);
+        return response()->json($doctors, 200);
     }
 
     public function showClinics(Request $request)
