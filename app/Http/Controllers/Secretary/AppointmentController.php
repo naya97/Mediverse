@@ -23,158 +23,48 @@ class AppointmentController extends Controller
     use CancelAppointmentsTrait;
     use PaginationTrait;
 
-    public function showAllAppointments(Request $request)
-    {
-        $auth = $this->auth();
-        if ($auth) return $auth;
-
-        $appointments = Appointment::with('patient.user', 'schedule.doctor.user');
-
-        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
-
-            $patient = $appointment->patient;
-            if ($patient->parent_id !== null) {
-                $patient = Patient::with('user')->find($patient->parent_id);
-            }
-
-            $patientUser = $patient->user;
-
-            $doctor = $appointment->schedule->doctor;
-            $doctorUser = $doctor->user;
-
-            return [
-                'id' => $appointment->id,
-                'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $patientUser ? $patientUser->phone : null,
-                'doctor' => $doctor->first_name . ' ' . $doctor->last_name,
-                'doctor_id' => $doctor->id,
-                'doctor_phone' => $doctorUser ? $doctorUser->phone : null,
-                'doctor_photo' => $doctor->photo,
-                'visit_fee' => $doctor->visit_fee,
-                'expected_price' => $appointment->expected_price,
-                'paid_price' => $appointment->paid_price,
-                'reservation_date' => $appointment->reservation_date,
-                'payment_status' => $appointment->payment_status,
-                'timeSelected' => $appointment->timeSelected,
-                'status' => $appointment->status,
-                'queue_number' => $appointment->queue_number,
-
-            ];
-        });
-
-        return response()->json($response, 200);
-
-    }
-
-    public function showTodayAppointmentByDoctor(Request $request) {
-        $auth = $this->auth();
-        if ($auth) return $auth;
-        // doctor_id , date->now (day), filtering by the الاسبقية 
-
-        $doctor = Doctor::where('id', $request->doctor_id)->first();
-        if(!$doctor) return response()->json(['message'=> 'doctor not found'], 404);
-
-        $now = Carbon::now()->format('Y-m-d');
-        $appointments = Appointment::with('patient.user', 'schedule.doctor.user')->where('reservation_date', $now)
-        ->orderBy('created_at', 'asc');
-
-        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
-            $patientUser = $appointment->patient;
-            $doctor = $appointment->schedule->doctor;
-            $doctorUser = $appointment->schedule->doctor->user;
-            
-            return [
-                'id' => $appointment->id,
-                'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $patientUser ? $patientUser->phone : null,
-                'doctor' => $doctor->first_name . ' ' . $doctor->last_name,
-                'doctor_id' => $doctor->id,
-                'doctor_phone' => $doctorUser ? $doctorUser->phone : null,
-                'doctor_photo' => $doctor->photo,
-                'visit_fee' => $doctor->visit_fee,
-                'expected_price' => $appointment->expected_price,
-                'paid_price' => $appointment->paid_price,
-                'reservation_date' => $appointment->reservation_date,
-                'payment_status' => $appointment->payment_status,
-                'timeSelected' => $appointment->timeSelected,
-                'status' => $appointment->status,
-                'queue_number' => $appointment->queue_number,
-
-            ];
-        });
-
-        return response()->json($response, 200);
-       
-    }
-
     public function filteringAppointmentByDoctor(Request $request)
     {
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
-            ->whereHas('schedule', function ($query) use ($request) {
+        $validator = Validator::make($request->all(), [
+            'doctor_id' => 'required|exists:doctors,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
+
+        if($request->has('date')) {
+            $date = Carbon::createFromFormat('m-Y', $request->date); 
+            $startOfMonth = $date->startOfMonth()->toDateString();
+            $endOfMonth = $date->endOfMonth()->toDateString();
+
+            $appointments = Appointment::with('patient.user', 'schedule.doctor')
+            ->whereBetween('reservation_date', [$startOfMonth, $endOfMonth])
+            ->whereHas('schedule', function($query) use ($request) {
                 $query->where('doctor_id', $request->doctor_id);
-        });
-
-        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
-
-            $patient = $appointment->patient;
-            if ($patient->parent_id !== null) {
-                $patient = Patient::with('user')->find($patient->parent_id);
-            }
-
-            $patientUser = $patient->user;
-
-            $doctor = $appointment->schedule->doctor;
-            $doctorUser = $doctor->user;
-
-            return [
-                'id' => $appointment->id,
-                'patient' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
-                'patient_phone' => $patientUser ? $patientUser->phone : null,
-                'doctor' => $doctor->first_name . ' ' . $doctor->last_name,
-                'doctor_id' => $doctor->id,
-                'doctor_phone' => $doctorUser ? $doctorUser->phone : null,
-                'doctor_photo' => $doctor->photo,
-                'visit_fee' => $doctor->visit_fee,
-                'expected_price' => $appointment->expected_price,
-                'paid_price' => $appointment->paid_price,
-                'reservation_date' => $appointment->reservation_date,
-                'payment_status' => $appointment->payment_status,
-                'timeSelected' => $appointment->timeSelected,
-                'status' => $appointment->status,
-                'queue_number' => $appointment->queue_number,
-
-            ];
-        });
-
-        return response()->json($response, 200);
-    }
-
-    public function filteringAppointmentByStatus(Request $request)
-    {
-        $auth = $this->auth();
-        if ($auth) return $auth;
-
-        $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
-            ->whereHas('schedule', function ($query) use ($request) {
+            })->get();
+        }
+        else {
+            $appointments = Appointment::with('patient.user', 'schedule.doctor')
+            ->whereHas('schedule', function($query) use ($request) {
                 $query->where('doctor_id', $request->doctor_id);
-            })
-            ->where('status', $request->status);
+            })->get();
+        }
 
-        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+        $response = [];
+
+        foreach($appointments as $appointment){
             $patient = $appointment->patient;
-
-            if ($patient->parent_id !== null) {
-                $patient = Patient::with('user')->find($patient->parent_id);
-            }
-
-            $patientUser = $patient->user;
             $doctor = $appointment->schedule->doctor;
-            $doctorUser = $doctor->user;
+            $patientUser = $appointment->patient->user;
+            $doctorUser = $appointment->schedule->doctor->user;
 
-            return [
+            $response [] = [
                 'id' => $appointment->id,
                 'patient' => $patient->first_name . ' ' . $patient->last_name,
                 'patient_phone' => $patientUser ? $patientUser->phone : null,
@@ -190,9 +80,160 @@ class AppointmentController extends Controller
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
                 'queue_number' => $appointment->queue_number,
-
             ];
-        });
+        }
+
+
+        return response()->json($response, 200);
+    }
+
+    public function filteringAppointmentByStatus(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $validator = Validator::make($request->all(), [
+            'status' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
+
+        if($request->status == 'today') {
+            $today = now()->format('Y-m-d');
+            $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
+            ->where('status', $request->status)
+            ->where('reservation_date', $today)
+            ->get();
+        }
+        else {
+            if($request->has('date')) {
+                $date = Carbon::createFromFormat('m-Y', $request->date); 
+                $startOfMonth = $date->startOfMonth()->toDateString();
+                $endOfMonth = $date->endOfMonth()->toDateString();
+
+                $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
+                ->where('status', $request->status)
+                ->whereBetween('reservation_date', [$startOfMonth, $endOfMonth])
+                ->get();
+            }
+            else {
+                $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
+                ->where('status', $request->status)
+                ->get();
+            }
+        }
+
+        $response = [];
+        foreach($appointments as $appointment){
+            $patient = $appointment->patient;
+            $doctor = $appointment->schedule->doctor;
+            $patientUser = $appointment->patient->user;
+            $doctorUser = $appointment->schedule->doctor->user;
+
+            $response [] = [
+                'id' => $appointment->id,
+                'patient' => $patient->first_name . ' ' . $patient->last_name,
+                'patient_phone' => $patientUser ? $patientUser->phone : null,
+                'doctor' => $doctor->first_name . ' ' . $doctor->last_name,
+                'doctor_id' => $doctor->id,
+                'doctor_phone' => $doctorUser ? $doctorUser->phone : null,
+                'doctor_photo' => $doctor->photo,
+                'visit_fee' => $doctor->visit_fee,
+                'expected_price' => $appointment->expected_price,
+                'paid_price' => $appointment->paid_price,
+                'reservation_date' => $appointment->reservation_date,
+                'payment_status' => $appointment->payment_status,
+                'timeSelected' => $appointment->timeSelected,
+                'status' => $appointment->status,
+                'queue_number' => $appointment->queue_number,
+            ];
+        }
+
+        
+
+        return response()->json($response, 200);
+    }
+
+    public function filteringAppointmentByDoctorStatus(Request $request) {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $validator = Validator::make($request->all(), [
+            'status' => 'required',
+            'doctor_id' => 'required|exists:doctors,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
+
+        if($request->status == 'today') {
+            $today = now()->format('Y-m-d');
+            $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
+            ->where('status', $request->status)
+            ->whereHas('schedule', function($query) use ($request) {
+            $query->where('doctor_id', $request->doctor_id);
+            })
+            ->where('reservation_date', $today)
+            ->get();
+        }
+        else {
+            if($request->has('date')) {
+                $date = Carbon::createFromFormat('m-Y', $request->date); 
+                $startOfMonth = $date->startOfMonth()->toDateString();
+                $endOfMonth = $date->endOfMonth()->toDateString();
+
+                $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
+                ->where('status', $request->status)
+                ->whereBetween('reservation_date', [$startOfMonth, $endOfMonth])
+                ->whereHas('schedule', function($query) use ($request) {
+                    $query->where('doctor_id', $request->doctor_id);
+                })
+                ->get();
+            }
+            else {
+                $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
+                ->where('status', $request->status)
+                ->whereHas('schedule', function($query) use ($request) {
+                    $query->where('doctor_id', $request->doctor_id);
+                })
+                ->get();
+            }
+        }
+
+        $response = [];
+        foreach($appointments as $appointment){
+            $patient = $appointment->patient;
+            $doctor = $appointment->schedule->doctor;
+            $patientUser = $appointment->patient->user;
+            $doctorUser = $appointment->schedule->doctor->user;
+
+            $response [] = [
+                'id' => $appointment->id,
+                'patient' => $patient->first_name . ' ' . $patient->last_name,
+                'patient_phone' => $patientUser ? $patientUser->phone : null,
+                'doctor' => $doctor->first_name . ' ' . $doctor->last_name,
+                'doctor_id' => $doctor->id,
+                'doctor_phone' => $doctorUser ? $doctorUser->phone : null,
+                'doctor_photo' => $doctor->photo,
+                'visit_fee' => $doctor->visit_fee,
+                'expected_price' => $appointment->expected_price,
+                'paid_price' => $appointment->paid_price,
+                'reservation_date' => $appointment->reservation_date,
+                'payment_status' => $appointment->payment_status,
+                'timeSelected' => $appointment->timeSelected,
+                'status' => $appointment->status,
+                'queue_number' => $appointment->queue_number,
+            ];
+        }
+
+        
 
         return response()->json($response, 200);
     }
@@ -203,23 +244,32 @@ class AppointmentController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $date = Carbon::createFromFormat('d-m-Y', $request->date)->toDateString();
+        $validator = Validator::make($request->all(), [
+            'date' => ['required', 'date_format:m-Y'],
+        ]);
 
-        $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
-        ->where('reservation_date', $date);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
 
-        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
+        $date = Carbon::createFromFormat('m-Y', $request->date); 
+        $startOfMonth = $date->startOfMonth()->toDateString();
+        $endOfMonth = $date->endOfMonth()->toDateString();
+
+        $appointments = Appointment::whereBetween('reservation_date',[$startOfMonth, $endOfMonth])
+        ->orderBy('reservation_date', 'asc')
+        ->get();
+        $response = [];
+
+        foreach($appointments as $appointment){
             $patient = $appointment->patient;
-
-            if ($patient->parent_id !== null) {
-                $patient = Patient::with('user')->find($patient->parent_id);
-            }
-
-            $patientUser = $patient->user;
             $doctor = $appointment->schedule->doctor;
-            $doctorUser = $doctor->user;
+            $patientUser = $appointment->patient->user;
+            $doctorUser = $appointment->schedule->doctor->user;
 
-            return [
+            $response [] = [
                 'id' => $appointment->id,
                 'patient' => $patient->first_name . ' ' . $patient->last_name,
                 'patient_phone' => $patientUser ? $patientUser->phone : null,
@@ -235,38 +285,76 @@ class AppointmentController extends Controller
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
                 'queue_number' => $appointment->queue_number,
-
             ];
-        });
+        }
 
         return response()->json($response, 200);
     }
 
-
-    public function filteringAppointmentByMonth(Request $request)
-    {
+    public function filteringAppointmentByClinic(Request $request) {
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $date = Carbon::createFromFormat('m-Y', $request->date);
-        $startOfMonth = $date->startOfMonth()->toDateString();
-        $endOfMonth = $date->endOfMonth()->toDateString();
+        $validator = Validator::make($request->all(), [
+            'clinic_id' => ['required', 'exists:clinics,id'],
+        ]);
 
-        $appointments = Appointment::with('patient.user', 'schedule.doctor.user')
-        ->whereBetween('reservation_date', [$startOfMonth, $endOfMonth]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
 
-        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
-            $patient = $appointment->patient;
-
-            if ($patient->parent_id !== null) {
-                $patient = Patient::with('user')->find($patient->parent_id);
+        if($request->has('status')) {
+            if($request->status == 'today') {
+                $today = now()->format('Y-m-d');
+                $appointments = Appointment::with('patient.user', 'schedule.doctor.user', 'schedule.clinic')
+                    ->where('status', $request->status)
+                    ->where('reservation_date', $today)
+                    ->whereHas('schedule', function ($query) use ($request) {
+                        $query->where('clinic_id', $request->clinic_id);
+                    })
+                ->get();
             }
+            else {
+                $appointments = Appointment::with('patient.user', 'schedule.doctor.user', 'schedule.doctor.clinic')
+                    ->where('status', $request->status)
+                    ->whereHas('schedule.doctor', function ($query) use ($request) {
+                        $query->where('clinic_id', $request->clinic_id);
+                    })
+                ->get();
+            }
+        }
+        else {
+            if($request->has('date')) {
+                $date = Carbon::createFromFormat('m-Y', $request->date);
+                $startOfMonth = $date->startOfMonth()->toDateString();
+                $endOfMonth = $date->endOfMonth()->toDateString();
 
-            $patientUser = $patient->user;
+                $appointments = Appointment::with('patient.user', 'schedule.doctor.user', 'schedule.doctor.clinic')
+                    ->whereBetween('reservation_date', [$startOfMonth, $endOfMonth])
+                    ->whereHas('schedule.doctor', function ($query) use ($request) {
+                        $query->where('clinic_id', $request->clinic_id);
+                    })
+                ->get();
+            }
+            else {
+                $appointments = Appointment::with('patient.user', 'schedule.doctor.user', 'schedule.doctor.clinic')
+                ->whereHas('schedule.doctor', function ($query) use ($request) {
+                    $query->where('clinic_id', $request->clinic_id);
+                })
+                ->get();
+            }
+        }
+
+        $response = [];
+        foreach ($appointments as $appointment) {
+            $patient = $appointment->patient;
             $doctor = $appointment->schedule->doctor;
+            $patientUser = $patient->user;
             $doctorUser = $doctor->user;
 
-            return [
+            $response[] = [
                 'id' => $appointment->id,
                 'patient' => $patient->first_name . ' ' . $patient->last_name,
                 'patient_phone' => $patientUser ? $patientUser->phone : null,
@@ -275,17 +363,18 @@ class AppointmentController extends Controller
                 'doctor_phone' => $doctorUser ? $doctorUser->phone : null,
                 'doctor_photo' => $doctor->photo,
                 'visit_fee' => $doctor->visit_fee,
-                'price' => $appointment->price,
+                'expected_price' => $appointment->expected_price,
+                'paid_price' => $appointment->paid_price,
                 'reservation_date' => $appointment->reservation_date,
                 'payment_status' => $appointment->payment_status,
                 'timeSelected' => $appointment->timeSelected,
                 'status' => $appointment->status,
                 'queue_number' => $appointment->queue_number,
-
             ];
-        });
+        }
 
         return response()->json($response, 200);
+
     }
 
     public function showAppointmentDetails(Request $request)
