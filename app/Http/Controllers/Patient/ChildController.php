@@ -32,7 +32,7 @@ class ChildController extends Controller
         $parent = Patient::where('user_id', $user->id)->first();
         if(!$parent) return response()->json(['message' => 'patient not found'], 404);
 
-        $child = Patient::where('id', $request->child_id)->first();
+        $child = Patient::where('id', $request->child_id)->where('parent_id', $parent->id)->first();
         if(!$child) return response()->json(['message' => 'child not found'], 404);
 
         $vaccinationRecords = VaccinationRecord::with(['vaccine', 'appointment'])->where('child_id', $child->id);
@@ -92,7 +92,8 @@ class ChildController extends Controller
             'vaccine_recommended_doses' =>$record->vaccine->recommended_doses ?? null,
             'vaccine_price' =>$record->vaccine->price ?? 0,
             'appointment_id' => $record->appointment_id ?? null,
-            'appointment_price' => $record->appointment?->price ? : 0,
+            'appointment_expected_price' => $record->appointment?->expected_price ? : 0,
+            'appointment_paid_price' => $record->appointment?->paid_price ? : 0,
             'appointment_payment_status' => $record->appointment?->payment_status ? : null,
             'appointment_reservation_date' => $record->appointment?->reservation_date ? : null ,
             'doctor_id' => $record->appointment?->schedule->doctor->id ? : null,
@@ -177,7 +178,7 @@ class ChildController extends Controller
             return response()->json(['message' => 'Parent not found'], 404);
         }
 
-        $child = Patient::where('id', $request->child_id)->first();
+        $child = Patient::where('id', $request->child_id)->where('parent_id', $parent->id)->first();
         if(!$child) return response()->json(['message' => 'child not found'], 404);
 
 

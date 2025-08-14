@@ -320,7 +320,7 @@ class PaymentController extends Controller
         }
 
         $finalPrice = $totalPrice * (1 - $discount);
-        $reservation->price = $finalPrice;
+        $reservation->paid_price = $finalPrice;
 
         $reservation->payment_status = 'paid';
         $reservation->save();
@@ -367,7 +367,7 @@ class PaymentController extends Controller
 
         if ($reservation->payment_status != 'paid') {
             $reservation->status = 'cancelled';
-            $reservation->price = 0;
+            $reservation->paid_price = 0;
             $reservation->save();
 
             return response()->json(['message' => 'Reservation cancelled (not paid).'], 200);
@@ -389,13 +389,13 @@ class PaymentController extends Controller
             $walletOwner = $parent;
         }
 
-        $walletOwner->wallet += $reservation->price;
+        $walletOwner->wallet += $reservation->paid_price;
         $walletOwner->save();
         
         $clinic = Clinic::where('id', $reservation->schedule->doctor->clinic->id)->first();
         if(!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
-        $clinic->money -= $reservation->price;
+        $clinic->money -= $reservation->paid_price;
         $clinic->save();
 
         return response()->json([

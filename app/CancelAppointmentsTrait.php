@@ -80,13 +80,13 @@ trait CancelAppointmentsTrait
                     ]);
 
                     $patient = $appointment->patient;
-                    $patient->wallet += $appointment->price;
+                    $patient->wallet += $appointment->paid_price;
                     $patient->save();
 
                     $clinic = Clinic::where('id', $appointment->doctor->clinic_id)->first();
                     if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
-                    $clinic->money -= $appointment->price;
+                    $clinic->money -= $appointment->paid_price;
                     $clinic->save();
                 } catch (\Exception $e) {
                     Log::error("Stripe refund failed for appointment ID {$appointment->id}: " . $e->getMessage());
@@ -148,16 +148,16 @@ trait CancelAppointmentsTrait
                 //     'payment_intent' => $reservation->payment_intent_id,
                 // ]);
 
-                $patient->wallet += $reservation->price;
+                $patient->wallet += $reservation->paid_price;
                 $patient->save();
 
-                $reservation->price = 0;
+                $reservation->paid_price = 0;
                 $reservation->save();
 
                 $clinic = Clinic::where('id', $reservation->doctor->clinic_id)->first();
                 if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
-                $clinic->money -= $reservation->price;
+                $clinic->money -= $reservation->paid_price;
                 $clinic->save();
             } catch (\Exception $e) {
                 Log::error("Stripe refund failed for reservation ID {$reservation->id}: " . $e->getMessage());

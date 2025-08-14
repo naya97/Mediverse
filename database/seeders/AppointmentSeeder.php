@@ -56,12 +56,18 @@ class AppointmentSeeder extends Seeder
 
                 $selectedPatient = $eligiblePatients->random();
 
+                 if ($appointmentType === 'visit') {
+                    $expectedPrice = rand(50, 150); 
+                } else {
+                    $expectedPrice = rand(100, 300);
+                }
+
                 if ($status === 'visited') {
                     $payment_status = 'paid';
-                    $price = rand(50, 300);
+                    $paidPrice = $expectedPrice;
                 } else { 
                     $payment_status = $paymentStatusOptions[array_rand($paymentStatusOptions)];
-                    $price = ($payment_status === 'paid') ? rand(50, 300) : 0;
+                    $paidPrice = ($payment_status === 'paid') ? $expectedPrice : 0;
                 }
 
                 Appointment::create([
@@ -70,7 +76,8 @@ class AppointmentSeeder extends Seeder
                     'timeSelected'     => $timeSelected,
                     'reservation_date' => $reservationDate,
                     'status'           => $status,
-                    'price'            => $price,
+                    'expected_price'            => $expectedPrice,
+                    'paid_price'            => $paidPrice,
                     'payment_status'   => $payment_status,
                     'reminder_offset'  => 12,
                     'reminder_sent'    => (bool) rand(0, 1),

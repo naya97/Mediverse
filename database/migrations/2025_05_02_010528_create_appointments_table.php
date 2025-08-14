@@ -27,7 +27,8 @@ return new class extends Migration
                 ->cascadeOnUpdate();
             $table->date('reservation_date')->nullable();
             $table->enum('status', ['visited', 'cancelled', 'pending'])->default('pending');
-            $table->float('price')->default(0);
+            $table->float('expected_price')->default(0);
+            $table->float('paid_price')->default(0);
             $table->string('payment_intent_id')->nullable();
             $table->enum('payment_status', ['pending', 'paid', 'cancelled'])->default('pending');
             $table->integer('reminder_offset')->default(12);

@@ -325,7 +325,15 @@ class ReservationController extends Controller
         }
 
         if ($request->has('child_id')) {
-            $patient = Patient::where('id', $request->child_id)->first();
+            $parent = Patient::where('user_id', $user->id)->first();
+            if(!$parent) {
+                return response()->json(['message' => 'Parent not found'], 404);
+            }
+
+            $child = Patient::where('id', $request->child_id)->where('parent_id', $parent->id)->first();
+            if(!$child) return response()->json(['message' => 'child not found'], 404);
+
+            $patient = $child;
         } else {
             $patient = Patient::where('user_id', $user->id)->first();
         }
@@ -409,22 +417,28 @@ class ReservationController extends Controller
             ->max('queue_number');
             $newQueueNumber = $lastQueueNumber ? $lastQueueNumber + 1 : 1;
 
+            $expectedPrice = $doctor->visit_fee;
+
             $appointment = Appointment::create([
                 'patient_id' => $patient->id,
                 'schedule_id' => $schedule->id,
                 'timeSelected' => $timeSelected,
                 'reservation_date' => $dateFormatted,
                 'appointment_type' => $request->appointment_type ?? 'visit',
+                'expected_price' => $expectedPrice,
                 'queue_number'    => $newQueueNumber,
             ]);
 
             if($appointment->appointment_type == 'vaccination') {
                 // لازم يعطيني كمان السجل يلي بدي اعمله ال appointment
-                $vaccinationRecord = VaccinationRecord::where('id', $request->record_id)->first();
+                $vaccinationRecord = VaccinationRecord::with('vaccine')->where('id', $request->record_id)->first();
                 if(!$vaccinationRecord) return response()->json(['message' => 'record not found'], 404);
 
                 $vaccinationRecord->appointment_id = $appointment->id;
                 $vaccinationRecord->save();
+
+                $appointment->expected_price += $vaccinationRecord->vaccine->price;
+                $appointment->save();
             }
 
             return response()->json($appointment, 200);
@@ -451,7 +465,15 @@ class ReservationController extends Controller
         }
 
         if ($request->has('child_id')) {
-            $patient = Patient::where('id', $request->child_id)->first();
+            $parent = Patient::where('user_id', $user->id)->first();
+            if(!$parent) {
+                return response()->json(['message' => 'Parent not found'], 404);
+            }
+
+            $child = Patient::where('id', $request->child_id)->where('parent_id', $parent->id)->first();
+            if(!$child) return response()->json(['message' => 'child not found'], 404);
+
+            $patient = $child;
         } else {
             $patient = Patient::where('user_id', $user->id)->first();
         }
@@ -541,22 +563,28 @@ class ReservationController extends Controller
             ->max('queue_number');
             $newQueueNumber = $lastQueueNumber ? $lastQueueNumber + 1 : 1;
 
+            $expectedPrice = $doctor->visit_fee;
+
             $appointment = Appointment::create([
                 'patient_id' => $patient->id,
                 'schedule_id' => $schedule->id,
                 'timeSelected' => $timeSelected,
                 'reservation_date' => $dateFormatted,
                 'appointment_type' => $request->appointment_type ?? 'visit',
+                'expected_price' => $expectedPrice,
                 'queue_number'    => $newQueueNumber,
             ]);
 
             if($appointment->appointment_type == 'vaccination') {
                 // لازم يعطيني كمان السجل يلي بدي اعمله ال appointment
-                $vaccinationRecord = VaccinationRecord::where('id', $request->record_id)->first();
+                $vaccinationRecord = VaccinationRecord::with('vaccine')->where('id', $request->record_id)->first();
                 if(!$vaccinationRecord) return response()->json(['message' => 'record not found'], 404);
 
                 $vaccinationRecord->appointment_id = $appointment->id;
                 $vaccinationRecord->save();
+
+                $appointment->expected_price += $vaccinationRecord->vaccine->price;
+                $appointment->save();
             }
 
             return response()->json($appointment, 200);
@@ -759,16 +787,16 @@ class ReservationController extends Controller
         if ($reservation->payment_status == 'paid') {
             try {
             
-                $patient->wallet += $reservation->price;
+                $patient->wallet += $reservation->paid_price;
                 $patient->save();
 
-                $reservation->price = 0;
+                $reservation->paid_price = 0;
                 $reservation->save();
 
                 $clinic = Clinic::where('id', $reservation->doctor->clinic_id)->first();
                 if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
-                $clinic->money -= $reservation->price;
+                $clinic->money -= $reservation->paid_price;
                 $clinic->save();
             } catch (\Exception $e) {
                 Log::error("Stripe refund failed for reservation ID {$reservation->id}: " . $e->getMessage());

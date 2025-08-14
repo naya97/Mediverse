@@ -286,13 +286,13 @@ class DoctorProfileController extends Controller
                     ]);
 
                     $patient = $appointment->patient;
-                    $patient->wallet += $appointment->price;
+                    $patient->wallet += $appointment->paid_price;
                     $patient->save();
 
                     $clinic = Clinic::where('id', $appointment->doctor->clinic_id)->first();
                     if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
-                    $clinic->money -= $appointment->price;
+                    $clinic->money -= $appointment->paid_price;
                     $clinic->save();
                 } catch (\Exception $e) {
                     Log::error("Stripe refund failed for appointment ID {$appointment->id}: " . $e->getMessage());

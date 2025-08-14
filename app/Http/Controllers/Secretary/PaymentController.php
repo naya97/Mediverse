@@ -72,7 +72,7 @@ class PaymentController extends Controller
         }
 
         $finalPrice = $totalPrice * (1 - $discount);
-        $appointment->price = $finalPrice;
+        $appointment->paid_price = $finalPrice;
         $appointment->payment_status = 'paid';
         $appointment->save();
 

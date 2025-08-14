@@ -220,9 +220,9 @@ class DashBoardController extends Controller
 
         $appointments = Appointment::where('payment_status', 'paid')->get();
 
-        $totalRevenue = $appointments->sum('price');
+        $totalRevenue = $appointments->sum('paid_price');
         $totalAppointments = $appointments->count();
-        $averagePayment = $appointments->avg('price');
+        $averagePayment = $appointments->avg('paid_price');
 
         return response()->json([
             'totalRevenue' => $totalRevenue,
@@ -241,9 +241,9 @@ class DashBoardController extends Controller
         })
         ->get();
 
-        $totalRevenue = $appointments->sum('price');
+        $totalRevenue = $appointments->sum('paid_price');
         $totalAppointments = $appointments->count();
-        $averagePayment = $appointments->avg('price');
+        $averagePayment = $appointments->avg('paid_price');
 
         return response()->json([
             'totalRevenue' => $totalRevenue,
@@ -274,9 +274,9 @@ class DashBoardController extends Controller
             ->whereBetween('reservation_date',[$startOfMonth, $endOfMonth])
         ->get();
 
-        $totalRevenue = $appointments->sum('price');
+        $totalRevenue = $appointments->sum('paid_price');
         $totalAppointments = $appointments->count();
-        $averagePayment = $appointments->avg('price');
+        $averagePayment = $appointments->avg('paid_price');
 
         return response()->json([
             'totalRevenue' => $totalRevenue,
@@ -293,9 +293,9 @@ class DashBoardController extends Controller
         $monthlyPaymentInfo = Appointment::select(
             DB::raw('YEAR(reservation_date) as year'),
             DB::raw('MONTH(reservation_date) as month'),
-            DB::raw('SUM(price) as totalRevenue'),
+            DB::raw('SUM(paid_price) as totalRevenue'),
             DB::raw('COUNT(*) as totalAppointments'),
-            DB::raw('AVG(price) as averagePayment'),
+            DB::raw('AVG(paid_price) as averagePayment'),
         )
         ->where('payment_status', 'paid')
         ->groupBy(DB::raw('YEAR(reservation_date)'), DB::raw('MONTH(reservation_date)'))
