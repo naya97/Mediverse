@@ -80,6 +80,7 @@ class HomeController extends Controller
             'visit_fee' => $doctor->visit_fee,
             'excperience' => $doctor->excperience,
             'status' => $doctor->status,
+            'average_visit_duration' => $doctor->average_visit_duration,
         ];
 
         return response()->json($response, 200);

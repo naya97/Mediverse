@@ -18,7 +18,7 @@ class AnalysisSeeder extends Seeder
         $doctors  = Doctor::all();
 
         if ($patients->isEmpty() || $clinics->isEmpty()) {
-            $this->command->warn('⚠ لا يوجد بيانات كافية لإنشاء التحاليل.');
+            $this->command->warn('there is no enough data to make the analysis');
             return;
         }
 
