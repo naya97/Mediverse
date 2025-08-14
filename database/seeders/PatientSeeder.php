@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Patient;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class PatientSeeder extends Seeder
@@ -18,18 +17,29 @@ class PatientSeeder extends Seeder
         $patientUsers = User::where('role', 'patient')->get();
         $allPatients = [];
 
+        $genderMap = [
+            'Naya'    => 'female',
+            'Maya'    => 'female',
+            'Rana'    => 'female',
+            'Jessy'   => 'female',
+            'Ali'     => 'male',
+            'Samer'   => 'male',
+            'John'    => 'male',
+            'Ibrahim' => 'male',
+        ];
+
         foreach ($patientUsers as $user) {
-            $allPatients [] = Patient::create([
-                'first_name'     => $user->first_name ,
-                'last_name'      => $user->last_name ,
+            $allPatients[] = Patient::create([
+                'first_name'     => $user->first_name,
+                'last_name'      => $user->last_name,
                 'user_id'        => $user->id,
-                'birth_date'     => Carbon::now()->subYears(rand(1, 80))->subDays(rand(0, 365)), 
-                'gender'         => ['male', 'female'][rand(0, 1)],
+                'birth_date'     => Carbon::now()->subYears(rand(1, 80))->subDays(rand(0, 365)),
+                'gender'         => $genderMap[$user->first_name] ?? 'male', // إذا الاسم غير موجود، نعتبره ذكر
                 'blood_type'     => collect(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])->random(),
                 'address'        => 'Unknown Address',
-                'wallet'         => rand(0, 1000), 
+                'wallet'         => rand(0, 1000),
                 'parent_id'      => null,
-                'discount_points'=> rand(0, 100),
+                'discount_points' => rand(0, 100),
             ]);
         }
 
