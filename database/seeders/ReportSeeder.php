@@ -18,9 +18,10 @@ class ReportSeeder extends Seeder
         $patients = Patient::all();
 
         if ($patients->isEmpty()) {
-            $this->command->warn('⚠ لا يوجد مرضى لإنشاء تقارير لهم.');
+            $this->command->warn('⚠ No patients found to create reports for.');
             return;
         }
+
 
         $reportTypes = [
             'Technical issue',

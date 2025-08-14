@@ -14,9 +14,10 @@ class MedicineSeeder extends Seeder
         $prescriptions = Prescription::all();
 
         if ($prescriptions->isEmpty()) {
-            $this->command->warn('⚠ لا توجد وصفات لإضافة الأدوية.');
+            $this->command->warn('⚠ No prescriptions found to add medicines.');
             return;
         }
+
 
         $medicineNames = ['Paracetamol', 'Ibuprofen', 'Amoxicillin', 'Metformin', 'Omeprazole', 'Atorvastatin', 'Amlodipine', 'Cefixime', 'Levothyroxine', 'Azithromycin'];
         $doses = ['1 pill', '2 pills', '1 capsule', '2 capsules', '5 ml'];
