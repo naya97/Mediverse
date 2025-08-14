@@ -16,10 +16,10 @@ use Illuminate\Support\Facades\File;
 class ClinicController extends Controller
 {
     protected $firebaseService;
-    
-    public function __construct(FirebaseService $firebase_service){
-        $this->firebaseService = $firebase_service;
 
+    public function __construct(FirebaseService $firebase_service)
+    {
+        $this->firebaseService = $firebase_service;
     }
 
     public function show()
@@ -44,7 +44,8 @@ class ClinicController extends Controller
         return response()->json($clinic, 200);
     }
 
-    public function showDoctorsClinic(Request $request) {
+    public function showDoctorsClinic(Request $request)
+    {
         $auth = $this->auth();
         if ($auth) return $auth;
 
@@ -85,7 +86,7 @@ class ClinicController extends Controller
         if ($request->hasFile('photo')) {
             $path = $request->photo->store('images/clinics', 'public');
         }
-    
+
         $clinic = Clinic::create([
             'name' => $request->name,
             'photo' => $path ? '/storage/' . $path : null,
@@ -94,13 +95,13 @@ class ClinicController extends Controller
 
         $patients = User::where('role', 'patient')
             ->whereNotNull('fcm_token')
-        ->get();
+            ->get();
 
         foreach ($patients as $patient) {
-            $this->firebaseService->sendNotification($patient->fcm_token, 'new clinic added ',  'clinic: '. $clinic->name, $clinic->toArray());
+            $this->firebaseService->sendNotification($patient->fcm_token, 'new clinic added ',  'clinic: ' . $clinic->name, $clinic->toArray());
             $patient->notify(new NewClinicCreated($clinic));
         }
-        
+
 
         return response()->json(['message' => 'created successfully and send notification'], 201);
     }
@@ -134,7 +135,7 @@ class ClinicController extends Controller
             $path = $request->photo->store('images/clinics', 'public');
             $clinic->photo = '/storage/' . $path;
         }
-        $clinic->name = $request->name;
+        $clinic->name = $request->name ?? $clinic->name;
         $clinic->save();
 
         return response()->json(['message' => 'clinic updated successfully'], 200);
