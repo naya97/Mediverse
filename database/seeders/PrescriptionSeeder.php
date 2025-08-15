@@ -16,9 +16,10 @@ class PrescriptionSeeder extends Seeder
         $doctors  = Doctor::all();
 
         if ($patients->isEmpty() || $doctors->isEmpty()) {
-            $this->command->warn('⚠ لا يوجد بيانات كافية لإنشاء الوصفات.');
+            $this->command->warn('⚠ Not enough data to create prescriptions.');
             return;
         }
+
 
         foreach ($patients as $patient) {
             $numPrescriptions = rand(1, 3);
