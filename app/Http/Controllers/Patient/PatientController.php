@@ -113,7 +113,7 @@ class PatientController extends Controller
             'blood_type' => $patient->blood_type,
             'address' => $patient->address,
             'discount_points' => $patient->discount_points,
-            'child_record' => $record,
+            'child_record' => $record ?? null,
         ];
 
         return response()->json([

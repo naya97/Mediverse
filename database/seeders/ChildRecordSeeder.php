@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Doctor;
+use App\Models\Patient;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
