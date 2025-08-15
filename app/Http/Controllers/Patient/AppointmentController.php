@@ -104,7 +104,7 @@ class AppointmentController extends Controller
         if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
 
 
-        $appointment = Appointment::with('schedule.doctor')
+        $appointment = Appointment::with(['patient', 'schedule.doctor'])
             ->where('id', $request->appointment_id)
             ->where('patient_id', $patient->id)
             ->first();
@@ -140,6 +140,8 @@ class AppointmentController extends Controller
             'visit_fee' => $doctor->visit_fee,
             'appointment_type' => $appointment->appointment_type,
             'queue_number' => $appointment->queue_number,
+            'patient_first_name' => $appointment->patient->first_name,
+            'patient_last_name' => $appointment->patient->last_name,
 
         ];
 
