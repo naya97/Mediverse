@@ -12,6 +12,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('/showTimes', 'showTimes');
         Route::post('/addReservation', 'addReservation');
         Route::post('/editReservation', 'editReservation');
-        Route::get('/cancelReservation', 'cancelReservation');
+        Route::post('/cancelReservation', 'cancelReservation');
     });
 });

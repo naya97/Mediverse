@@ -138,6 +138,7 @@ class ReservationController extends Controller
         $day = $date->format('l');
 
         $schedule = Schedule::where('doctor_id', $request->doctor_id)->where('status', 'notAvailable')->where('day', $day)->first();
+        if(!$schedule) return response()->json(['message' => 'the doctor is not available on this day'], 400);
 
         $mysqlDate = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
 
@@ -412,8 +413,18 @@ class ReservationController extends Controller
 
         if ($appointmentsNum < $numOfPeopleInHour) {
 
+            $sameDayAppointment = Appointment::where('patient_id', $patient->id)
+            ->where('reservation_date', $dateFormatted)
+            ->where('timeSelected', $timeFormatted)
+            ->where('status', '!=', 'cancelled')
+            ->first();
+            if($sameDayAppointment) {
+                return response()->json(['message' => 'you can not reservation two appointments at the same time'], 400);
+            }
+
             $lastQueueNumber = Appointment::where('schedule_id',  $schedule->id)
             ->whereDate('reservation_date', $dateFormatted)
+            ->whereTime('timeSelected', $timeFormatted)
             ->max('queue_number');
             $newQueueNumber = $lastQueueNumber ? $lastQueueNumber + 1 : 1;
 
@@ -487,7 +498,7 @@ class ReservationController extends Controller
         $schedule = Schedule::where('doctor_id', $request->doctor_id)
             ->where('status', 'notAvailable')
             ->where('day', $day)
-            ->first();
+        ->first();
 
         if (!$schedule) return response()->json(['message' => 'Schedule Not Found'], 404);
         $doctor = Doctor::where('id', $request->doctor_id)->first();
@@ -557,6 +568,15 @@ class ReservationController extends Controller
         ->count();
 
         if ($appointmentsTimeNum < $numOfPeopleInHour) {
+
+            $sameDayAppointment = Appointment::where('patient_id', $patient->id)
+            ->where('reservation_date', $dateFormatted)
+            ->where('timeSelected', $timeSelected)
+            ->where('status', '!=', 'cancelled')
+            ->first();
+            if($sameDayAppointment) {
+                return response()->json(['message' => 'Sorry, you have an appointment at the same time'], 400);
+            }
 
             $lastQueueNumber = Appointment::where('schedule_id', $schedule->id)
             ->whereDate('reservation_date', $dateFormatted)
@@ -646,7 +666,7 @@ class ReservationController extends Controller
     }
 
 
-    public function editReservation(Request $request)
+    public function editReservation(Request $request) 
     {
         $user = Auth::user(); // 
 
@@ -779,7 +799,13 @@ class ReservationController extends Controller
             ], 401);
         }
 
-        $reservation = Appointment::with('patient', 'schedule.doctor')->where('id', $request->reservation_id)->first();
+        $patient = Patient::where('user_id', $user->id)->first();
+        if(!$patient) return response()->json(['message' => 'patient not found'], 404);
+
+        $reservation = Appointment::with('patient', 'schedule.doctor')
+        ->where('id', $request->reservation_id)
+        ->where('patient_id', $patient->id)
+        ->first();
         if(!$reservation) return response()->json(['message' => 'reservation not found'], 404);
 
         $patient = $reservation->patient;
@@ -821,6 +847,20 @@ class ReservationController extends Controller
             $startHour = $reservationTime->copy()->startOfHour();
             $cancelledTime = $reservationTime->format('H:i:s');
 
+            $cancelledQueueNumber = $reservation->queue_number;
+
+            $appointmentsToUpdateQueue = Appointment::where('schedule_id', $reservation->schedule_id)
+                ->where('reservation_date', $reservationDate)
+                ->where('status', 'pending')
+                ->where('queue_number', '>', $cancelledQueueNumber)
+                ->orderBy('queue_number', 'asc')
+            ->get();
+
+            foreach ($appointmentsToUpdateQueue as $appointment) {
+                $appointment->queue_number -= 1;
+                $appointment->save();
+            }
+
             $currentCountInHour = Appointment::where('schedule_id', $reservation->schedule_id)
             ->where('reservation_date', $reservationDate)
             ->where('status', 'pending')
@@ -842,7 +882,7 @@ class ReservationController extends Controller
             $currentHour = $startHour->copy();
 
             foreach ($upcomingAppointments as $appointment) {
-
+            
                 $currentCountInHour = Appointment::where('schedule_id', $reservation->schedule_id)
                 ->where('reservation_date', $reservationDate)
                 ->where('status', 'pending')
@@ -871,6 +911,32 @@ class ReservationController extends Controller
                 $availableSlots--;
             }
 
+            $reservation->queue_number = null;
+            $reservation->save();
+
+        }
+        else {
+
+            $reservationTime = Carbon::createFromFormat('H:i:s', $reservation->timeSelected);
+            $reservationDate = $reservation->reservation_date;
+
+            $cancelledQueueNumber = $reservation->queue_number;
+
+            $appointmentsToUpdateQueue = Appointment::where('schedule_id', $reservation->schedule_id)
+                ->where('reservation_date', $reservationDate)
+                ->where('timeSelected', $reservation->timeSelected)
+                ->where('status', 'pending')
+                ->where('queue_number', '>', $cancelledQueueNumber)
+                ->orderBy('queue_number', 'asc')
+            ->get();
+
+            foreach ($appointmentsToUpdateQueue as $appointment) {
+                $appointment->queue_number -= 1;
+                $appointment->save();
+            }
+
+            $reservation->queue_number = null;
+            $reservation->save();
         }
 
         return response()->json(['message' => 'reservation cancelled successfully'], 200);
