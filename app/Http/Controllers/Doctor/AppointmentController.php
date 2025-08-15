@@ -18,15 +18,24 @@ use DateInterval;
 use DatePeriod;
 use DateTime;
 use App\CancelAppointmentsTrait;
+use App\Models\User;
 use App\Models\VaccinationRecord;
 use App\PaginationTrait;
 use FontLib\Table\Type\fpgm;
 use Illuminate\Support\Facades\Validator;
+use App\Services\FirebaseService;
+use App\Notifications\Referral;
 
 class AppointmentController extends Controller
 {
     use CancelAppointmentsTrait;
     use PaginationTrait;
+    protected $firebaseService;
+
+    public function __construct(FirebaseService $firebase_service)
+    {
+        $this->firebaseService = $firebase_service;
+    }
 
     public function showAllAppointments(Request $request)
     {
@@ -1240,6 +1249,24 @@ class AppointmentController extends Controller
             return $this->addManualReferralReservation($request);
         } else {
             return $this->addAutoReferralReservation($request);
+        }
+        $user = User::where('id', $doctor->user_id)->first();
+        if ($user->fcm_token) {
+            $doctor2 = Doctor::where('user_id', $user->id)->first();
+            $patient = Patient::where('id', $request->patient_id)->first();
+            $doctorFullName = $doctor2->first_name . ' ' . $doctor2->last_name;
+            $patientFullName = $patient->first_name . ' ' . $patient->last_name;
+            $this->firebaseService->sendNotification(
+                $user->fcm_token,
+                'New referral',
+                'The patient' . $patientFullName . ' has been referred to you by ' . $doctorFullName,
+            );
+            $user->notify(new Referral([
+                'patient_id' => $patient->id,
+                'referring_doctor_id' => $doctor->id,
+                'patient_name' => $patientFullName,
+                'referring_doctor_name' => $doctorFullName,
+            ]));
         }
     }
 
