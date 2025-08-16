@@ -191,36 +191,28 @@ class AppointmentController extends Controller
 
         $isFirstTime = $request->type == 'first time';
 
+        $appointments = Appointment::with('patient')->whereIn('schedule_id', $scheduleIds);
+
         if ($request->status != 'today') {
+            $appointments->where('status', $request->status);
+
             if ($request->has('date')) {
                 $date = Carbon::createFromFormat('m-Y', $request->date);
                 $startOfMonth = $date->startOfMonth()->toDateString();
                 $endOfMonth = $date->endOfMonth()->toDateString();
 
-                $appointments = Appointment::with('patient')
-                    ->whereIn('schedule_id', $scheduleIds)
-                    ->where('status', $request->status)
-                    ->whereBetween('reservation_date', [$startOfMonth, $endOfMonth])
-                    ->where($isFirstTime ? 'parent_id' : 'parent_id', $isFirstTime ? null : '!=', null)
-                    ->get();
-            } else {
-                $appointments = Appointment::with('patient')
-                    ->whereIn('schedule_id', $scheduleIds)
-                    ->where('status', $request->status)
-                    ->where($isFirstTime ? 'parent_id' : 'parent_id', $isFirstTime ? null : '!=', null)
-                    ->get();
+                $appointments->whereBetween('reservation_date', [$startOfMonth, $endOfMonth]);
             }
+
+            $appointments->where($isFirstTime ? 'parent_id' : 'parent_id', $isFirstTime ? null : '!=', null);
         } else {
             $today = now()->format('Y-m-d');
-            $appointments = Appointment::with('patient')
-                ->whereIn('schedule_id', $scheduleIds)
-                ->where('reservation_date', $today)
-                ->where($isFirstTime ? 'parent_id' : 'parent_id', $isFirstTime ? null : '!=', null)
-                ->get();
+            $appointments->where('reservation_date', $today);
+            $appointments->where($isFirstTime ? 'parent_id' : 'parent_id', $isFirstTime ? null : '!=', null);
         }
-        $response = [];
 
-        foreach ($appointments as $appointment) {
+        // استخدام دالة الباجينيشن
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) use ($isFirstTime) {
             $referring_doctor_name = null;
             if ($appointment->referring_doctor != null) {
                 $referring_doctor = Doctor::find($appointment->referring_doctor);
@@ -231,7 +223,7 @@ class AppointmentController extends Controller
 
             $is_child = $appointment->patient->parent_id != null;
 
-            $response[] = [
+            return [
                 'id' => $appointment->id,
                 'patient_first_name' => $appointment->patient->first_name,
                 'patient_last_name' => $appointment->patient->last_name,
@@ -245,10 +237,11 @@ class AppointmentController extends Controller
                 'referred_by' => $referring_doctor_name,
                 'is_child' => $is_child,
             ];
-        }
+        });
 
         return response()->json($response, 200);
     }
+
 
     /////
     public function filteringAppointmentsByDate(Request $request)
