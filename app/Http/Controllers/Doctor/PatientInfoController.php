@@ -250,7 +250,7 @@ class PatientInfoController extends Controller
         return response()->json($clinics, 200);
     }
     ////
-    public function showPatientAnalysisByClinic(Request $request) //by status and clinic
+    public function showPatientAnalysisByClinic(Request $request) //by clinic
     {
         $auth = $this->auth();
         if ($auth) return $auth;
@@ -372,7 +372,7 @@ class PatientInfoController extends Controller
             $is_child = true;
 
             $child_record = ChildRecord::where('child_id', $request->patient_id)->first();
-            if(!$child_record) $record = null;
+            if (!$child_record) $record = null;
             else $record = $child_record->id;
         }
         $response = [
