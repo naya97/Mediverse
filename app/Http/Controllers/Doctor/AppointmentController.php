@@ -211,37 +211,70 @@ class AppointmentController extends Controller
             $appointments->where($isFirstTime ? 'parent_id' : 'parent_id', $isFirstTime ? null : '!=', null);
         }
 
-        // استخدام دالة الباجينيشن
-        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) use ($isFirstTime) {
-            $referring_doctor_name = null;
-            if ($appointment->referring_doctor != null) {
-                $referring_doctor = Doctor::find($appointment->referring_doctor);
-                if ($referring_doctor) {
-                    $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
+        $usePagination = $request->has('page') || $request->has('size');
+
+        if ($usePagination) {
+            $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) use ($isFirstTime) {
+                $referring_doctor_name = null;
+                if ($appointment->referring_doctor != null) {
+                    $referring_doctor = Doctor::find($appointment->referring_doctor);
+                    if ($referring_doctor) {
+                        $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
+                    }
                 }
+
+                $is_child = $appointment->patient->parent_id != null;
+
+                return [
+                    'id' => $appointment->id,
+                    'patient_first_name' => $appointment->patient->first_name,
+                    'patient_last_name' => $appointment->patient->last_name,
+                    'patient_gender' => $appointment->patient->gender,
+                    'reservation_date' => $appointment->reservation_date,
+                    'reservation_hour' => $appointment->timeSelected,
+                    'status' => $appointment->status,
+                    'appointment_type' => $isFirstTime ? 'first time' : 'check up',
+                    'appointment_info' => $appointment->appointment_type,
+                    'payment_status' => $appointment->payment_status,
+                    'referred_by' => $referring_doctor_name,
+                    'is_child' => $is_child,
+                ];
+            });
+        } else {
+            $items = $appointments->get();
+            $data = [];
+
+            foreach ($items as $appointment) {
+                $referring_doctor_name = null;
+                if ($appointment->referring_doctor != null) {
+                    $referring_doctor = Doctor::find($appointment->referring_doctor);
+                    if ($referring_doctor) {
+                        $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
+                    }
+                }
+
+                $is_child = $appointment->patient->parent_id != null;
+
+                $data[] = [
+                    'id' => $appointment->id,
+                    'patient_first_name' => $appointment->patient->first_name,
+                    'patient_last_name' => $appointment->patient->last_name,
+                    'patient_gender' => $appointment->patient->gender,
+                    'reservation_date' => $appointment->reservation_date,
+                    'reservation_hour' => $appointment->timeSelected,
+                    'status' => $appointment->status,
+                    'appointment_type' => $isFirstTime ? 'first time' : 'check up',
+                    'appointment_info' => $appointment->appointment_type,
+                    'payment_status' => $appointment->payment_status,
+                    'referred_by' => $referring_doctor_name,
+                    'is_child' => $is_child,
+                ];
             }
-
-            $is_child = $appointment->patient->parent_id != null;
-
-            return [
-                'id' => $appointment->id,
-                'patient_first_name' => $appointment->patient->first_name,
-                'patient_last_name' => $appointment->patient->last_name,
-                'patient_gender' => $appointment->patient->gender,
-                'reservation_date' => $appointment->reservation_date,
-                'reservation_hour' => $appointment->timeSelected,
-                'status' => $appointment->status,
-                'appointment_type' => $isFirstTime ? 'first time' : 'check up',
-                'appointment_info' => $appointment->appointment_type,
-                'payment_status' => $appointment->payment_status,
-                'referred_by' => $referring_doctor_name,
-                'is_child' => $is_child,
-            ];
-        });
+            $response = $data;
+        }
 
         return response()->json($response, 200);
     }
-
 
     /////
     public function filteringAppointmentsByDate(Request $request)
