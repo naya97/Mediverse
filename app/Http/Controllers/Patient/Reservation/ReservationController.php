@@ -666,7 +666,136 @@ class ReservationController extends Controller
     }
 
 
-    public function editReservation(Request $request) 
+    // public function editReservation(Request $request) {
+    //     $user = Auth::user();
+
+    //     //check the auth
+    //     if (!$user) {
+    //         return response()->json([
+    //             'message' => 'unauthorized'
+    //         ], 401);
+    //     }
+
+    //     if ($user->role != 'patient') {
+    //         return response()->json([
+    //             'message' => 'you dont have permission'
+    //         ], 401);
+    //     }
+
+    //     $appointment = Appointment::with('schedule.doctor', 'patient.user')->where('id', $request->appointment_id)->first();
+    //     if(!$appointment) return response()->json(['message' => 'appointment not found'], 404);
+
+    //     $patient = $appointment->patient;
+    //     if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
+
+    //     $doctor = $appointment->schedule->doctor;
+
+    //     //----------------------------MANUAL---------------------------------------------------
+    //     if ($doctor->booking_type == 'manual') {
+
+    //         $validator = Validator::make($request->all(), [
+    //             'new_date' => 'required|date_format:d/m/y',
+    //             'new_time' => 'required|date_format:H:i'
+    //         ]);
+
+    //         if ($validator->fails()) {
+    //             return response()->json([
+    //                 'message' =>  $validator->errors()->all()
+    //             ], 400);
+    //         }
+
+    //         $dateFormatted = Carbon::createFromFormat('d/m/y', $request->new_date)->format('Y-m-d');
+    //         $timeFormatted = Carbon::createFromFormat('H:i', $request->new_time)->format('H:i:s');
+
+    //         $new_date = Carbon::createFromFormat('d/m/y', $request->new_date);
+    //         $new_time = Carbon::createFromFormat('H:i', $request->new_time);
+    //         $new_day = $new_date->format('l');
+
+    //         $schedule = Schedule::where('doctor_id', $doctor->id)
+    //             ->where('status', 'notAvailable')
+    //             ->where('day', $new_day)
+    //         ->first();
+
+    //         if (!$schedule) return response()->json(['message' => 'schedule not found'], 404);
+
+    //         $userTime = new DateTime($request->input('new_time'));
+    //         if ($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
+    //             $start = new DateTime('09:00');
+    //             $end = new DateTime('15:00');
+    //         } else {
+    //             $start = new DateTime('15:00');
+    //             $end = new DateTime('21:00');
+    //         }
+
+    //         if ($userTime < $start || $userTime >= $end) {
+    //             return response()->json([
+    //                 'message' => 'this time not available in this schedule',
+    //             ], 400);
+    //         }
+
+    //         if ($new_date->toDateString() >= $schedule->start_leave_date && $new_date->toDateString() <= $schedule->end_leave_date) {
+    //             if ($new_time->format('H:i') >= $schedule->start_leave_time && $new_time->format('H:i') <= $schedule->end_leave_time) {
+    //                 return response()->json([
+    //                     'message' => 'this doctor is not available in this date '
+    //                 ], 400);
+    //             }
+    //         }
+
+    //         // delete old reservation 
+    //         $oldReservation = Appointment::where('id', $request->appointment_id)
+    //             ->where('status', 'pending')
+    //             ->first();
+    //         // return $oldReservation;
+    //         if (!$oldReservation) return response()->json(['message' => 'reservation not found'], 404);
+
+    //         $oldReservation->delete();
+
+    //         $appointmentsNum = Appointment::where('schedule_id', $schedule->id)
+    //             ->where('reservation_date', $dateFormatted)
+    //             ->where('status', 'pending')
+    //             ->where('timeSelected', $timeFormatted)
+    //         ->count();
+
+    //         $visitTime = Doctor::where('id', $request->doctor_id)->select('average_visit_duration')->first()->average_visit_duration;
+    //         if (!$visitTime) return response()->json(['message' => 'Visit Time Not Availabe'], 404);
+
+    //         $visitTime = (float) $visitTime;
+    //         $numOfPeopleInHour = floor(60 / $visitTime);
+
+    //         $newTimeFormatted = Carbon::parse($request->time);
+    //         if ($appointmentsNum == $numOfPeopleInHour) $timeSelected = $newTimeFormatted->addHours(1)->toTimeString();
+    //         else $timeSelected = $timeFormatted;
+
+    //         if ($appointmentsNum < $numOfPeopleInHour) {
+    //             $appointment = Appointment::create([
+    //                 'patient_id' => $patient->id,
+    //                 'schedule_id' => $schedule->id,
+    //                 'timeSelected' => $timeSelected,
+    //                 'reservation_date' => $dateFormatted,
+    //             ]);
+
+    //             return response()->json($appointment, 200);
+    //         }
+
+    //         return response()->json(['message' => 'this time is full'], 400);
+
+    //     } else {
+
+    //         $validator = Validator::make($request->all(), [
+    //             'child_id' => 'sometimes|exists:patients,id',
+    //             'appointment_type' => ['required_with:child_id', Rule::in(['visit', 'vaccination'])],
+    //             'record_id' => 'sometimes|exists:vaccination_records,id',
+    //         ]);
+    //         if ($validator->fails()) {
+    //             return response()->json([
+    //                 'message' =>  $validator->errors()->all()
+    //             ], 400);
+    //         }
+
+    //         return $this->addAutoReservation($request);
+    //     }
+    // }
+    public function editReservation(Request $request)  // TO DO 
     {
         $user = Auth::user(); // 
 

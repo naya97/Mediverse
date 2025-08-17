@@ -5,12 +5,22 @@ namespace App\Http\Controllers\Patient;
 use App\Http\Controllers\Controller;
 use App\Models\Patient;
 use App\Models\Report;
+use App\Models\User;
+use App\Notifications\ReportNotification;
+use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class ReportController extends Controller
 {
+    protected $firebaseService;
+
+    public function __construct(FirebaseService $firebase_service)
+    {
+        $this->firebaseService = $firebase_service;
+    }
+
     public function makeReport(Request $request)
     {
         $auth = $this->auth();
@@ -33,6 +43,12 @@ class ReportController extends Controller
             'type' => $request->type,
             'description' => $request->description,
         ]);
+        $admin = User::where('role', 'admin')->first();
+        if ($admin->fcm_token) {
+            $this->firebaseService->sendNotification($admin->fcm_token,'New Report', 'Type : '. $report->type, $report);
+            $admin->notify(new ReportNotification($report));
+        }
+
         return response()->json(['message' => 'report created successfully', 'report' => $report], 201);
     }
     /////
