@@ -61,7 +61,7 @@ class EmailOtpController extends Controller
         ], 400);
     }
     /////
-    public function resetPassword(Request $request)
+    public function email_resetPassword(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
