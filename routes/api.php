@@ -34,12 +34,12 @@ Route::post('/auth/google', [GoogleAuthController::class, 'googleLogin']);
 //Email Verification
 Route::post('/send-email-otp', [EmailOtpController::class, 'send']);
 Route::post('/verify-email-otp', [EmailOtpController::class, 'verify']);
-Route::post('/resetPassword', [EmailOtpController::class, 'resetPassword']);
+Route::post('/email_resetPassword', [EmailOtpController::class, 'email_resetPassword']);
 
 //SMS Verification
 Route::post('/send-sms-otp', [SmsOtpController::class, 'send']);
 Route::post('/verify-sms-otp', [SmsOtpController::class, 'verify']);
-Route::post('/resetPassword', [SmsOtpController::class, 'resetPassword']);
+Route::post('/phone_resetPassword', [SmsOtpController::class, 'phone_resetPassword']);
 
 //Notifications
 Route::middleware([JwtMiddleware::class])->group(function () {
@@ -55,7 +55,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::apiResource('chat', ChatController::class)->only(['index', 'store', 'show']);
     Route::apiResource('chat_message', ChatMessageController::class)->only(['index', 'store']);
     Route::apiResource('user', UserController::class)->only(['index']);
-    
 });
 
 

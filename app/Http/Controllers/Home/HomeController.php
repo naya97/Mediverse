@@ -28,6 +28,7 @@ class HomeController extends Controller
         return response()->json($doctors, 200);
     }
 
+
     public function searchDoctor(Request $request)
     {
         $auth = $this->auth();
@@ -60,7 +61,7 @@ class HomeController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
         $doctor = Doctor::where('id', $request->doctor_id)->first();
-        if(!$doctor) return response()->json(['message' => 'doctor not found'], 404);
+        if (!$doctor) return response()->json(['message' => 'doctor not found'], 404);
 
         $department = Clinic::where('id', $doctor->clinic_id)->select('name')->first();
         $doctor_details = User::where('id', $doctor->user_id)->select('first_name', 'last_name', 'phone', 'email')->first();
@@ -91,10 +92,54 @@ class HomeController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $doctors = Doctor::where('clinic_id', $request->clinic_id)->get();
+        $doctors = Doctor::where('clinic_id', $request->clinic_id)
+            ->select(
+                'id',
+                'first_name',
+                'last_name',
+                'user_id',
+                'clinic_id',
+                'photo',
+                'speciality',
+                'professional_title',
+                'finalRate',
+                'average_visit_duration',
+                'visit_fee',
+                'sign',
+                'experience',
+                'treated',
+                'status',
+                'booking_type',
+                'created_at',
+                'updated_at'
+            );
 
-        return response()->json($doctors, 200);
+        $response = $this->paginateResponse($request, $doctors, 'Doctors', function ($doctor) {
+            return [
+                'id' => $doctor->id,
+                'first_name' => $doctor->first_name,
+                'last_name' => $doctor->last_name,
+                'user_id' => $doctor->user_id,
+                'clinic_id' => $doctor->clinic_id,
+                'photo' => $doctor->photo,
+                'speciality' => $doctor->speciality,
+                'professional_title' => $doctor->professional_title,
+                'finalRate' => $doctor->finalRate,
+                'average_visit_duration' => $doctor->average_visit_duration,
+                'visit_fee' => $doctor->visit_fee,
+                'sign' => $doctor->sign,
+                'experience' => $doctor->experience,
+                'treated' => $doctor->treated,
+                'status' => $doctor->status,
+                'booking_type' => $doctor->booking_type,
+                'created_at' => $doctor->created_at,
+                'updated_at' => $doctor->updated_at,
+            ];
+        });
+
+        return response()->json($response, 200);
     }
+
 
     public function showClinics(Request $request)
     {
@@ -125,7 +170,8 @@ class HomeController extends Controller
         return $this->getPharmacy($request);
     }
 
-    public function topRatedDoctors() {
+    public function topRatedDoctors()
+    {
         $auth = $this->auth();
         if ($auth) return $auth;
 
@@ -154,7 +200,7 @@ class HomeController extends Controller
 
     public function showAllDoctors(Request $request)
     {
-        $doctors = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id');
+        $doctors = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id', 'average_visit_duration');
 
         $data = $this->paginateResponse($request, $doctors, 'Doctors');
 

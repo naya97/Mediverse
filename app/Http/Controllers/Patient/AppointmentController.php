@@ -22,7 +22,7 @@ class AppointmentController extends Controller
     use PaginationTrait;
 
     public function showAppointment(Request $request)
-    {        
+    {
         $user = Auth::user();
         if (!$user) {
             return response()->json([
@@ -43,21 +43,21 @@ class AppointmentController extends Controller
         if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
 
         $appointments = Appointment::with('schedule.doctor')
-        ->where('patient_id', $patient->id)
-        ->where('status', $request->status);
+            ->where('patient_id', $patient->id)
+            ->where('status', $request->status);
 
         if (!$appointments) return response()->json(['message' => 'No Appointments yet'], 404);
 
-        if($request->has('child_id') && $request->has('appointment_type')) {
+        if ($request->has('child_id') && $request->has('appointment_type')) {
             $appointments = Appointment::with('schedule.doctor')
-            ->where('patient_id', $patient->id)
-            ->where('status', $request->status)
-            ->where('appointment_type', $request->appointment_type);
+                ->where('patient_id', $patient->id)
+                ->where('status', $request->status)
+                ->where('appointment_type', $request->appointment_type);
 
             if (!$appointments) return response()->json(['message' => 'No Appointments yet'], 404);
         }
 
-        $response = $this->paginateResponse($request, $appointments, 'Appointments', function($appointment){
+        $response = $this->paginateResponse($request, $appointments, 'Appointments', function ($appointment) {
             $doctor = $appointment->schedule->doctor ?? null;
 
             if ($doctor) {
@@ -77,7 +77,6 @@ class AppointmentController extends Controller
                     'queue_number' => $appointment->queue_number,
                 ];
             }
-
         });
 
         return response()->json($response, 200);
@@ -142,7 +141,7 @@ class AppointmentController extends Controller
             'queue_number' => $appointment->queue_number,
             'patient_first_name' => $appointment->patient->first_name,
             'patient_last_name' => $appointment->patient->last_name,
-
+            'average_visit_duration' => $doctor->average_visit_duration,
         ];
 
         return response()->json($information, 200);

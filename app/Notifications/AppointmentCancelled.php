@@ -38,10 +38,14 @@ class AppointmentCancelled extends Notification
      */
     public function toArray(object $notifiable): array
     {
+        $doctor = $this->appointment->schedule?->doctor;
         return [
             'title' => 'your appointment cancelled successfully',
-            'body' => 'sorry, your appointment cancelled '. $this->appointment->reservation_date,
+            'body' => 'sorry, your appointment cancelled ' . $this->appointment->reservation_date,
             'appointment_id' => $this->appointment->id,
+            'reservation_date' => $this->appointment->reservation_date,
+            'timeSelected' => $this->appointment->timeSelected,
+            'doctor_name' => $doctor ? $doctor->first_name . ' ' . $doctor->last_name : 'Unknown',
             'type' => 'cancel_appointment',
         ];
     }

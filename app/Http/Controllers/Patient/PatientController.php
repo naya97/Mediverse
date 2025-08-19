@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class PatientController extends Controller
 {
@@ -90,11 +91,10 @@ class PatientController extends Controller
             $phone = null;
             $email = null;
 
-            
+
             $child_record = ChildRecord::where('child_id', $request->child_id)->first();
-            if(!$child_record) $record = null;
+            if (!$child_record) $record = null;
             else $record = $child_record->id;
-            
         } else {
             $patient = Patient::where('user_id', $user->id)->first();
             $phone = $user->phone;
@@ -143,8 +143,8 @@ class PatientController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'string|nullable',
             'last_name' => 'string|nullable',
-            'email' => 'string|email|max:255|nullable',
-            'phone' => 'phone:SY|nullable',
+            'email' => ['string', 'email', 'max:255', 'nullable', Rule::unique('users', 'email')->ignore($user->id)],
+            'phone' => ['phone:SY', 'nullable', Rule::unique('users', 'phone')->ignore($user->id)],
             'old_password' => ['string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'nullable'],
             'password' => ['string', 'min:8', 'regex:/[0-9]/', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'confirmed', 'nullable'],
             'birth_date' => 'date|nullable',
@@ -152,8 +152,8 @@ class PatientController extends Controller
             'blood_type' => 'string|nullable',
             'address' => 'string|nullable',
 
-        ],[
-            'phone.phone' => 'enter a valid syrian phone number' ,
+        ], [
+            'phone.phone' => 'enter a valid syrian phone number',
             'phone.unique' => 'this phone has already been taken'
         ]);
 
@@ -189,6 +189,9 @@ class PatientController extends Controller
                 if (! Hash::check($request->old_password, $user->password)) {
                     return response()->json(['message' => 'old password is wrong'], 422);
                 }
+                if ($request->old_password == $request->password) {
+                    return response()->json(['message' => 'The new password you entered is the same as the old one']);
+                }
             }
 
             $user->update($request->all());
@@ -215,15 +218,16 @@ class PatientController extends Controller
     }
     /////
 
-    function ageStringToMonths($ageStr) {
+    function ageStringToMonths($ageStr)
+    {
         $ageStr = strtolower(trim($ageStr));
-        if ($ageStr == 'at birth' || $ageStr == 'birth' || $ageStr == 'newborn') return 0; 
+        if ($ageStr == 'at birth' || $ageStr == 'birth' || $ageStr == 'newborn') return 0;
         $number = (int) filter_var($ageStr, FILTER_SANITIZE_NUMBER_INT);
-        return strpos($ageStr, 'year') !== false ? $number * 12 :
-        (strpos($ageStr, 'month') !== false ? $number : null);
+        return strpos($ageStr, 'year') !== false ? $number * 12 : (strpos($ageStr, 'month') !== false ? $number : null);
     }
 
-    private function generateVaccinationRecordsForChild($child) {
+    private function generateVaccinationRecordsForChild($child)
+    {
 
         $birthDate = Carbon::parse($child->birth_date); // get the age months or years 
         $now = Carbon::now();
@@ -231,13 +235,13 @@ class PatientController extends Controller
 
         $recommendedNow = [];
         $upcomingVaccines = [];
-        
+
         $vaccines = Vaccine::all();
 
-        foreach($vaccines as $vaccine) {
+        foreach ($vaccines as $vaccine) {
             $ageGroups = explode(',', $vaccine->age_group);
 
-            foreach($ageGroups as $groupAge) {
+            foreach ($ageGroups as $groupAge) {
                 $groupAge = trim($groupAge);
                 $groupAgeMonths = $this->ageStringToMonths($groupAge);
                 if ($groupAgeMonths !== null) {
@@ -251,12 +255,11 @@ class PatientController extends Controller
                     ];
                     if ($groupAgeMonths == $ageInMonths) {
                         $recommendedNow[] = $vaccineDose;
-                    } elseif ($groupAgeMonths > $ageInMonths){
+                    } elseif ($groupAgeMonths > $ageInMonths) {
                         $upcomingVaccines[] = $vaccineDose;
                     }
                 }
             }
-
         }
 
         foreach ($recommendedNow as $vaccine) {
@@ -287,7 +290,7 @@ class PatientController extends Controller
             ]);
         }
 
-         return [
+        return [
             'age_in_months' => $ageInMonths,
             'recommended_now' => $recommendedNow,
             'upcoming_vaccines' => $upcomingVaccines,

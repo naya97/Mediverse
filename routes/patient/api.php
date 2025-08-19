@@ -21,6 +21,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     });
     Route::controller(RateController::class)->group(function () {
         Route::post('/rate', 'patientRate');
+        Route::get('/showDoctorReviews', 'showDoctorReviews');
     });
     Route::controller(ChildController::class)->group(function () {
         Route::get('/showVaccinationRecords', 'showVaccinationRecords');

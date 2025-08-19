@@ -60,7 +60,7 @@ class SmsOtpController extends Controller
         ], 400);
     }
     /////
-    public function resetPassword(Request $request)
+    public function phone_resetPassword(Request $request)
     {
         $request->validate([
             'phone' => 'required',

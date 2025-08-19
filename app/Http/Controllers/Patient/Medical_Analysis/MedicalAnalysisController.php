@@ -9,14 +9,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
+use App\PaginationTrait;
 
 class MedicalAnalysisController extends Controller
 {
+    use PaginationTrait;
+
     public function showAnalysis(Request $request)
     {
-        $user = Auth::user(); // 
+        $user = Auth::user();
 
-        //check the auth
+        // Check the auth
         if (!$user) {
             return response()->json([
                 'message' => 'unauthorized'
@@ -34,6 +37,7 @@ class MedicalAnalysisController extends Controller
         } else {
             $patient = Patient::where('user_id', $user->id)->first();
         }
+
         if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
 
         $analysis = Analyse::where('patient_id', $patient->id)
@@ -43,18 +47,29 @@ class MedicalAnalysisController extends Controller
                 'description',
                 'result_file',
                 'result_photo',
-                'status',
-            )
-            ->get();
+                'status'
+            );
 
-        return response()->json($analysis, 200);
+        $response = $this->paginateResponse($request, $analysis, 'Analysis', function ($item) {
+            return [
+                'id' => $item->id,
+                'name' => $item->name,
+                'description' => $item->description,
+                'result_file' => $item->result_file,
+                'result_photo' => $item->result_photo,
+                'status' => $item->status,
+            ];
+        });
+
+        return response()->json($response, 200);
     }
+
 
     public function filteringAnalysis(Request $request)
     {
-        $user = Auth::user(); // 
+        $user = Auth::user();
 
-        //check the auth
+        // Check the auth
         if (!$user) {
             return response()->json([
                 'message' => 'unauthorized'
@@ -72,8 +87,8 @@ class MedicalAnalysisController extends Controller
         } else {
             $patient = Patient::where('user_id', $user->id)->first();
         }
-        if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
 
+        if (!$patient) return response()->json(['message' => 'Patient Not Found'], 404);
 
         $analysis = Analyse::where('patient_id', $patient->id)
             ->where('status', $request->status)
@@ -83,14 +98,23 @@ class MedicalAnalysisController extends Controller
                 'description',
                 'result_file',
                 'result_photo',
-                'status',
-            )
-            ->get();
+                'status'
+            );
 
-        if (! $analysis) return response()->json(['message' => 'Not Found'], 404);
+        $response = $this->paginateResponse($request, $analysis, 'Analysis', function ($item) {
+            return [
+                'id' => $item->id,
+                'name' => $item->name,
+                'description' => $item->description,
+                'result_file' => $item->result_file,
+                'result_photo' => $item->result_photo,
+                'status' => $item->status,
+            ];
+        });
 
-        return response()->json($analysis, 200);
+        return response()->json($response, 200);
     }
+
 
 
     public function addAnalysis(Request $request)
