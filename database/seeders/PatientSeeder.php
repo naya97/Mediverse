@@ -57,6 +57,9 @@ class PatientSeeder extends Seeder
                         'parent_id'  => $parent->id,
                         'birth_date' => Carbon::now()->subMonths($agesInMonths[$i]),
                         'wallet' => 0,
+                        'phone' => null,
+                        'email' => null,
+                        'password' => null,
                     ]);
                 }
             }
