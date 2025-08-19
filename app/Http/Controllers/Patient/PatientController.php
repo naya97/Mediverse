@@ -190,7 +190,7 @@ class PatientController extends Controller
                     return response()->json(['message' => 'old password is wrong'], 422);
                 }
                 if ($request->old_password == $request->password) {
-                    return response()->json(['message' => 'The new password you entered is the same as the old one']);
+                    return response()->json(['message' => 'The new password you entered is the same as the old one'], 422);
                 }
             }
 

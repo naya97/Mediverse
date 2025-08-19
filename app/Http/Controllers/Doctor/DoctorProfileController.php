@@ -134,13 +134,13 @@ class DoctorProfileController extends Controller
 
         if ($request->filled('password')) {
             if (! $request->filled('old_password')) {
-                return response()->json(['message' => 'you have to enter old_password to change password']);
+                return response()->json(['message' => 'you have to enter old_password to change password'], 422);
             }
             if (! Hash::check($request->old_password, $user->password)) {
-                return response()->json(['message' => 'old password is wrong']);
+                return response()->json(['message' => 'old password is wrong'], 422);
             }
             if ($request->old_password == $request->password) {
-                return response()->json(['message' => 'The new password you entered is the same as the old one']);
+                return response()->json(['message' => 'The new password you entered is the same as the old one'], 422);
             }
         }
         $user = $doctor->user()->first();
