@@ -205,7 +205,7 @@ class ChildController extends Controller
         $auth = $this->auth();
         if($auth) return $auth;
 
-        $vaccinesRecords = VaccinationRecord::with('vaccine')->where('child_id', $request->child_id);
+        $vaccinesRecords = VaccinationRecord::with('vaccine', 'patient')->where('child_id', $request->child_id);
 
 
         $response = $this->paginateResponse($request, $vaccinesRecords, 'Vaccination Records', function($vaccineRecord) {
@@ -214,6 +214,8 @@ class ChildController extends Controller
                 'vaccine_id' => $vaccineRecord->vaccine_id,
                 'vaccine_name' => $vaccineRecord->vaccine->name,
                 'child_id' => $vaccineRecord->child_id,
+                'child_first_name' => $vaccineRecord->patient->first_name,
+                'child_last_name' => $vaccineRecord->patient->last_name,
                 'appointment_id' =>$vaccineRecord->appointment_id ?? null,
                 'dose_number' =>$vaccineRecord->dose_number ?? null,
                 'notes' =>$vaccineRecord->notes ?? null,
