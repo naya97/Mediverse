@@ -592,7 +592,8 @@ class AppointmentController extends Controller
         $date = Carbon::createFromFormat('d/m/y', $request->date);
         $day = $date->format('l');
 
-        $schedule = Schedule::where('doctor_id', $doctor->id)->where('day', $day)->first();
+        $schedule = Schedule::where('doctor_id', $doctor->id)->where('status', 'notAvailable')->where('day', $day)->first();
+        if (!$schedule) return response()->json(['message' => 'you are not available on this day'], 400);
 
         $mysqlDate = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
 
@@ -608,35 +609,37 @@ class AppointmentController extends Controller
         // filter the times 
         $available_times = [];
 
-        if ($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
-            $start = new DateTime('09:00');
-            $end = new DateTime('15:00');
-        } else {
-            $start = new DateTime('15:00');
-            $end = new DateTime('21:00');
-        }
+        if ($schedule->doctor->booking_type == 'manual') {
 
-        $interval = new DateInterval('PT1H');
-        $period = new DatePeriod($start, $interval, $end);
+            if ($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
+                $start = new DateTime('09:00');
+                $end = new DateTime('15:00');
+            } else {
+                $start = new DateTime('15:00');
+                $end = new DateTime('21:00');
+            }
 
-        foreach ($period as $time) {
+            $interval = new DateInterval('PT1H');
+            $period = new DatePeriod($start, $interval, $end);
 
-            $timeFormatted = $time->format('H:i:s');
-            $count = $appointments->where('timeSelected', $timeFormatted)->where('status', 'pending')->count();
-            if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
-                if ($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time) {
-                    continue;
+            foreach ($period as $time) {
+
+                $timeFormatted = $time->format('H:i:s');
+                $count = $appointments->where('timeSelected', $timeFormatted)->where('status', 'pending')->count();
+                if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
+                    if ($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time) {
+                        continue;
+                    }
+                }
+                if ($count < $numOfPeopleInHour) {
+                    $available_times[] = $time->format('H:i');
                 }
             }
-            if ($count < $numOfPeopleInHour) {
-                $available_times[] = $time->format('H:i');
+            if ($available_times == []) {
+                return response()->json([
+                    'message' => 'you are not available in this date'
+                ], 400);
             }
-        }
-
-        if ($available_times == []) {
-            return response()->json([
-                'message' => 'this doctor is not available in this date'
-            ], 400);
         }
 
         return response()->json($available_times, 200);
@@ -655,6 +658,7 @@ class AppointmentController extends Controller
             'date' => 'required|date_format:d/m/y',
             'time' => 'required|date_format:H:i',
             'this_appointment_id' => 'required|exists:appointments,id',
+            'appointment_type' => 'required|in:visit,vaccination'
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -689,7 +693,7 @@ class AppointmentController extends Controller
         $visitTime = (float) $visitTime;
 
         if ($visitTime == 0 || $doctor->status == 'notAvailable') {
-            return response()->json(['message' => 'this doctor not available'], 503);
+            return response()->json(['message' => 'doctor not available'], 503);
         }
 
         $numOfPeopleInHour = floor(60 / $visitTime);
@@ -712,7 +716,7 @@ class AppointmentController extends Controller
         if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
             if ($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time) {
                 return response()->json([
-                    'message' => 'this doctor is not available in this date '
+                    'message' => 'you are not available in this date '
                 ], 400);
             }
         }
@@ -734,13 +738,46 @@ class AppointmentController extends Controller
         }
 
         if ($appointmentsNum < $numOfPeopleInHour) {
+
+            $sameDayAppointment = Appointment::where('patient_id', $patient->id)
+                ->where('reservation_date', $dateFormatted)
+                ->where('timeSelected', $timeFormatted)
+                ->where('status', '!=', 'cancelled')
+                ->first();
+            if ($sameDayAppointment) {
+                return response()->json(['message' => 'Sorry, the patient already has an appointment on the same day'], 400);
+            }
+
+            $lastQueueNumber = Appointment::where('schedule_id',  $schedule->id)
+                ->whereDate('reservation_date', $dateFormatted)
+                ->whereTime('timeSelected', $timeFormatted)
+                ->max('queue_number');
+            $newQueueNumber = $lastQueueNumber ? $lastQueueNumber + 1 : 1;
+
+            $expectedPrice = $doctor->visit_fee;
+
             $appointment = Appointment::create([
                 'patient_id' => $patient->id,
                 'schedule_id' => $schedule->id,
                 'timeSelected' => $timeSelected,
                 'reservation_date' => $dateFormatted,
+                'appointment_type' => $request->appointment_type ?? 'visit',
+                'expected_price' => $expectedPrice,
+                'queue_number'    => $newQueueNumber,
                 'parent_id' => $request->this_appointment_id,
             ]);
+
+            if ($appointment->appointment_type == 'vaccination') {
+                // لازم يعطيني كمان السجل يلي بدي اعمله ال appointment
+                $vaccinationRecord = VaccinationRecord::with('vaccine')->where('id', $request->record_id)->first();
+                if (!$vaccinationRecord) return response()->json(['message' => 'record not found'], 404);
+
+                $vaccinationRecord->appointment_id = $appointment->id;
+                $vaccinationRecord->save();
+
+                $appointment->expected_price += $vaccinationRecord->vaccine->price;
+                $appointment->save();
+            }
 
             return response()->json($appointment, 200);
         }
@@ -759,8 +796,9 @@ class AppointmentController extends Controller
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
             'date' => 'required|date_format:d/m/y',
-            'time' => 'required|date_format:H:i',
             'this_appointment_id' => 'required|exists:appointments,id',
+            'appointment_type' => 'in:visit,vaccination'
+
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -782,6 +820,7 @@ class AppointmentController extends Controller
             ->first();
 
         if (!$schedule) return response()->json(['message' => 'Schedule Not Found'], 404);
+
 
         $lastReservationTime = Appointment::where('schedule_id', $schedule->id)
             ->whereDate('reservation_date', $dateFormatted)
@@ -811,7 +850,7 @@ class AppointmentController extends Controller
         $visitTime = (float) $visitTime;
 
         if ($visitTime == 0 || $doctor->status == 'notAvailable') {
-            return response()->json(['message' => 'this doctor not available'], 503);
+            return response()->json(['message' => 'doctor not available'], 503);
         }
         $numOfPeopleInHour = floor(60 / $visitTime);
 
@@ -819,7 +858,7 @@ class AppointmentController extends Controller
         if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
             if ($reservationCarbonTime->format('H:i') >= $schedule->start_leave_time && $reservationCarbonTime->format('H:i') <= $schedule->end_leave_time) {
                 return response()->json([
-                    'message' => 'this doctor is not available in this date '
+                    'message' => 'you are not available in this date '
                 ], 400);
             }
         }
@@ -847,13 +886,45 @@ class AppointmentController extends Controller
             ->count();
 
         if ($appointmentsTimeNum < $numOfPeopleInHour) {
+
+            $sameDayAppointment = Appointment::where('patient_id', $patient->id)
+                ->where('reservation_date', $dateFormatted)
+                ->where('timeSelected', $timeSelected)
+                ->where('status', '!=', 'cancelled')
+                ->first();
+            if ($sameDayAppointment) {
+                return response()->json(['message' => 'Sorry, the patient already has an appointment on the same day'], 400);
+            }
+
+            $lastQueueNumber = Appointment::where('schedule_id', $schedule->id)
+                ->whereDate('reservation_date', $dateFormatted)
+                ->max('queue_number');
+            $newQueueNumber = $lastQueueNumber ? $lastQueueNumber + 1 : 1;
+
+            $expectedPrice = $doctor->visit_fee;
+
             $appointment = Appointment::create([
                 'patient_id' => $patient->id,
                 'schedule_id' => $schedule->id,
                 'timeSelected' => $timeSelected,
                 'reservation_date' => $dateFormatted,
+                'appointment_type' => $request->appointment_type ?? 'visit',
+                'expected_price' => $expectedPrice,
+                'queue_number'    => $newQueueNumber,
                 'parent_id' => $request->this_appointment_id,
             ]);
+
+            if ($appointment->appointment_type == 'vaccination') {
+                // لازم يعطيني كمان السجل يلي بدي اعمله ال appointment
+                $vaccinationRecord = VaccinationRecord::with('vaccine')->where('id', $request->record_id)->first();
+                if (!$vaccinationRecord) return response()->json(['message' => 'record not found'], 404);
+
+                $vaccinationRecord->appointment_id = $appointment->id;
+                $vaccinationRecord->save();
+
+                $appointment->expected_price += $vaccinationRecord->vaccine->price;
+                $appointment->save();
+            }
 
             return response()->json($appointment, 200);
         }
@@ -873,6 +944,8 @@ class AppointmentController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'time' => 'required|date_format:H:i',
+                'appointment_type' => 'in:visit,vaccination',
+                'record_id' => 'sometimes|exists:vaccination_records,id',
             ]);
 
             if ($validator->fails()) {
@@ -883,6 +956,15 @@ class AppointmentController extends Controller
 
             return $this->addManualReservation($request);
         } else {
+            $validator = Validator::make($request->all(), [
+                'appointment_type' => 'in:visit,vaccination',
+                'record_id' => 'sometimes|exists:vaccination_records,id',
+            ]);
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' =>  $validator->errors()->all()
+                ], 400);
+            }
             return $this->addAutoReservation($request);
         }
     }
@@ -1004,6 +1086,7 @@ class AppointmentController extends Controller
         $day = $date->format('l');
 
         $schedule = Schedule::where('doctor_id', $request->doctor_id)->where('status', 'notAvailable')->where('day', $day)->first();
+        if (!$schedule) return response()->json(['message' => 'the doctor is not available on this day'], 400);
 
         $mysqlDate = Carbon::createFromFormat('d/m/y', $request->date)->format('Y-m-d');
 
@@ -1059,6 +1142,9 @@ class AppointmentController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
+        $user = Auth::user();
+        $re_doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$re_doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
 
         $patient = Patient::where('id', $request->patient_id)->first();
 
@@ -1136,14 +1222,47 @@ class AppointmentController extends Controller
         }
 
         if ($appointmentsNum < $numOfPeopleInHour) {
+
+            $sameDayAppointment = Appointment::where('patient_id', $patient->id)
+                ->where('reservation_date', $dateFormatted)
+                ->where('timeSelected', $timeFormatted)
+                ->where('status', '!=', 'cancelled')
+                ->first();
+            if ($sameDayAppointment) {
+                return response()->json(['message' => 'you can not reservation two appointments at the same time'], 400);
+            }
+
+            $lastQueueNumber = Appointment::where('schedule_id',  $schedule->id)
+                ->whereDate('reservation_date', $dateFormatted)
+                ->whereTime('timeSelected', $timeFormatted)
+                ->max('queue_number');
+            $newQueueNumber = $lastQueueNumber ? $lastQueueNumber + 1 : 1;
+
+            $expectedPrice = $doctor->visit_fee;
+
             $appointment = Appointment::create([
                 'patient_id' => $patient->id,
                 'schedule_id' => $schedule->id,
                 'timeSelected' => $timeSelected,
                 'reservation_date' => $dateFormatted,
+                'appointment_type' => $request->appointment_type ?? 'visit',
+                'expected_price' => $expectedPrice,
+                'queue_number'    => $newQueueNumber,
                 'is_referral' => true,
-                'referring_doctor' => $doctor->id,
+                'referring_doctor' => $re_doctor->id,
             ]);
+
+            if ($appointment->appointment_type == 'vaccination') {
+                // لازم يعطيني كمان السجل يلي بدي اعمله ال appointment
+                $vaccinationRecord = VaccinationRecord::with('vaccine')->where('id', $request->record_id)->first();
+                if (!$vaccinationRecord) return response()->json(['message' => 'record not found'], 404);
+
+                $vaccinationRecord->appointment_id = $appointment->id;
+                $vaccinationRecord->save();
+
+                $appointment->expected_price += $vaccinationRecord->vaccine->price;
+                $appointment->save();
+            }
 
             return response()->json($appointment, 200);
         }
@@ -1155,6 +1274,9 @@ class AppointmentController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
+        $user = Auth::user();
+        $re_doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$re_doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
 
         $patient = Patient::where('id', $request->patient_id)->first();
 
@@ -1238,14 +1360,46 @@ class AppointmentController extends Controller
             ->count();
 
         if ($appointmentsTimeNum < $numOfPeopleInHour) {
+
+            $sameDayAppointment = Appointment::where('patient_id', $patient->id)
+                ->where('reservation_date', $dateFormatted)
+                ->where('timeSelected', $timeSelected)
+                ->where('status', '!=', 'cancelled')
+                ->first();
+            if ($sameDayAppointment) {
+                return response()->json(['message' => 'Sorry, you have an appointment at the same time'], 400);
+            }
+
+            $lastQueueNumber = Appointment::where('schedule_id', $schedule->id)
+                ->whereDate('reservation_date', $dateFormatted)
+                ->max('queue_number');
+            $newQueueNumber = $lastQueueNumber ? $lastQueueNumber + 1 : 1;
+
+            $expectedPrice = $doctor->visit_fee;
+
             $appointment = Appointment::create([
                 'patient_id' => $patient->id,
                 'schedule_id' => $schedule->id,
                 'timeSelected' => $timeSelected,
                 'reservation_date' => $dateFormatted,
+                'appointment_type' => $request->appointment_type ?? 'visit',
+                'expected_price' => $expectedPrice,
+                'queue_number'    => $newQueueNumber,
                 'is_referral' => true,
-                'referring_doctor' => $doctor->id,
+                'referring_doctor' => $re_doctor->id,
             ]);
+
+            if ($appointment->appointment_type == 'vaccination') {
+                // لازم يعطيني كمان السجل يلي بدي اعمله ال appointment
+                $vaccinationRecord = VaccinationRecord::with('vaccine')->where('id', $request->record_id)->first();
+                if (!$vaccinationRecord) return response()->json(['message' => 'record not found'], 404);
+
+                $vaccinationRecord->appointment_id = $appointment->id;
+                $vaccinationRecord->save();
+
+                $appointment->expected_price += $vaccinationRecord->vaccine->price;
+                $appointment->save();
+            }
 
             return response()->json($appointment, 200);
         }
@@ -1261,9 +1415,10 @@ class AppointmentController extends Controller
         $doctor = Doctor::findOrFail($request->doctor_id);
 
         if ($doctor->booking_type == 'manual') {
-
             $validator = Validator::make($request->all(), [
                 'time' => 'required|date_format:H:i',
+                'appointment_type' => 'in:visit,vaccination',
+                'record_id' => 'sometimes|exists:vaccination_records,id',
             ]);
 
             if ($validator->fails()) {
@@ -1274,6 +1429,15 @@ class AppointmentController extends Controller
 
             return $this->addManualReferralReservation($request);
         } else {
+            $validator = Validator::make($request->all(), [
+                'appointment_type' => 'in:visit,vaccination',
+                'record_id' => 'sometimes|exists:vaccination_records,id',
+            ]);
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' =>  $validator->errors()->all()
+                ], 400);
+            }
             return $this->addAutoReferralReservation($request);
         }
         $user = User::where('id', $doctor->user_id)->first();
