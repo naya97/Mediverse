@@ -43,7 +43,6 @@ class AppointmentController extends Controller
         if ($auth) return $auth;
 
         $user = Auth::user();
-
         $doctor = Doctor::where('user_id', $user->id)->first();
         if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
 
@@ -402,6 +401,46 @@ class AppointmentController extends Controller
         return response()->json($response, 200);
     }
     /////
+
+    public function showAppointmentVaccinatioinRecord(Request $request) {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $validator = Validator::make($request->all(), [
+            'appointment_id' => 'required|exists:appointments,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->all()
+            ], 400);
+        }
+
+        $vaccinationRecord = VaccinationRecord::with('appointment.patient', 'vaccine')
+        ->where('appointment_id', $request->appointment_id)
+        ->first();
+
+        if(!$vaccinationRecord) return response()->json(['message' => 'record not found'], 404);
+
+        $response = [
+            'vaccination_record_id' => $vaccinationRecord->id,
+            'vaccine_id' => $vaccinationRecord->vaccine_id,
+            'vaccine_name' => $vaccinationRecord->vaccine->name,
+            'dose_number' => $vaccinationRecord->dose_number,
+            'notes' => $vaccinationRecord->notes,
+            'isTaken' => $vaccinationRecord->isTaken,
+            'when_to_take' => $vaccinationRecord->when_to_take,
+            'recommended' => $vaccinationRecord->recommended,
+            'next_vaccine_date' => $vaccinationRecord->next_vaccine_date,
+            'patient_id' => $vaccinationRecord->child_id,
+            'patient_first_name' => $vaccinationRecord->patient->first_name,
+            'patient_last_name' => $vaccinationRecord->patient->last_name,
+            'reservation_date' => $vaccinationRecord->appointment->reservation_date,
+            'reservation_hour' => $vaccinationRecord->appointment->timeSelected,
+        ];
+
+        return response()->json($response, 200);
+    }
+
     public function showAppointmentDetails(Request $request)
     {
         $auth = $this->auth();
