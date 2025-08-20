@@ -82,6 +82,87 @@ class AppointmentController extends Controller
         return response()->json($response, 200);
     }
     /////
+
+    public function showChildsAppointments(Request $request) {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $user = Auth::user();
+
+        $doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$doctor) return response()->json(['message' => 'Doctor Not Found'], 404);
+
+        $scheduleIds = Schedule::where('doctor_id', $doctor->id)->pluck('id')->toArray();
+
+        if ($request->status != 'today') {
+            if ($request->has('date')) {
+                $date = Carbon::createFromFormat('m-Y', $request->date);
+                $startOfMonth = $date->startOfMonth()->toDateString();
+                $endOfMonth = $date->endOfMonth()->toDateString();
+
+                $appointments = Appointment::with('patient')
+                    ->whereIn('schedule_id', $scheduleIds)
+                    ->where('status', $request->status)
+                    ->whereBetween('reservation_date', [$startOfMonth, $endOfMonth])
+                    ->whereHas('patient', function ($query) {
+                        $query->whereNotNull('parent_id');
+                    })
+                ->get();
+            } else {
+                $appointments = Appointment::with('patient')
+                    ->whereIn('schedule_id', $scheduleIds)
+                    ->where('status', $request->status)
+                    ->whereHas('patient', function ($query) {
+                        $query->whereNotNull('parent_id');
+                    })
+                ->get();
+            }
+        } else {
+            $today = now()->format('Y-m-d');
+            $appointments = Appointment::with('patient')
+                ->whereIn('schedule_id', $scheduleIds)
+                ->where('reservation_date', $today)
+                ->whereHas('patient', function ($query) {
+                    $query->whereNotNull('parent_id');
+                })
+                ->get();
+        }
+
+        $response = [];
+
+        foreach ($appointments as $appointment) {
+            $type = $appointment->parent_id === null ? 'first time' : 'check up';
+            $referring_doctor_name = null;
+
+            if ($appointment->referring_doctor != null) {
+                $referring_doctor = Doctor::find($appointment->referring_doctor);
+                if ($referring_doctor) {
+                    $referring_doctor_name = 'Dr. ' . $referring_doctor->first_name . ' ' . $referring_doctor->last_name;
+                }
+            }
+
+            $is_child = $appointment->patient->parent_id != null;
+
+            $response[] = [
+                'id' => $appointment->id,
+                'patient_id' => $appointment->patient->id,
+                'patient_first_name' => $appointment->patient->first_name,
+                'patient_last_name' => $appointment->patient->last_name,
+                'patient_gender' => $appointment->patient->gender,
+                'reservation_date' => $appointment->reservation_date,
+                'reservation_hour' => $appointment->timeSelected,
+                'status' => $appointment->status,
+                'appointment_type' => $type,
+                'appointment_info' => $appointment->appointment_type,
+                'payment_status' => $appointment->payment_status,
+                'referred by' => $referring_doctor_name,
+                'is_child' => $is_child,
+            ];
+        }
+
+        return response()->json($response, 200);
+    }
+
     public function showAppointmentsByStatus(Request $request)
     {
         $auth = $this->auth();
