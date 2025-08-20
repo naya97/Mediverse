@@ -43,26 +43,30 @@ class PatientSeeder extends Seeder
             ]);
         }
 
-        if (count($allPatients) >= 4) {
-            $parent = collect($allPatients)->random();
-            $childrenCandidates = collect($allPatients)->filter(fn($p) => $p->id !== $parent->id && $p->parent_id === null);
+        $father1 = $allPatients[0]; // أب لـ 3 أطفال
+        $father2 = $allPatients[1]; // أب لـ طفل واحد
 
-            if ($childrenCandidates->count() >= 3) {
-                $children = $childrenCandidates->random(3)->values(); // 3 أطفال
+        $children = [
+            ['first_name' => 'Adam',  'gender' => 'male',   'parent_id' => $father1->id],
+            ['first_name' => 'Lina',  'gender' => 'female', 'parent_id' => $father1->id],
+            ['first_name' => 'Omar',  'gender' => 'male',   'parent_id' => $father1->id],
+            ['first_name' => 'Joud',  'gender' => 'female', 'parent_id' => $father2->id],
+        ];
 
-                $agesInMonths = [8, 36, 72]; // 8 شهور، 3 سنين، 6 سنين
-
-                foreach ($children as $i => $child) {
-                    $child->update([
-                        'parent_id'  => $parent->id,
-                        'birth_date' => Carbon::now()->subMonths($agesInMonths[$i]),
-                        'wallet' => 0,
-                        'phone' => null,
-                        'email' => null,
-                        'password' => null,
-                    ]);
-                }
-            }
+        foreach ($children as $child) {
+            Patient::create([
+                'first_name'      => $child['first_name'],
+                'last_name'       => 'Child',
+                'user_id'         => null, 
+                'birth_date'      => Carbon::now()->subMonths(rand(3, 4))->subDays(rand(0, 30)),
+                'gender'          => $child['gender'],
+                'blood_type'      => collect(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])->random(),
+                'address'         => 'Same as parent',
+                'wallet'          => 0,
+                'parent_id'       => $child['parent_id'],
+                'discount_points' => 0,
+            ]);
         }
+ 
     }
 }
