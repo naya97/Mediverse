@@ -61,6 +61,8 @@ trait AuthTrait
             $token = JWTAuth::claims(['role' => $user->role])->fromUser($user);
 
             $doctor = Doctor::where('user_id', $user->id)->first();
+            if(!$doctor) return response()->json(['message' => 'doctor not found'], 404);
+            
             $redirect = true;
             if($doctor->status == 'available') $redirect = false;
 
