@@ -83,7 +83,7 @@ trait CancelAppointmentsTrait
                     $patient->wallet += $appointment->paid_price;
                     $patient->save();
 
-                    $clinic = Clinic::where('id', $appointment->doctor->clinic_id)->first();
+                    $clinic = Clinic::where('id', $appointment->schedule->doctor->clinic_id)->first();
                     if (!$clinic) return response()->json(['messsage' => 'clinic not found'], 404);
 
                     $clinic->money -= $appointment->paid_price;
@@ -109,7 +109,7 @@ trait CancelAppointmentsTrait
             if ($patient->fcm_token) {
                 foreach ($appointments as $appointment) {
                     if ($appointment->patient->id == $patient->id) {
-                        $this->firebaseService->sendNotification($patient->user->fcm_token, 'sorry, your appointment canceled, doctor' . ' ' . $appointment->doctor->first_name . ' ' . $appointment->doctor->last_name . ' ' . 'will not be available ',  'date ' . $appointment->reservation_date,);
+                        $this->firebaseService->sendNotification($patient->fcm_token, 'sorry, your appointment canceled, doctor' . ' ' . $appointment->schedule->doctor->first_name . ' ' . $appointment->schedule->doctor->last_name . ' ' . 'will not be available ',  'date ' . $appointment->reservation_date,);
                         $patient->user->notify(new AppointmentCancelled($appointment));
                     }
                 }
@@ -177,8 +177,8 @@ trait CancelAppointmentsTrait
             $patient = $patient->user;
         }
         if ($patient->fcm_token) {
-            $this->firebaseService->sendNotification($patient->fcm_token, 'sorry, your appointment canceled, doctor' . ' ' . $reservation->doctor->first_name . ' ' . $reservation->doctor->last_name . ' ' . 'will not be available ',  'date ' . $reservation->reservation_date,);
-            $patient->user->notify(new AppointmentCancelled($reservation));
+            $this->firebaseService->sendNotification($patient->fcm_token, 'sorry, your appointment canceled, doctor' . ' ' . $reservation->schedule->doctor->first_name . ' ' . $reservation->schedule->doctor->last_name . ' ' . 'will not be available ',  'date ' . $reservation->reservation_date,);
+            $patient->notify(new AppointmentCancelled($reservation));
         }
 
         return response()->json(['message' => 'reservation canceled successfully'], 200);
