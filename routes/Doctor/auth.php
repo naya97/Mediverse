@@ -8,6 +8,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::controller(DoctorAuthController::class)->group(function () {
         Route::post('doctorLogout',  'doctorLogout');
         Route::post('doctorSaveFcmToken',  'doctorSaveFcmToken');
+        Route::get('getAllDoctorNotifications', 'getAllDoctorNotifications');
     });
 });
 

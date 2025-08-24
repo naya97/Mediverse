@@ -8,6 +8,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::controller(AdminAuthContcoller::class)->group(function () {
         Route::post('adminLogout',  'adminLogout');
         Route::post('adminSaveFcmToken',  'adminSaveFcmToken');
+        Route::get('getAllAdminNotifications', 'getAllAdminNotifications');
     });
 });
 
