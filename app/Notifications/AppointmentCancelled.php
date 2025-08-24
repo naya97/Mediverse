@@ -40,8 +40,8 @@ class AppointmentCancelled extends Notification
     {
         $doctor = $this->appointment->schedule?->doctor;
         return [
-            'title' => 'your appointment cancelled successfully',
-            'body' => 'sorry, your appointment cancelled ' . $this->appointment->reservation_date,
+            'title' => 'sorry, your appointment canceled',
+            'body' => 'date : ' . $this->appointment->reservation_date . ', doctor : ' . $doctor->first_name . ' ' . $doctor->last_name,
             'appointment_id' => $this->appointment->id,
             'reservation_date' => $this->appointment->reservation_date,
             'timeSelected' => $this->appointment->timeSelected,

@@ -177,8 +177,10 @@ class ChildController extends Controller
         ->orderBy('reservation_date', 'desc')
         ->first();
         if(!$lastAppointment) return response()->json(['message' => 'There is no appointment for this patient'], 404);
-
         $record->last_visit_date = $lastAppointment->reservation_date;
+
+        $doctor = Auth::user();
+        $record->doctor_id = $doctor->id ? : null;
 
         $record->save();
 
