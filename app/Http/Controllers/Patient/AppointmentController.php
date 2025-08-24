@@ -67,6 +67,7 @@ class AppointmentController extends Controller
                     'doctor_name' => $doctor->first_name . ' ' . $doctor->last_name,
                     'doctor_id' => $doctor->id,
                     'doctor_speciality' => $doctor->speciality,
+                    'doctor_rate' => $doctor->finalRate,
                     'reservation_date' => $appointment->reservation_date,
                     'reservation_hour' => $appointment->timeSelected,
                     'payment_status' => $appointment->payment_status,
