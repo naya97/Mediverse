@@ -9,6 +9,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::controller(DoctorProfileController::class)->group(function () {
         Route::get('profile', 'profile');
         Route::get('availableWorkDays', 'availableWorkDays');
+        Route::get('showDoctorWorkDates', 'showDoctorWorkDates');
         Route::post('schedule', 'schedule');
         Route::post('deleteFromSchedule', 'deleteFromSchedule');
         Route::post('editProfile', 'editProfile');

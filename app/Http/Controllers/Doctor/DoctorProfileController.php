@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Log;
 use Stripe\Refund;
 use Stripe\Stripe;
 use App\Services\FirebaseService;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 
 class DoctorProfileController extends Controller
 {
@@ -32,6 +34,80 @@ class DoctorProfileController extends Controller
         $this->firebaseService = $firebase_service;
     }
     /////
+    public function showDoctorWorkDates(Request $request)
+    {
+        $user = Auth::user();
+
+        //check the auth
+        if (!$user) {
+            return response()->json([
+                'message' => 'unauthorized'
+            ], 401);
+        }
+
+        if ($user->role != 'doctor') {
+            return response()->json([
+                'message' => 'you dont have permission'
+            ], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'doctor_id' => 'required|exists:doctors,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' =>  $validator->errors()->all()
+            ], 400);
+        }
+
+        $schedules = Schedule::where('doctor_id', $request->doctor_id)->where('status', 'notAvailable')->get();
+        $workingDays = $schedules->pluck('day');
+
+        $startDate = Carbon::today();
+        $endDate = Carbon::today()->addMonth(12);
+        $period = CarbonPeriod::create($startDate, $endDate);
+
+        $availableDates = collect();
+
+        foreach ($period as $date) {
+            if ($workingDays->contains($date->format('l'))) {
+                $availableDates->push($date->toDateString());
+            }
+        }
+
+        foreach ($availableDates as $key => $availableDate) {
+            foreach ($schedules as $schedule) {
+                $date = $availableDate;
+                $startLeaveDate = $schedule->start_leave_date;
+                $endLeaveDate = $schedule->end_leave_date;
+                $startLeaveTime =  $schedule->start_leave_time;
+                $endLeaveTime =  $schedule->end_leave_time;
+
+                if ($date >= $startLeaveDate && $date <= $endLeaveDate) {
+                    if ($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
+                        $start = Carbon::createFromTime(9, 0, 0)->format('H:i:s');
+                        $end = Carbon::createFromTime(15, 0, 0)->format('H:i:s');
+                    } else {
+                        $start = Carbon::createFromTime(15, 0, 0)->format('H:i:s');
+                        $end = Carbon::createFromTime(21, 0, 0)->format('H:i:s');
+                    }
+                    if ($startLeaveTime == null && $endLeaveTime == null) {
+                        $availableDates->forget($key);
+                        continue;
+                    }
+                    if ($startLeaveTime == $start && $endLeaveTime == $end) {
+                        $availableDates->forget($key);
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'available_dates' => $availableDates->values()
+        ], 200);
+    }
+    ////
     public function profile()
     {
         $auth = $this->auth();
