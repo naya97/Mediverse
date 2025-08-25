@@ -379,7 +379,7 @@ class DoctorProfileController extends Controller
             $appointment->save();
         }
 
-        $patients = $appointments->pluck('patient')->all();
+        $patients = $appointments->pluck('patient.user')->all();
 
 
         foreach ($patients as $patient) {
