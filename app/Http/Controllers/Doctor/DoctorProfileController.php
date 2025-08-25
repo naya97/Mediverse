@@ -34,7 +34,7 @@ class DoctorProfileController extends Controller
         $this->firebaseService = $firebase_service;
     }
     /////
-    public function showDoctorWorkDates(Request $request)
+    public function showDoctorWorkDates()
     {
         $user = Auth::user();
 
@@ -51,17 +51,10 @@ class DoctorProfileController extends Controller
             ], 401);
         }
 
-        $validator = Validator::make($request->all(), [
-            'doctor_id' => 'required|exists:doctors,id',
-        ]);
+        $doctor = Doctor::where('user_id', $user->id)->first();
+        if(!$doctor) return response()->json(['message' => 'doctor not found'], 404);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'message' =>  $validator->errors()->all()
-            ], 400);
-        }
-
-        $schedules = Schedule::where('doctor_id', $request->doctor_id)->where('status', 'notAvailable')->get();
+        $schedules = Schedule::where('doctor_id', $doctor->id)->where('status', 'notAvailable')->get();
         $workingDays = $schedules->pluck('day');
 
         $startDate = Carbon::today();
