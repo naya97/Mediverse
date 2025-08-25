@@ -65,7 +65,7 @@ class DoctorProfileController extends Controller
         $workingDays = $schedules->pluck('day');
 
         $startDate = Carbon::today();
-        $endDate = Carbon::today()->addMonth(12);
+        $endDate = Carbon::today()->addMonth(5);
         $period = CarbonPeriod::create($startDate, $endDate);
 
         $availableDates = collect();
