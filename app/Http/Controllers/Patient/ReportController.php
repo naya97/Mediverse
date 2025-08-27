@@ -45,7 +45,7 @@ class ReportController extends Controller
         ]);
         $admin = User::where('role', 'admin')->first();
         if ($admin->fcm_token) {
-            $this->firebaseService->sendNotification($admin->fcm_token,'New Report', 'Type : '. $report->type, 'Patient Name: '. $patient->first_name. ' '. $patient->last_name);
+            $this->firebaseService->sendNotification($admin->fcm_token,'New Report', 'Type : '. $report->type);
             $admin->notify(new ReportNotification($report));
         }
 

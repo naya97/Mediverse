@@ -40,7 +40,6 @@ class ReportNotification extends Notification
         return [
             'title' => 'New Report',
             'body' => $this->report,
-            'report_id' => $this->report->id,
             'type' => $this->report->type,
             'description' => $this->report->description,
             'message' => 'New report submitted',
