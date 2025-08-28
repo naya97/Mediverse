@@ -271,22 +271,9 @@ class PaymentController extends Controller
             $walletOwner = $parent;
         }
 
-        $totalPrice = $doctorAmount;
+        $totalPrice = $reservation->expected_price;
 
-        if($reservation->appointment_type == 'vaccination') {
-            $vaccinationRecord = VaccinationRecord::with('vaccine')
-            ->where('appointment_id', $reservation->id)
-            ->first();
-
-            if($vaccinationRecord && $vaccinationRecord->vaccine) {
-                $vaccinationPrice = $vaccinationRecord->vaccine->price;
-                $totalPrice += $vaccinationPrice;
-            }else {
-                return response()->json(['message' => 'vaccination record or vaccination not found'], 404);
-            }
-        }
-
-        if($walletOwner->wallet < $doctorAmount) {
+        if($walletOwner->wallet < $totalPrice) {
             return response()->json(['message' => 'You do not have enough money to pay'], 400);
         }
 
