@@ -391,34 +391,33 @@ class AppointmentController extends Controller
         return $this->cancelAnAppointment($request);
     }
 
-    public function showCanceledAppointments()
+    public function showCanceledAppointments(Request $request)
     {
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $notifications = DatabaseNotification::where('type', 'App\Notifications\AppointmentCancelled')->where('created_at', '>=', now()->subDays(7))->get();
-        $response = [];
+        $notificationsQuery = DatabaseNotification::where('type', 'App\Notifications\AppointmentCancelled')
+            ->where('created_at', '>=', now()->subDays(7));
 
-        foreach ($notifications as $notification) {
-            $patientId = $notification->notifiable_id;
-            $patient = User::find($patientId);
-            $read = 'seen';
-            if ($notification->is_read == 0) {
-                $read = 'not seen';
-            }
-            $response[] = [
-                'patientFisrtName' => $patient->first_name,
-                'patientLastName' => $patient->last_name,
+        $response = $this->paginateResponse($request, $notificationsQuery, 'CanceledAppointments', function ($notification) {
+            $patient = User::find($notification->notifiable_id);
+
+            $read = $notification->is_read == 0 ? 'not seen' : 'seen';
+
+            return [
+                'patient_first_name' => $patient->first_name,
+                'patient_last_name' => $patient->last_name,
                 'phone' => $patient->phone,
                 'read' => $read,
                 'appointment_date' => $notification->data['reservation_date'],
                 'appointment_time' => $notification->data['timeSelected'],
                 'doctor_name' => $notification->data['doctor_name'],
             ];
-        }
+        });
 
         return response()->json($response, 200);
     }
+
 
 
 

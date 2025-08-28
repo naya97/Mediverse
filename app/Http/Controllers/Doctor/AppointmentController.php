@@ -83,7 +83,8 @@ class AppointmentController extends Controller
     }
     /////
 
-    public function showChildsAppointments(Request $request) {
+    public function showChildsAppointments(Request $request)
+    {
         $auth = $this->auth();
         if ($auth) return $auth;
 
@@ -107,7 +108,7 @@ class AppointmentController extends Controller
                     ->whereHas('patient', function ($query) {
                         $query->whereNotNull('parent_id');
                     })
-                ->get();
+                    ->get();
             } else {
                 $appointments = Appointment::with('patient')
                     ->whereIn('schedule_id', $scheduleIds)
@@ -115,7 +116,7 @@ class AppointmentController extends Controller
                     ->whereHas('patient', function ($query) {
                         $query->whereNotNull('parent_id');
                     })
-                ->get();
+                    ->get();
             }
         } else {
             $today = now()->format('Y-m-d');
@@ -483,7 +484,8 @@ class AppointmentController extends Controller
     }
     /////
 
-    public function showAppointmentVaccinatioinRecord(Request $request) {
+    public function showAppointmentVaccinatioinRecord(Request $request)
+    {
         $auth = $this->auth();
         if ($auth) return $auth;
         $validator = Validator::make($request->all(), [
@@ -497,10 +499,10 @@ class AppointmentController extends Controller
         }
 
         $vaccinationRecord = VaccinationRecord::with('appointment.patient', 'vaccine')
-        ->where('appointment_id', $request->appointment_id)
-        ->first();
+            ->where('appointment_id', $request->appointment_id)
+            ->first();
 
-        if(!$vaccinationRecord) return response()->json(['message' => 'record not found'], 404);
+        if (!$vaccinationRecord) return response()->json(['message' => 'record not found'], 404);
 
         $response = [
             'vaccination_record_id' => $vaccinationRecord->id,
