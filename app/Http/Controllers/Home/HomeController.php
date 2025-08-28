@@ -50,6 +50,7 @@ class HomeController extends Controller
                 'clinic_id' => $result->clinic_id,
                 'speciality' => $result->speciality,
                 'finalRate' => $result->finalRate,
+                'average_visit_duration' => $result->average_visit_duration,
             ];
         }
 
