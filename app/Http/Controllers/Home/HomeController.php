@@ -201,7 +201,7 @@ class HomeController extends Controller
 
     public function showAllDoctors(Request $request)
     {
-        $doctors = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id', 'average_visit_duration');
+        $doctors = Doctor::select('id','user_id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id', 'average_visit_duration');
 
         $data = $this->paginateResponse($request, $doctors, 'Doctors');
 
