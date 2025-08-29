@@ -25,11 +25,12 @@ class PaymentController extends Controller
         if (!$appointment) return response()->json(['message' => 'appointment not found'], 404);
         if ($appointment->payment_status == 'paid') return response()->json(['message' => 'you already paid for this appointment'], 409);
 
-        $visit_fee = $appointment->schedule->doctor->visit_fee;
-
         $patient = Patient::find($appointment->patient_id);
         $discount = 0;
         $pointsToDeduct = 0;
+
+        $totalPrice = $appointment->expected_price;
+
 
         if($request->has('discount_points') && $request->discount_points == true) {
             $points = $patient->discount_points;
@@ -56,26 +57,10 @@ class PaymentController extends Controller
             }
         }
 
-        $totalPrice = $visit_fee;
-
-        if ($appointment->appointment_type == 'vaccination') {
-            $vaccinationRecord = VaccinationRecord::with('vaccine')
-                ->where('appointment_id', $appointment->id)
-                ->first();
-
-            if (!$vaccinationRecord || !$vaccinationRecord->vaccine) {
-                return response()->json(['message' => 'vaccination record or vaccine not found'], 404);
-            }
-
-            $vaccinePrice = $vaccinationRecord->vaccine->price;
-            $totalPrice += $vaccinePrice;
-        }
-
         $finalPrice = $totalPrice * (1 - $discount);
         $appointment->paid_price = $finalPrice;
-        $appointment->payment_status = 'paid';
         $appointment->save();
-
+        
         $patient->discount_points -= $pointsToDeduct;
         $patient->save();
 
