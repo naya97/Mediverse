@@ -497,7 +497,7 @@ class AppointmentController extends Controller
 
     public function showAllDoctors(Request $request)
     {
-        $doctors = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id', 'average_visit_duration', 'sign');
+        $doctors = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id', 'average_visit_duration');
 
         $data = $this->paginateResponse($request, $doctors, 'Doctors');
 

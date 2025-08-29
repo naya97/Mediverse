@@ -49,12 +49,12 @@ class AnalysisSeeder extends Seeder
                 $paymentStatus = 'pending';
 
                 if ($resultType === 1) {
-                    $resultFile = '/storage/results/file_' . rand(1, 10) . '.pdf';
+                    $resultFile = '/storage/files/patients/analysis/' . rand(1, 2) . '.pdf';
                     $price = rand(50, 500);
                     $status = 'finished';
                     $paymentStatus = 'paid';
                 } elseif ($resultType === 2) {
-                    $resultPhoto = '/storage/results/photo_' . rand(1, 10) . '.jpg';
+                    $resultPhoto = '/storage/images/patients/analysis/' . rand(1, 5) . '.jpg';
                     $price = rand(50, 500);
                     $status = 'finished';
                     $paymentStatus = 'paid';
