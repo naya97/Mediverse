@@ -35,7 +35,7 @@ class AppointmentSeeder extends Seeder
             $timeSelected = $this->randomTimeForShift($schedule->Shift);
 
 
-            if (rand(1, 100) <= 70) {
+            if (rand(1, 100) <= 35) {
                 $reservationDate = Carbon::create(2025, 8, 30)->toDateString();
             } else {
                 $year = now()->year;
