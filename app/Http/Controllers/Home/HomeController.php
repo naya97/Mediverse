@@ -77,10 +77,9 @@ class HomeController extends Controller
             'photo' => $doctor->photo,
             'treated' => $doctor->treated,
             'speciality' => $doctor->speciality,
-            'department' => $doctor->department,
             'finalRate' => $doctor->finalRate,
             'visit_fee' => $doctor->visit_fee,
-            'excperience' => $doctor->excperience,
+            'experience' => $doctor->experience,
             'status' => $doctor->status,
             'average_visit_duration' => $doctor->average_visit_duration,
         ];
