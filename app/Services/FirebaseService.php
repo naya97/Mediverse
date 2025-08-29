@@ -20,6 +20,10 @@ class FirebaseService
 
     public function sendNotification($token, $title, $body, $data = [])
     {
+        if (empty($token)) {
+            throw new \InvalidArgumentException("FCM token is required but null or empty was given.");
+        }
+
         $message = CloudMessage::new()->withTarget('token', $token)
             ->withNotification(Notification::create($title, $body))
             ->withData($data);

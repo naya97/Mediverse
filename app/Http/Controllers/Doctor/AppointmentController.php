@@ -1145,7 +1145,7 @@ class AppointmentController extends Controller
         $workingDays = $schedules->pluck('day');
 
         $startDate = Carbon::today();
-        $endDate = Carbon::today()->addMonth();
+        $endDate = Carbon::today()->addMonth(6);
         $period = CarbonPeriod::create($startDate, $endDate);
 
         $availableDates = collect();
