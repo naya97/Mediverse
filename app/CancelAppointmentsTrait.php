@@ -93,6 +93,7 @@ trait CancelAppointmentsTrait
                 }
             }
 
+            $appointment->payment_status = 'cancelled';
             $appointment->status = 'cancelled';
             $appointment->save();
         }
@@ -166,6 +167,7 @@ trait CancelAppointmentsTrait
 
         $reservation->update([
             'status' => 'cancelled',
+            'payment_status' => 'cancelled',
         ]);
         $reservation->save();
 
