@@ -266,6 +266,30 @@ class ChildController extends Controller
         return response()->json($vaccinationRecord, 200);
     }
 
+    public function showChildren(Request $request)
+    {
+        
+        $auth = $this->auth();
+        if($auth) return $auth;
+        
+        $childrenQuery = Patient::whereNotNull('parent_id');
+        
+        $transform = function ($child) {
+            return [
+                'id' => $child->id,
+                'first_name' => $child->first_name,
+                'last_name' => $child->last_name,
+                'birth_date' => $child->birth_date,
+                'gender' => $child->gender,
+                'blood_type' => $child->blood_type,
+            ];
+        };
+
+        $response = $this->paginateResponse($request, $childrenQuery, 'Children', $transform);
+
+        return response()->json($response, 200);
+    }
+
     public function auth() {
         $user = Auth::user();
         if (!$user) {
