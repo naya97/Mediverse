@@ -425,13 +425,14 @@ class AppointmentController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $clinicsQuery = Clinic::select('name', 'numOfDoctors', 'photo', 'money');
+        $clinicsQuery = Clinic::select('id', 'name', 'numOfDoctors', 'photo', 'money');
 
         $usePagination = $request->has('page') || $request->has('size');
 
         if ($usePagination) {
             $response = $this->paginateResponse($request, $clinicsQuery, 'Clinics', function ($clinic) {
                 return [
+                    'id' =>  $clinic->id,
                     'name' => $clinic->name,
                     'numOfDoctors' => $clinic->numOfDoctors,
                     'photo' => $clinic->photo,
@@ -446,6 +447,7 @@ class AppointmentController extends Controller
 
             foreach ($clinics as $clinic) {
                 $data[] = [
+                    'id' =>  $clinic->id,
                     'name' => $clinic->name,
                     'numOfDoctors' => $clinic->numOfDoctors,
                     'photo' => $clinic->photo,
