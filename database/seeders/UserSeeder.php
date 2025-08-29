@@ -152,11 +152,11 @@ class UserSeeder extends Seeder
             ],
             [
                 'id' => 16,
-                'first_name' => 'Ali',
+                'first_name' => 'Alia',
                 'last_name' => 'Nassar',
-                'email' => 'ali@example.com',
+                'email' => 'alia@example.com',
                 'phone' => '0990000015',
-                'password' => Hash::make('Ali1234'),
+                'password' => Hash::make('Alia1234'),
                 'role' => 'patient',
             ],
             [

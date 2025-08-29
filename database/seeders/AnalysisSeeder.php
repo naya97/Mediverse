@@ -34,7 +34,7 @@ class AnalysisSeeder extends Seeder
         ];
 
         foreach ($patients as $patient) {
-            $numAnalyses = rand(1, 3);
+            $numAnalyses = rand(3, 6);
 
             for ($i = 0; $i < $numAnalyses; $i++) {
                 $clinic = $clinics->random();
@@ -49,12 +49,12 @@ class AnalysisSeeder extends Seeder
                 $paymentStatus = 'pending';
 
                 if ($resultType === 1) {
-                    $resultFile = '/storage/results/file_' . rand(1, 50) . '.pdf';
+                    $resultFile = '/storage/results/file_' . rand(1, 10) . '.pdf';
                     $price = rand(50, 500);
                     $status = 'finished';
                     $paymentStatus = 'paid';
                 } elseif ($resultType === 2) {
-                    $resultPhoto = '/storage/results/photo_' . rand(1, 50) . '.jpg';
+                    $resultPhoto = '/storage/results/photo_' . rand(1, 10) . '.jpg';
                     $price = rand(50, 500);
                     $status = 'finished';
                     $paymentStatus = 'paid';

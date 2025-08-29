@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Stripe\Refund;
 use Stripe\Stripe;
 use App\CancelAppointmentsTrait;
+use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Notification;
 use App\Models\Patient;
@@ -419,6 +420,89 @@ class AppointmentController extends Controller
     }
 
 
+    public function showClinics()
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $clinics = Clinic::select('name', 'numOfDoctors', 'photo', 'money')->get();
+        return response()->json($clinics, 200);
+    }
+
+
+
+    public function showDoctors(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $doctors = $this->showAllDoctors($request);
+
+        // don't show the clinic id (tell the front)
+        return response()->json($doctors, 200);
+    }
+
+    public function showClinicDoctors(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+
+        $doctors = Doctor::where('clinic_id', $request->clinic_id)
+            ->select(
+                'id',
+                'first_name',
+                'last_name',
+                'user_id',
+                'clinic_id',
+                'photo',
+                'speciality',
+                'professional_title',
+                'finalRate',
+                'average_visit_duration',
+                'visit_fee',
+                'sign',
+                'experience',
+                'treated',
+                'status',
+                'booking_type',
+                'created_at',
+                'updated_at'
+            );
+
+        $response = $this->paginateResponse($request, $doctors, 'Doctors', function ($doctor) {
+            return [
+                'id' => $doctor->id,
+                'first_name' => $doctor->first_name,
+                'last_name' => $doctor->last_name,
+                'user_id' => $doctor->user_id,
+                'clinic_id' => $doctor->clinic_id,
+                'photo' => $doctor->photo,
+                'speciality' => $doctor->speciality,
+                'professional_title' => $doctor->professional_title,
+                'finalRate' => $doctor->finalRate,
+                'average_visit_duration' => $doctor->average_visit_duration,
+                'visit_fee' => $doctor->visit_fee,
+                'sign' => $doctor->sign,
+                'experience' => $doctor->experience,
+                'treated' => $doctor->treated,
+                'status' => $doctor->status,
+                'booking_type' => $doctor->booking_type,
+                'created_at' => $doctor->created_at,
+                'updated_at' => $doctor->updated_at,
+            ];
+        });
+
+        return response()->json($response, 200);
+    }
+
+
+    public function showAllDoctors(Request $request)
+    {
+        $doctors = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id', 'average_visit_duration');
+
+        $data = $this->paginateResponse($request, $doctors, 'Doctors');
+
+        return $data;
+    }
 
 
     public function auth()
