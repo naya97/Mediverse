@@ -16,5 +16,8 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('/showCanceledAppointments', 'showCanceledAppointments');
         Route::get('/showAppointmentDetails', 'showAppointmentDetails');
         Route::get('/showTodayAppointmentByDoctor', 'showTodayAppointmentByDoctor');
+        Route::get('/showDoctors', 'showDoctors');
+        Route::get('/showClinicDoctors', 'showClinicDoctors');
+        Route::get('/showClinics', 'showClinics');
     });
 });

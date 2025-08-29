@@ -22,14 +22,14 @@ class ClinicSeeder extends Seeder
             'Neuro',         // Neurologist
             'Kidney',        // Nephrologist
         ];
+        $numOfDoctors = [2, 2, 1, 1, 1, 2, 1, 1];
 
-        foreach ($clinics as $clinicName) {
-            $clinic = Clinic::create([
-                'name'  => $clinicName,
-                'photo' => '/storage/images/clinics/' . $clinicName . '.png', 
-                'numOfDoctors' => 1,
+        for ($i = 0; $i < 8; $i++) {
+            Clinic::create([
+                'name'  => $clinics[$i],
+                'photo' => '/storage/images/clinics/' . $clinics[$i] . '.png',
+                'numOfDoctors' => $numOfDoctors[$i],
             ]);
-
         }
     }
 }

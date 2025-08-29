@@ -14,7 +14,7 @@ class ScheduleSeeder extends Seeder
      */
     public function run(): void
     {
-        $days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        $days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
         $shifts = [
             'morning shift:from 9 AM to 3 PM',
             'evening shift:from 3 PM to 9 PM',
@@ -22,7 +22,7 @@ class ScheduleSeeder extends Seeder
 
         $doctors = Doctor::with('clinic')->get();
 
-         foreach ($doctors as $doctor) {
+        foreach ($doctors as $doctor) {
             // نعطي لكل دكتور عدد عشوائي من الشفتات (مثلاً 2 شفتات بالأسبوع)
             $numShifts = rand(1, 3);
 
