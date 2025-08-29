@@ -420,12 +420,41 @@ class AppointmentController extends Controller
     }
 
 
-    public function showClinics()
+    public function showClinics(Request $request)
     {
         $auth = $this->auth();
         if ($auth) return $auth;
-        $clinics = Clinic::select('name', 'numOfDoctors', 'photo', 'money')->get();
-        return response()->json($clinics, 200);
+
+        $clinicsQuery = Clinic::select('name', 'numOfDoctors', 'photo', 'money');
+
+        $usePagination = $request->has('page') || $request->has('size');
+
+        if ($usePagination) {
+            $response = $this->paginateResponse($request, $clinicsQuery, 'Clinics', function ($clinic) {
+                return [
+                    'name' => $clinic->name,
+                    'numOfDoctors' => $clinic->numOfDoctors,
+                    'photo' => $clinic->photo,
+                    'money' => $clinic->money,
+                ];
+            });
+
+            return $response;
+        } else {
+            $clinics = $clinicsQuery->get();
+            $data = [];
+
+            foreach ($clinics as $clinic) {
+                $data[] = [
+                    'name' => $clinic->name,
+                    'numOfDoctors' => $clinic->numOfDoctors,
+                    'photo' => $clinic->photo,
+                    'money' => $clinic->money,
+                ];
+            }
+
+            return response()->json($data, 200);
+        }
     }
 
 
@@ -435,10 +464,46 @@ class AppointmentController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $doctors = $this->showAllDoctors($request);
+        $doctorsQuery = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id', 'average_visit_duration');
 
-        // don't show the clinic id (tell the front)
-        return response()->json($doctors, 200);
+        $usePagination = $request->has('page') || $request->has('size');
+
+        if ($usePagination) {
+            $response = $this->paginateResponse($request, $doctorsQuery, 'Doctors', function ($doctor) {
+                return [
+                    'id' => $doctor->id,
+                    'photo' => $doctor->photo,
+                    'first_name' => $doctor->first_name,
+                    'last_name' => $doctor->last_name,
+                    'speciality' => $doctor->speciality,
+                    'status' => $doctor->status,
+                    'finalRate' => $doctor->finalRate,
+                    'clinic_id' => $doctor->clinic_id,
+                    'average_visit_duration' => $doctor->average_visit_duration,
+                ];
+            });
+
+            return $response;
+        } else {
+            $doctors = $doctorsQuery->get();
+            $data = [];
+
+            foreach ($doctors as $doctor) {
+                $data[] = [
+                    'id' => $doctor->id,
+                    'photo' => $doctor->photo,
+                    'first_name' => $doctor->first_name,
+                    'last_name' => $doctor->last_name,
+                    'speciality' => $doctor->speciality,
+                    'status' => $doctor->status,
+                    'finalRate' => $doctor->finalRate,
+                    'clinic_id' => $doctor->clinic_id,
+                    'average_visit_duration' => $doctor->average_visit_duration,
+                ];
+            }
+
+            return response()->json($data, 200);
+        }
     }
 
     public function showClinicDoctors(Request $request)
@@ -446,7 +511,7 @@ class AppointmentController extends Controller
         $auth = $this->auth();
         if ($auth) return $auth;
 
-        $doctors = Doctor::where('clinic_id', $request->clinic_id)
+        $doctorsQuery = Doctor::where('clinic_id', $request->clinic_id)
             ->select(
                 'id',
                 'first_name',
@@ -468,40 +533,108 @@ class AppointmentController extends Controller
                 'updated_at'
             );
 
-        $response = $this->paginateResponse($request, $doctors, 'Doctors', function ($doctor) {
-            return [
-                'id' => $doctor->id,
-                'first_name' => $doctor->first_name,
-                'last_name' => $doctor->last_name,
-                'user_id' => $doctor->user_id,
-                'clinic_id' => $doctor->clinic_id,
-                'photo' => $doctor->photo,
-                'speciality' => $doctor->speciality,
-                'professional_title' => $doctor->professional_title,
-                'finalRate' => $doctor->finalRate,
-                'average_visit_duration' => $doctor->average_visit_duration,
-                'visit_fee' => $doctor->visit_fee,
-                'sign' => $doctor->sign,
-                'experience' => $doctor->experience,
-                'treated' => $doctor->treated,
-                'status' => $doctor->status,
-                'booking_type' => $doctor->booking_type,
-                'created_at' => $doctor->created_at,
-                'updated_at' => $doctor->updated_at,
-            ];
-        });
+        $usePagination = $request->has('page') || $request->has('size');
 
-        return response()->json($response, 200);
+        if ($usePagination) {
+            $response = $this->paginateResponse($request, $doctorsQuery, 'Doctors', function ($doctor) {
+                return [
+                    'id' => $doctor->id,
+                    'first_name' => $doctor->first_name,
+                    'last_name' => $doctor->last_name,
+                    'user_id' => $doctor->user_id,
+                    'clinic_id' => $doctor->clinic_id,
+                    'photo' => $doctor->photo,
+                    'speciality' => $doctor->speciality,
+                    'professional_title' => $doctor->professional_title,
+                    'finalRate' => $doctor->finalRate,
+                    'average_visit_duration' => $doctor->average_visit_duration,
+                    'visit_fee' => $doctor->visit_fee,
+                    'sign' => $doctor->sign,
+                    'experience' => $doctor->experience,
+                    'treated' => $doctor->treated,
+                    'status' => $doctor->status,
+                    'booking_type' => $doctor->booking_type,
+                    'created_at' => $doctor->created_at,
+                    'updated_at' => $doctor->updated_at,
+                ];
+            });
+            return $response;
+        } else {
+            $doctors = $doctorsQuery->get();
+            $data = [];
+
+            foreach ($doctors as $doctor) {
+                $data[] = [
+                    'id' => $doctor->id,
+                    'first_name' => $doctor->first_name,
+                    'last_name' => $doctor->last_name,
+                    'user_id' => $doctor->user_id,
+                    'clinic_id' => $doctor->clinic_id,
+                    'photo' => $doctor->photo,
+                    'speciality' => $doctor->speciality,
+                    'professional_title' => $doctor->professional_title,
+                    'finalRate' => $doctor->finalRate,
+                    'average_visit_duration' => $doctor->average_visit_duration,
+                    'visit_fee' => $doctor->visit_fee,
+                    'sign' => $doctor->sign,
+                    'experience' => $doctor->experience,
+                    'treated' => $doctor->treated,
+                    'status' => $doctor->status,
+                    'booking_type' => $doctor->booking_type,
+                    'created_at' => $doctor->created_at,
+                    'updated_at' => $doctor->updated_at,
+                ];
+            }
+
+            return response()->json($data, 200);
+        }
     }
+
+
 
 
     public function showAllDoctors(Request $request)
     {
-        $doctors = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id', 'average_visit_duration');
+        $doctorsQuery = Doctor::select('id', 'photo', 'first_name', 'last_name', 'speciality', 'status', 'finalRate', 'clinic_id', 'average_visit_duration');
 
-        $data = $this->paginateResponse($request, $doctors, 'Doctors');
+        $usePagination = $request->has('page') || $request->has('size');
 
-        return $data;
+        if ($usePagination) {
+            $response = $this->paginateResponse($request, $doctorsQuery, 'Doctors', function ($doctor) {
+                return [
+                    'id' => $doctor->id,
+                    'photo' => $doctor->photo,
+                    'first_name' => $doctor->first_name,
+                    'last_name' => $doctor->last_name,
+                    'speciality' => $doctor->speciality,
+                    'status' => $doctor->status,
+                    'finalRate' => $doctor->finalRate,
+                    'clinic_id' => $doctor->clinic_id,
+                    'average_visit_duration' => $doctor->average_visit_duration,
+                ];
+            });
+
+            return $response;
+        } else {
+            $doctors = $doctorsQuery->get();
+            $data = [];
+
+            foreach ($doctors as $doctor) {
+                $data[] = [
+                    'id' => $doctor->id,
+                    'photo' => $doctor->photo,
+                    'first_name' => $doctor->first_name,
+                    'last_name' => $doctor->last_name,
+                    'speciality' => $doctor->speciality,
+                    'status' => $doctor->status,
+                    'finalRate' => $doctor->finalRate,
+                    'clinic_id' => $doctor->clinic_id,
+                    'average_visit_duration' => $doctor->average_visit_duration,
+                ];
+            }
+
+            return response()->json($data, 200);
+        }
     }
 
 
