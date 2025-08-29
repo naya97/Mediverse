@@ -15,7 +15,9 @@ class PharmacySeeder extends Seeder
     public function run(): void
     {
         $faker = Faker::create();
-
+        $name = [];
+        $latitude = [];
+        $longitude = [];
         // نولد مثلاً 10 صيدليات
         for ($i = 0; $i < 10; $i++) {
             Pharmacy::create([
