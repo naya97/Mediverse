@@ -592,7 +592,36 @@ class AppointmentController extends Controller
         }
     }
 
+    public function showDoctorDetails(Request $request)
+    {
+        $auth = $this->auth();
+        if ($auth) return $auth;
+        $doctor = Doctor::where('id', $request->doctor_id)->first();
+        if (!$doctor) return response()->json(['message' => 'doctor not found'], 404);
 
+        $doctor_details = User::where('id', $doctor->user_id)->select('first_name', 'last_name')->first();
+        $clinic = Clinic::where('id', $doctor->clinic_id)->first();
+        $workDays = Schedule::where('doctor_id', $doctor->id)->where('clinic_id', $clinic->id)->where('status', 'notAvailable')->get();
+        if ($workDays->isEmpty()) {
+            return response()->json(['message' => 'No schedule available yet'], 404);
+        }
+        $schedule = [];
+        foreach ($workDays as $workDay) {
+            $schedule[] = [
+                'id' => $workDay->id,
+                'day' => $workDay->day,
+                'Shift' => $workDay->Shift,
+            ];
+        }
+        $response = [
+            'id' => $doctor->id,
+            'first_name' => $doctor_details->first_name,
+            'last_name' => $doctor_details->last_name,
+            'schedule' => $schedule,
+        ];
+
+        return response()->json($response, 200);
+    }
 
 
     public function showAllDoctors(Request $request)
