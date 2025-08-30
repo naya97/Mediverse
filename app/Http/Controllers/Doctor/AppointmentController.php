@@ -1123,7 +1123,7 @@ class AppointmentController extends Controller
     {
         $auth = $this->auth();
         if ($auth) return $auth;
-        $doctors = Doctor::select('id', 'first_name', 'last_name', 'clinic_id')
+        $doctors = Doctor::select('id', 'first_name', 'last_name', 'clinic_id', 'booking_type', 'status')
             ->get();
 
         $clinic_doctors = [];
