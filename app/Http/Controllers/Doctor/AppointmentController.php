@@ -835,12 +835,17 @@ class AppointmentController extends Controller
             ], 400);
         }
 
-        if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
-            if ($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time) {
-                return response()->json([
-                    'message' => 'you are not available in this date '
-                ], 400);
-            }
+        $schedules = Schedule::where('doctor_id', $doctor->id)
+            ->where('status', 'notAvailable')
+        ->get();
+        foreach($schedules as $cancelledSchedule) {
+            if ($date->toDateString() >= $cancelledSchedule->start_leave_date && $date->toDateString() <= $cancelledSchedule->end_leave_date) {
+                if ($time->format('H:i:s') >= $cancelledSchedule->start_leave_time && $time->format('H:i:s') <= $cancelledSchedule->end_leave_time) {
+                    return response()->json([
+                        'message' => 'this doctor is not available in this date '
+                    ], 400);
+                }
+            }   
         }
 
         $newTimeFormatted = Carbon::parse($request->time);
@@ -977,12 +982,17 @@ class AppointmentController extends Controller
         $numOfPeopleInHour = floor(60 / $visitTime);
 
         $reservationCarbonTime = Carbon::createFromFormat('H:i', $reservationTime->format('H:i'));
-        if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
-            if ($reservationCarbonTime->format('H:i') >= $schedule->start_leave_time && $reservationCarbonTime->format('H:i') <= $schedule->end_leave_time) {
-                return response()->json([
-                    'message' => 'you are not available in this date '
-                ], 400);
-            }
+        $schedules = Schedule::where('doctor_id', $doctor->id)
+            ->where('status', 'notAvailable')
+        ->get();
+        foreach($schedules as $cancelledSchedule) {
+            if ($date->toDateString() >= $cancelledSchedule->start_leave_date && $date->toDateString() <= $cancelledSchedule->end_leave_date) {
+                if ($reservationCarbonTime->format('H:i:s') >= $cancelledSchedule->start_leave_time && $reservationCarbonTime->format('H:i:s') <= $cancelledSchedule->end_leave_time) {
+                    return response()->json([
+                        'message' => 'this doctor is not available in this date '
+                    ], 400);
+                }
+            }   
         }
 
         $newTimeFormatted = Carbon::parse($reservationTime);
@@ -1319,12 +1329,17 @@ class AppointmentController extends Controller
             ], 400);
         }
 
-        if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
-            if ($time->format('H:i') >= $schedule->start_leave_time && $time->format('H:i') <= $schedule->end_leave_time) {
-                return response()->json([
-                    'message' => 'this doctor is not available in this date '
-                ], 400);
-            }
+        $schedules = Schedule::where('doctor_id', $doctor->id)
+            ->where('status', 'notAvailable')
+        ->get();
+        foreach($schedules as $cancelledSchedule) {
+            if ($date->toDateString() >= $cancelledSchedule->start_leave_date && $date->toDateString() <= $cancelledSchedule->end_leave_date) {
+                if ($time->format('H:i:s') >= $cancelledSchedule->start_leave_time && $time->format('H:i:s') <= $cancelledSchedule->end_leave_time) {
+                    return response()->json([
+                        'message' => 'this doctor is not available in this date '
+                    ], 400);
+                }
+            }   
         }
 
         $newTimeFormatted = Carbon::parse($request->time);
@@ -1451,12 +1466,17 @@ class AppointmentController extends Controller
         $numOfPeopleInHour = floor(60 / $visitTime);
 
         $reservationCarbonTime = Carbon::createFromFormat('H:i', $reservationTime->format('H:i'));
-        if ($date->toDateString() >= $schedule->start_leave_date && $date->toDateString() <= $schedule->end_leave_date) {
-            if ($reservationCarbonTime->format('H:i') >= $schedule->start_leave_time && $reservationCarbonTime->format('H:i') <= $schedule->end_leave_time) {
-                return response()->json([
-                    'message' => 'this doctor is not available in this date '
-                ], 400);
-            }
+        $schedules = Schedule::where('doctor_id', $doctor->id)
+            ->where('status', 'notAvailable')
+        ->get();
+        foreach($schedules as $cancelledSchedule) {
+            if ($date->toDateString() >= $cancelledSchedule->start_leave_date && $date->toDateString() <= $cancelledSchedule->end_leave_date) {
+                if ($reservationCarbonTime->format('H:i:s') >= $cancelledSchedule->start_leave_time && $reservationCarbonTime->format('H:i:s') <= $cancelledSchedule->end_leave_time) {
+                    return response()->json([
+                        'message' => 'this doctor is not available in this date '
+                    ], 400);
+                }
+            }   
         }
 
         $newTimeFormatted = Carbon::parse($reservationTime);
