@@ -22,7 +22,7 @@ class PatientSeeder extends Seeder
             'Maya'    => 'female',
             'Rana'    => 'female',
             'Jessy'   => 'female',
-            'Ali'     => 'male',
+            'Alia'     => 'female',
             'Samer'   => 'male',
             'John'    => 'male',
             'Ibrahim' => 'male',
@@ -57,7 +57,7 @@ class PatientSeeder extends Seeder
             Patient::create([
                 'first_name'      => $child['first_name'],
                 'last_name'       => 'Child',
-                'user_id'         => null, 
+                'user_id'         => null,
                 'birth_date'      => Carbon::now()->subMonths(rand(3, 4))->subDays(rand(0, 30)),
                 'gender'          => $child['gender'],
                 'blood_type'      => collect(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])->random(),
@@ -67,6 +67,5 @@ class PatientSeeder extends Seeder
                 'discount_points' => 0,
             ]);
         }
- 
     }
 }
