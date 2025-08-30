@@ -20,5 +20,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('/showClinicDoctors', 'showClinicDoctors');
         Route::get('/showClinics', 'showClinics');
         Route::get('/showDoctorDetails', 'showDoctorDetails');
+        Route::get('/showDoctorWorkDates', 'showDoctorWorkDates');
     });
 });

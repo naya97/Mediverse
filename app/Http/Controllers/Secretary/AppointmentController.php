@@ -18,6 +18,7 @@ use App\Models\Notification;
 use App\Models\Patient;
 use App\Models\User;
 use App\PaginationTrait;
+use Carbon\CarbonPeriod;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Validator;
 
@@ -666,6 +667,61 @@ class AppointmentController extends Controller
 
             return response()->json($data, 200);
         }
+    }
+
+    public function showDoctorWorkDates(Request $request)
+    {
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $doctor = Doctor::where('id', $request->doctor_id)->first();
+        if(!$doctor) return response()->json(['message' => 'doctor not found'], 404);
+
+        $schedules = Schedule::where('doctor_id', $doctor->id)->where('status', 'notAvailable')->get();
+        $workingDays = $schedules->pluck('day');
+
+        $startDate = Carbon::today();
+        $endDate = Carbon::today()->addMonth(5);
+        $period = CarbonPeriod::create($startDate, $endDate);
+
+        $availableDates = collect();
+
+        foreach ($period as $date) {
+            if ($workingDays->contains($date->format('l'))) {
+                $availableDates->push($date->toDateString());
+            }
+        }
+
+        foreach ($availableDates as $key => $availableDate) {
+            foreach ($schedules as $schedule) {
+                $date = $availableDate;
+                $startLeaveDate = $schedule->start_leave_date;
+                $endLeaveDate = $schedule->end_leave_date;
+                $startLeaveTime =  $schedule->start_leave_time;
+                $endLeaveTime =  $schedule->end_leave_time;
+
+                if ($date >= $startLeaveDate && $date <= $endLeaveDate) {
+                    if ($schedule->Shift == 'morning shift:from 9 AM to 3 PM') {
+                        $start = Carbon::createFromTime(9, 0, 0)->format('H:i:s');
+                        $end = Carbon::createFromTime(15, 0, 0)->format('H:i:s');
+                    } else {
+                        $start = Carbon::createFromTime(15, 0, 0)->format('H:i:s');
+                        $end = Carbon::createFromTime(21, 0, 0)->format('H:i:s');
+                    }
+                    if ($startLeaveTime == null && $endLeaveTime == null) {
+                        $availableDates->forget($key);
+                        continue;
+                    }
+                    if ($startLeaveTime == $start && $endLeaveTime == $end) {
+                        $availableDates->forget($key);
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'available_dates' => $availableDates->values()
+        ], 200);
     }
 
 
