@@ -416,6 +416,7 @@ class PatientInfoController extends Controller
                 'birth_date' => $patient->birth_date,
                 'address' => $patient->address,
                 'is_child' => $is_child,
+                'gender' => $patient->gender,
             ];
         });
 

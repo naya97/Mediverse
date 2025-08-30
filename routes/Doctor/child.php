@@ -11,6 +11,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('addChildRecords', 'addChildRecords');
         Route::post('editChildRecords', 'editChildRecords');
         Route::get('showVaccines', 'showVaccines');
+        Route::get('showChildren', 'showChildren');
         Route::get('showVaccineRecords', 'showVaccineRecords');
         Route::get('showVaccineRecordsDetails', 'showVaccineRecordsDetails');
         Route::post('editVaccineRecordInfo', 'editVaccineRecordInfo');

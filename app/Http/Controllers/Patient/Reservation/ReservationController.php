@@ -954,6 +954,7 @@ class ReservationController extends Controller
 
         $reservation->update([
             'status' => 'cancelled',
+            'payment_status' => 'cancelled',
         ]);
         $reservation->save();
 

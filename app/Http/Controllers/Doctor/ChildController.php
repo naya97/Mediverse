@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Models\ChildRecord;
 use App\Models\Doctor;
 use App\Models\Patient;
+use App\Models\Schedule;
 use App\Models\VaccinationRecord;
 use App\Models\Vaccine;
 use App\PaginationTrait;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use PhpParser\Comment\Doc;
 
 class ChildController extends Controller
 {
@@ -264,6 +266,42 @@ class ChildController extends Controller
         $appointment->save();
 
         return response()->json($vaccinationRecord, 200);
+    }
+
+    public function showChildren(Request $request)
+    {
+        
+        $auth = $this->auth();
+        if($auth) return $auth;
+
+        $user = Auth::user();
+        $doctor = Doctor::where('user_id', $user->id)->first();
+        $schedules = Schedule::where('doctor_id', $doctor->id)->pluck('id');
+        $appointments = Appointment::with('patient')->whereIn('schedule_id', $schedules)->get();
+        
+        $childrenIds = $appointments
+        ->filter(function ($appointment) {
+            return $appointment->patient && $appointment->patient->parent_id !== null;
+        })
+        ->pluck('patient.id')
+        ->unique();
+
+        $childrenQuery = Patient::whereIn('id', $childrenIds);
+
+        $transform = function ($child) {
+            return [
+                'id' => $child->id,
+                'first_name' => $child->first_name,
+                'last_name' => $child->last_name,
+                'birth_date' => $child->birth_date,
+                'gender' => $child->gender,
+                'blood_type' => $child->blood_type,
+            ];
+        };
+
+        $response = $this->paginateResponse($request, $childrenQuery, 'Children', $transform);
+
+        return response()->json($response, 200);
     }
 
     public function auth() {
