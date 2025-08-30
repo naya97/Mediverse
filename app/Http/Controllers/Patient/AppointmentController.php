@@ -44,15 +44,14 @@ class AppointmentController extends Controller
 
         $appointments = Appointment::with('schedule.doctor')
             ->where('patient_id', $patient->id)
-            ->where('status', $request->status);
+        ->where('status', $request->status);
 
-        if (!$appointments) return response()->json(['message' => 'No Appointments yet'], 404);
 
         if ($request->has('child_id') && $request->has('appointment_type')) {
             $appointments = Appointment::with('schedule.doctor')
                 ->where('patient_id', $patient->id)
-                ->where('status', $request->status)
-                ->where('appointment_type', $request->appointment_type);
+                ->where('appointment_type', $request->appointment_type)
+                ->where('status', $request->status);
 
             if (!$appointments) return response()->json(['message' => 'No Appointments yet'], 404);
         }
@@ -75,6 +74,7 @@ class AppointmentController extends Controller
                     'expected_price' => $appointment->expected_price,
                     'paid_price' => $appointment->paid_price,
                     'appointment_type' => $appointment->appointment_type,
+                    'status' => $appointment->status,
                     'queue_number' => $appointment->queue_number,
                 ];
             }
