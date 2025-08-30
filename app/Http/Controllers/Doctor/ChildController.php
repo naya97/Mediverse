@@ -289,6 +289,9 @@ class ChildController extends Controller
         $childrenQuery = Patient::whereIn('id', $childrenIds);
 
         $transform = function ($child) {
+            $child_record = ChildRecord::where('child_id', $child->id)->first();
+            if (!$child_record) $record = null;
+            else $record = $child_record->id;
             return [
                 'id' => $child->id,
                 'first_name' => $child->first_name,
@@ -296,6 +299,7 @@ class ChildController extends Controller
                 'birth_date' => $child->birth_date,
                 'gender' => $child->gender,
                 'blood_type' => $child->blood_type,
+                'child_record' => $record ?? null,
             ];
         };
 
